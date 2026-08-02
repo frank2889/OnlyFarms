@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { currentUserId } from "@/auth";
-import { userById } from "@/lib/queries/accounts";
+import { listsForUser, userById } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
 import { CATEGORIES } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { currentSeason } from "@/lib/season";
 import { iconForCategory } from "@/components/catalog-icons";
-import { ListIcon, SproutIcon, StoreIcon } from "@/components/icons";
+import { SproutIcon, StoreIcon } from "@/components/icons";
+import HomeListPanel from "@/components/HomeListPanel";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const season = currentSeason();
   const userId = await currentUserId();
-  const user = userId ? await userById(userId) : null;
+  const [user, serverLists] = userId
+    ? await Promise.all([userById(userId), listsForUser(userId)])
+    : [null, []];
 
   return (
     <main>
@@ -43,18 +46,15 @@ export default async function Home() {
           {t("home.heroTitle")}
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-ink-500">{t("home.heroText")}</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/lijsten"
-            className="inline-flex items-center gap-2 rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600"
-          >
-            <ListIcon width={18} height={18} /> {t("home.ctaList")}
-          </Link>
+        <div className="mt-8">
+          <HomeListPanel
+            serverLists={serverLists.map((l) => ({ token: l.token, name: l.name }))}
+          />
           <Link
             href="/producenten"
-            className="inline-flex items-center gap-2 rounded-full border border-terra-400 px-6 py-3 font-medium text-terra-700 hover:bg-terra-50"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-terra-700 underline"
           >
-            <StoreIcon width={18} height={18} /> {t("home.ctaProducers")}
+            <StoreIcon width={16} height={16} /> {t("home.ctaProducers")}
           </Link>
         </div>
       </section>

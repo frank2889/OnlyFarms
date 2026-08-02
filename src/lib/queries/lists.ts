@@ -1,0 +1,145 @@
+import { randomBytes } from "node:crypto";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { db } from "@/db";
+import { listItems, lists } from "@/db/schema";
+import type { ListItem, ShoppingList } from "@/lib/types";
+
+export async function createList(name: string): Promise<ShoppingList> {
+  const token = randomBytes(12).toString("base64url");
+  const [row] = await db
+    .insert(lists)
+    .values({ token, name: name.trim() || "Boodschappen" })
+    .returning();
+  return row as ShoppingList;
+}
+
+export async function getListByToken(token: string): Promise<ShoppingList | null> {
+  const [row] = await db.select().from(lists).where(eq(lists.token, token));
+  return (row as ShoppingList) ?? null;
+}
+
+export async function getListItems(listId: number): Promise<{
+  open: ListItem[];
+  bought: ListItem[];
+}> {
+  const rows = (await db
+    .select()
+    .from(listItems)
+    .where(eq(listItems.listId, listId))
+    .orderBy(asc(listItems.position), asc(listItems.createdAt))) as ListItem[];
+  const open = rows.filter((r) => !r.checked);
+  const bought = rows
+    .filter((r) => r.checked)
+    .sort((a, b) => (b.checkedAt?.getTime() ?? 0) - (a.checkedAt?.getTime() ?? 0));
+  return { open, bought };
+}
+
+export async function addItem(
+  listId: number,
+  item: { catalogKey?: string | null; label: string; qty?: string; note?: string }
+): Promise<void> {
+  // Zelfde item opnieuw toevoegen terwijl het afgevinkt staat = weer op de lijst
+  if (item.catalogKey) {
+    const [existing] = await db
+      .select({ id: listItems.id })
+      .from(listItems)
+      .where(
+        and(eq(listItems.listId, listId), eq(listItems.catalogKey, item.catalogKey))
+      );
+    if (existing) {
+      await db
+        .update(listItems)
+        .set({ checked: false, checkedAt: null, qty: item.qty || null, note: item.note || null })
+        .where(eq(listItems.id, existing.id));
+      await touch(listId);
+      return;
+    }
+  }
+  await db.insert(listItems).values({
+    listId,
+    catalogKey: item.catalogKey ?? null,
+    label: item.label.trim(),
+    qty: item.qty?.trim() || null,
+    note: item.note?.trim() || null,
+  });
+  await touch(listId);
+}
+
+export async function setItemChecked(
+  listId: number,
+  itemId: number,
+  checked: boolean
+): Promise<void> {
+  await db
+    .update(listItems)
+    .set({ checked, checkedAt: checked ? sql`now()` : null })
+    .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
+  await touch(listId);
+}
+
+export async function updateItem(
+  listId: number,
+  itemId: number,
+  patch: { qty?: string; note?: string }
+): Promise<void> {
+  await db
+    .update(listItems)
+    .set({ qty: patch.qty?.trim() || null, note: patch.note?.trim() || null })
+    .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
+  await touch(listId);
+}
+
+export async function removeItem(listId: number, itemId: number): Promise<void> {
+  await db
+    .delete(listItems)
+    .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
+  await touch(listId);
+}
+
+export async function setListLocation(
+  listId: number,
+  loc: { postcode?: string | null; lat: number; lng: number; radiusKm?: number }
+): Promise<void> {
+  await db
+    .update(lists)
+    .set({
+      postcode: loc.postcode ?? null,
+      lat: loc.lat,
+      lng: loc.lng,
+      ...(loc.radiusKm ? { radiusKm: loc.radiusKm } : {}),
+      updatedAt: sql`now()`,
+    })
+    .where(eq(lists.id, listId));
+}
+
+export async function setListRadius(listId: number, radiusKm: number): Promise<void> {
+  await db
+    .update(lists)
+    .set({ radiusKm, updatedAt: sql`now()` })
+    .where(eq(lists.id, listId));
+}
+
+export async function renameList(listId: number, name: string): Promise<void> {
+  await db
+    .update(lists)
+    .set({ name: name.trim(), updatedAt: sql`now()` })
+    .where(eq(lists.id, listId));
+}
+
+async function touch(listId: number): Promise<void> {
+  await db
+    .update(lists)
+    .set({ updatedAt: sql`now()` })
+    .where(eq(lists.id, listId));
+}
+
+/** "Vorige keer gekocht": catalog-keys die ooit op deze lijst zijn afgevinkt */
+export async function boughtBefore(listId: number): Promise<string[]> {
+  const rows = await db
+    .select({ key: listItems.catalogKey })
+    .from(listItems)
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)))
+    .orderBy(desc(listItems.checkedAt))
+    .limit(12);
+  return rows.map((r) => r.key).filter((k): k is string => !!k);
+}

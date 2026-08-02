@@ -29,17 +29,17 @@ async function main() {
 
   console.log("Sheet ophalen…");
   const rows = await fetchSheetRows();
-  const { farms, issues } = normalizeRows(rows);
+  const { producers, issues } = normalizeRows(rows);
 
   const stats = {
     "rijen in sheet": rows.length,
-    "genormaliseerd": farms.length,
-    "zonder coördinaten": farms.filter((f) => f.lat === null).length,
-    "zonder provincie": farms.filter((f) => f.province === null).length,
-    "zonder producten": farms.filter((f) => f.products.length === 0).length,
-    "status actief": farms.filter((f) => f.status === "actief").length,
-    "status seizoen": farms.filter((f) => f.status === "seizoen").length,
-    "status gestopt": farms.filter((f) => f.status === "gestopt").length,
+    "genormaliseerd": producers.length,
+    "zonder coördinaten": producers.filter((f) => f.lat === null).length,
+    "zonder provincie": producers.filter((f) => f.province === null).length,
+    "zonder producten": producers.filter((f) => f.products.length === 0).length,
+    "status actief": producers.filter((f) => f.status === "actief").length,
+    "status seizoen": producers.filter((f) => f.status === "seizoen").length,
+    "status gestopt": producers.filter((f) => f.status === "gestopt").length,
   };
   console.table(stats);
 
@@ -64,7 +64,7 @@ async function main() {
   const { syncFarms } = await import("@/lib/sheet-sync");
   const result = await syncFarms(db);
   console.log(
-    `\nKlaar: ${result.upserted} boerderijen geüpsert, ${result.orphaned} verdwenen records op 'onbevestigd' gezet.`
+    `\nKlaar: ${result.upserted} producenten geüpsert, ${result.orphaned} verdwenen records op 'onbevestigd' gezet.`
   );
   process.exit(0);
 }

@@ -1,6 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { sql } from "drizzle-orm";
-import { farms } from "@/db/schema";
+import { producers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import type { db as Db } from "@/db";
 
@@ -28,7 +28,7 @@ type SheetRow = {
   Automaat: string;
 };
 
-export type NormalizedFarm = {
+export type NormalizedProducer = {
   sourceId: number;
   name: string;
   slug: string;
@@ -118,7 +118,7 @@ function normalizeProducts(v: string): string[] {
   return [...seen];
 }
 
-function normalizeStatus(v: string): NormalizedFarm["status"] {
+function normalizeStatus(v: string): NormalizedProducer["status"] {
   const s = v.trim().toLowerCase();
   if (s === "actief" || s === "seizoen" || s === "gestopt") return s;
   return "onbevestigd";
@@ -137,10 +137,10 @@ export async function fetchSheetRows(): Promise<SheetRow[]> {
 }
 
 export function normalizeRows(rows: SheetRow[]): {
-  farms: NormalizedFarm[];
+  producers: NormalizedProducer[];
   issues: SyncIssue[];
 } {
-  const result: NormalizedFarm[] = [];
+  const result: NormalizedProducer[] = [];
   const issues: SyncIssue[] = [];
   const slugCounts = new Map<string, number>();
 
@@ -204,7 +204,7 @@ export function normalizeRows(rows: SheetRow[]): {
     });
   }
 
-  return { farms: result, issues };
+  return { producers: result, issues };
 }
 
 export async function syncFarms(db: typeof Db): Promise<{
@@ -213,16 +213,16 @@ export async function syncFarms(db: typeof Db): Promise<{
   issues: SyncIssue[];
 }> {
   const rows = await fetchSheetRows();
-  const { farms: normalized, issues } = normalizeRows(rows);
+  const { producers: normalized, issues } = normalizeRows(rows);
 
   const batchSize = 250;
   for (let i = 0; i < normalized.length; i += batchSize) {
     const batch = normalized.slice(i, i + batchSize);
     await db
-      .insert(farms)
+      .insert(producers)
       .values(batch)
       .onConflictDoUpdate({
-        target: farms.sourceId,
+        target: producers.sourceId,
         set: {
           name: sql`excluded.name`,
           slug: sql`excluded.slug`,
@@ -250,14 +250,14 @@ export async function syncFarms(db: typeof Db): Promise<{
   // Array als één parameter met cast, anders klapt Drizzle hem uit tot een ROW-expressie.
   const idsLiteral = `{${normalized.map((f) => f.sourceId).join(",")}}`;
   const orphanResult = await db
-    .update(farms)
+    .update(producers)
     .set({ status: "onbevestigd", updatedAt: sql`now()` })
     .where(
-      sql`${farms.source} = 'sheet-import'
-        and ${farms.status} <> 'onbevestigd'
-        and not (${farms.sourceId} = any(${idsLiteral}::int[]))`
+      sql`${producers.source} = 'sheet-import'
+        and ${producers.status} <> 'onbevestigd'
+        and not (${producers.sourceId} = any(${idsLiteral}::int[]))`
     )
-    .returning({ id: farms.id });
+    .returning({ id: producers.id });
 
   return { upserted: normalized.length, orphaned: orphanResult.length, issues };
 }

@@ -143,3 +143,121 @@ export function SproutIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function BreadIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 4C7 4 4 6 4 9c0 1.5 1 2.6 2 3v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-7c1-.4 2-1.5 2-3 0-3-3-5-8-5Z" />
+    </Svg>
+  );
+}
+
+export function BeerIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M17 11h1a3 3 0 0 1 0 6h-1" />
+      <path d="M9 12v6M13 12v6" />
+      <path d="M5 8v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V8" />
+      <path d="M5 8h10V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2Z" />
+    </Svg>
+  );
+}
+
+export function WineIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 22h8M12 15v7M7 10h10" />
+      <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" />
+    </Svg>
+  );
+}
+
+export function JarIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 3h8" />
+      <path d="M7 3c0 2-2 3-2 5v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8c0-2-2-3-2-5" />
+      <path d="M5 13h14" />
+    </Svg>
+  );
+}
+
+export function FlowerIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 9a3 3 0 1 1 3-3M15 12a3 3 0 1 1 3 3M12 15a3 3 0 1 1-3 3M9 12a3 3 0 1 1-3-3" />
+    </Svg>
+  );
+}
+
+export function PlusIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5 12h14M12 5v14" />
+    </Svg>
+  );
+}
+
+export function CheckIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M20 6 9 17l-5-5" />
+    </Svg>
+  );
+}
+
+export function TrashIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    </Svg>
+  );
+}
+
+export function ShareIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
+    </Svg>
+  );
+}
+
+export function ListIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </Svg>
+  );
+}
+
+export function SearchIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </Svg>
+  );
+}
+
+export function StoreIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="m2 7 2-4h16l2 4" />
+      <path d="M2 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7" />
+      <path d="M4 11v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9" />
+      <path d="M9 21v-6h6v6" />
+    </Svg>
+  );
+}
+
+export function RouteIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 11 22 2l-9 19-2-8Z" />
+    </Svg>
+  );
+}

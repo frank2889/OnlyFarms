@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Huisstijl: maximaal 3 kleurfamilies — terra (hoofd), ink (donker neutraal),
+ * cream (achtergrond). Dit is de ENIGE plek met hexwaarden; componenten en
+ * illustraties putten uit deze tokens. Bewust geen dark mode.
+ */
+@theme {
+  --color-terra-50: #fbf1ec;
+  --color-terra-100: #f6dfd3;
+  --color-terra-200: #efc3ad;
+  --color-terra-300: #e5a181;
+  --color-terra-400: #d97b54;
+  --color-terra-500: #c4552c;
+  --color-terra-600: #a64621;
+  --color-terra-700: #85381b;
+  --color-terra-800: #652a15;
+  --color-terra-900: #471e0f;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-ink-100: #e7e1db;
+  --color-ink-300: #b7aba0;
+  --color-ink-500: #7a6c60;
+  --color-ink-700: #4a3e35;
+  --color-ink-900: #2a211b;
+
+  --color-cream-50: #fbf7f0;
+  --color-cream-100: #f4ebdd;
+  --color-cream-200: #e9dcc6;
+  --color-cream-300: #dccbae;
+
+  --color-background: var(--color-cream-50);
+  --color-foreground: var(--color-ink-900);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-tile: 1.25rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

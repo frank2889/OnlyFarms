@@ -42,7 +42,7 @@ export default function VerkopenPage() {
     return (
       <main className="mx-auto max-w-xl p-8">
         <h1 className="mb-4 text-2xl font-bold">Aanmelding ontvangen</h1>
-        <p className="text-neutral-600 dark:text-neutral-300">
+        <p className="text-ink-500">
           Bedankt voor je aanmelding. We beoordelen elke aanmelding handmatig en
           nemen contact met je op via het opgegeven e-mailadres.
         </p>
@@ -53,12 +53,12 @@ export default function VerkopenPage() {
     );
   }
 
-  const field = "w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900";
+  const field = "w-full rounded-xl border border-cream-300 px-3 py-2";
 
   return (
     <main className="mx-auto max-w-xl p-8">
       <h1 className="mb-2 text-2xl font-bold">Verkopen via OnlyFarms</h1>
-      <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-300">
+      <p className="mb-6 text-sm text-ink-500">
         Voor bedrijven met een KVK-inschrijving. Na aanmelding volgt een
         handmatige beoordeling. OnlyFarms is een platform dat vraag en aanbod
         bij elkaar brengt: wij verwerken geen betalingen en zijn geen partij
@@ -105,7 +105,7 @@ export default function VerkopenPage() {
         </label>
 
         {errors.length > 0 && (
-          <ul className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+          <ul className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
             {errors.map((e) => (
               <li key={e}>• {e}</li>
             ))}
@@ -115,7 +115,7 @@ export default function VerkopenPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-green-700 px-6 py-3 font-medium text-white hover:bg-green-800 disabled:opacity-50"
+          className="rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600 disabled:opacity-50"
         >
           {submitting ? "Versturen…" : "Aanmelding versturen"}
         </button>

@@ -10,21 +10,37 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-export const farmStatus = pgEnum("farm_status", [
+export const producerStatus = pgEnum("producer_status", [
   "actief",
   "seizoen",
   "gestopt",
   "onbevestigd",
 ]);
 
-export const farms = pgTable(
-  "farms",
+export const producerKind = pgEnum("producer_kind", [
+  "boerderijwinkel",
+  "brouwerij",
+  "bakkerij",
+  "imkerij",
+  "wijngaard",
+  "overig",
+]);
+
+// Alle lokale producenten. isMember scheidt de gids (geïmporteerd/redactie)
+// van aangesloten leden — alleen leden draaien mee in de lijst-matching.
+export const producers = pgTable(
+  "producers",
   {
     id: serial("id").primaryKey(),
-    // ID uit de bron-sheet; hierop wordt geüpsert zodat de sync idempotent is
+    // ID uit de bron-sheet; hierop is de eenmalige seed geüpsert
     sourceId: integer("source_id").notNull().unique(),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
+    kind: producerKind("kind").notNull().default("boerderijwinkel"),
+    isMember: boolean("is_member").notNull().default(false),
+    claimedBySellerId: integer("claimed_by_seller_id").references(
+      () => sellers.id
+    ),
     address: text("address"),
     postcode: text("postcode"),
     city: text("city"),
@@ -39,7 +55,7 @@ export const farms = pgTable(
     vendingMachine: boolean("vending_machine"),
     paymentMethods: text("payment_methods"),
     description: text("description"),
-    status: farmStatus("status").notNull().default("onbevestigd"),
+    status: producerStatus("status").notNull().default("onbevestigd"),
     source: text("source").notNull().default("sheet-import"),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
     claimedByEmail: text("claimed_by_email"),
@@ -51,10 +67,49 @@ export const farms = pgTable(
       .defaultNow(),
   },
   (t) => [
-    index("farms_province_idx").on(t.province),
-    index("farms_status_idx").on(t.status),
-    index("farms_lat_lng_idx").on(t.lat, t.lng),
+    index("producers_province_idx").on(t.province),
+    index("producers_status_idx").on(t.status),
+    index("producers_lat_lng_idx").on(t.lat, t.lng),
   ]
+);
+
+// Boodschappenlijsten (Bring-model): anoniem, gedeeld via geheime token-link.
+// In fase 2 komt hier een koppeling met users/list_members bij.
+export const lists = pgTable("lists", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  name: text("name").notNull(),
+  postcode: text("postcode"),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
+  radiusKm: integer("radius_km").notNull().default(10),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const listItems = pgTable(
+  "list_items",
+  {
+    id: serial("id").primaryKey(),
+    listId: integer("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    catalogKey: text("catalog_key"),
+    label: text("label").notNull(),
+    qty: text("qty"),
+    note: text("note"),
+    checked: boolean("checked").notNull().default(false),
+    checkedAt: timestamp("checked_at", { withTimezone: true }),
+    position: integer("position").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("list_items_list_idx").on(t.listId, t.checked)]
 );
 
 // Aangesloten verkopers: bedrijven (KVK verplicht) die via het platform
@@ -143,9 +198,9 @@ export const sellerReviews = pgTable(
 // Meldingen van bezoekers ("klopt dit niet meer?") — de goedkoopste bron van actualiteit
 export const reports = pgTable("reports", {
   id: serial("id").primaryKey(),
-  farmId: integer("farm_id")
+  producerId: integer("producer_id")
     .notNull()
-    .references(() => farms.id, { onDelete: "cascade" }),
+    .references(() => producers.id, { onDelete: "cascade" }),
   message: text("message").notNull(),
   reporterEmail: text("reporter_email"),
   resolved: boolean("resolved").notNull().default(false),

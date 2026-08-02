@@ -2,7 +2,7 @@
 
 Lokale-producenten-platform met **gedeelde boodschappenlijsten als kern** (Bring-model): maak samen je lijst met visuele producttegels, en zie per item welke boer, bakker of brouwer bij jou in de buurt het verkoopt. **Bewust géén kaart** — route via je eigen navigatie-app.
 
-Volledig productplan: `~/.claude/plans/maak-een-plan-hoe-async-bird.md` (Frank). Begon als herbouw van deboervinder.nl, die dit platform op termijn vervangt.
+Volledig productplan: [docs/PLAN.md](docs/PLAN.md). Begon als herbouw van deboervinder.nl, die dit platform op termijn vervangt.
 
 **Stack:** Next.js (App Router) · Postgres + Drizzle (Neon) · Tailwind v4 · Vercel · Pusher (realtime, optioneel) · Klaviyo (events, optioneel)
 

@@ -8,6 +8,7 @@ Volledig productplan: [docs/PLAN.md](docs/PLAN.md). Begon als herbouw van deboer
 
 ## Kernconcepten
 
+- **Offline & app**: installeerbaar als PWA; de lijst opent offline (service worker) en wijzigingen zonder verbinding syncen zodra je weer online bent (let op: pagina herladen terwijl je offline bent verliest nog niet-gesyncte vinkjes — bekende v1-beperking).
 - **Lijsten** (`/lijsten`, `/lijst/[token]`): meerdere lijsten, anoniem, delen via geheime link, samen afvinken (realtime via Pusher, anders polling), "onlangs gekocht", seizoenssuggesties. Lijst-links worden niet geïndexeerd (robots).
 - **Matching**: per lijst-item tonen we producenten in de buurt (Haversine in SQL; straal instelbaar, fallback dichtstbijzijnde 5). **Gids vs. leden**: geïmporteerde vermeldingen zijn "gids"; alleen aangesloten leden (`producers.is_member`) staan bovenaan — gids eronder met claim-teaser.
 - **Producenten**: alle KVK-producenten van eet/drinkwaar (`producers.kind`: boerderijwinkel, brouwerij, bakkerij…). SEO-pagina's: `/producent/[slug]` (JSON-LD), `/producenten` (zoeken op locatie + categorie), `/provincie/[slug]`, sitemap.
@@ -78,4 +79,4 @@ scripts/                 seed, migratie, datakwaliteit
 - **Fase 2**: accounts (Auth.js magic link + Google), profielen (bezocht/ervaringen/wishlist), foto's (Vercel Blob), KVK-API-validatie, admin-scherm, web-push.
 - **Verkenning (Chimene)**: mensen willen niet naar 5 plekken — antwoorden: slimme dekking (minder stops), marktstandplaatsen (één plek, veel producenten), en mogelijk supermarkt-alternatieven aanraden met schone ingrediënten/zonder toevoegingen (databron: Open Food Facts, open data) — let op: verbreedt de missie, bewust besluiten.
 - **Fase 3**: **marktstandplaatsen per producent** (weekmarkten als locaties — zo krijgt de stad wél aanbod op loopafstand, op de juiste dag), slimme dekking ("dit lid dekt 5 van je 7 items"), lijstsjablonen, recepten-import, aanbiedingen van leden (incl. locatiegebonden melding "de kaas waar je nu bent is goedkoper" — bij openen van de app op een andere plek via web, echte achtergrond-geofencing pas in de native app), deboervinder-migratie (301's), Skal/KVK-SBI-databronnen.
-- **Vóór launch**: definitieve naam + domein, voorwaarden via jurist, Neon naar EU-regio, Plausible + GA4.
+- **Vóór launch**: definitieve naam + domein, voorwaarden via jurist, Neon naar EU-regio, Plausible + GA4, **Pusher-keys aanmaken** (gratis account; vier env-vars in Vercel — dan is samen afvinken echt realtime i.p.v. 10s-polling).

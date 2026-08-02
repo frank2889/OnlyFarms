@@ -53,6 +53,8 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
   const [locBusy, setLocBusy] = useState(false);
   const [locError, setLocError] = useState(false);
   const [editItem, setEditItem] = useState<number | null>(null);
+  const [qtyItem, setQtyItem] = useState<CatalogItem | null>(null);
+  const [qtyValue, setQtyValue] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Lijst registreren op dit apparaat (voor het "Mijn lijsten"-overzicht)
@@ -154,6 +156,20 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
   const openIdByKey = new Map(
     open.filter((i) => i.catalogKey).map((i) => [i.catalogKey as string, i.id])
   );
+
+  function addWithQty() {
+    if (!qtyItem) return;
+    const item = qtyItem;
+    const qty = qtyValue.trim();
+    const existingId = openIdByKey.get(item.key);
+    if (existingId) {
+      act(() => updateItemAction(list.token, existingId, { qty }));
+    } else {
+      act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label, qty }));
+    }
+    setQtyItem(null);
+    setQtyValue("");
+  }
 
   function toggleTile(item: CatalogItem) {
     const existingId = openIdByKey.get(item.key);
@@ -401,6 +417,7 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                 toggleTile(item);
                 setQuery("");
               }}
+              onLongPress={() => setQtyItem(item)}
             />
           ))}
           <button
@@ -428,12 +445,63 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                     item={item}
                     added={openKeys.has(item.key)}
                     onAdd={() => toggleTile(item)}
+                    onLongPress={() => setQtyItem(item)}
                   />
                 ))}
               </div>
             </section>
           );
         })
+      )}
+      {qtyItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 sm:items-center"
+          onClick={() => setQtyItem(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-t-tile bg-white p-5 sm:rounded-tile"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center gap-3">
+              {createElement(iconForItem(qtyItem), {
+                width: 32,
+                height: 32,
+                className: tintForCategory(qtyItem.category).icon,
+              })}
+              <h3 className="text-lg font-semibold">{qtyItem.label}</h3>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                addWithQty();
+              }}
+              className="flex flex-col gap-3"
+            >
+              <input
+                autoFocus
+                value={qtyValue}
+                onChange={(e) => setQtyValue(e.target.value)}
+                placeholder="Hoeveel? (bijv. 2 dozen, 1 kilo)"
+                className="w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-3"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-full bg-terra-500 px-5 py-3 font-medium text-white hover:bg-terra-600"
+                >
+                  Op de lijst
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQtyItem(null)}
+                  className="rounded-full px-4 text-sm text-ink-500 underline"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -442,16 +510,43 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
 function AddTile({
   item,
   onAdd,
+  onLongPress,
   added,
 }: {
   item: CatalogItem;
   onAdd: () => void;
+  onLongPress?: () => void;
   added?: boolean;
 }) {
   const tint = tintForCategory(item.category);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+
+  function pressStart() {
+    if (!onLongPress) return;
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      onLongPress();
+    }, 450);
+  }
+  function pressEnd() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+  }
+
   return (
     <button
-      onClick={onAdd}
+      onClick={() => {
+        if (longPressed.current) {
+          longPressed.current = false;
+          return; // lange druk opende al het hoeveelheid-paneel
+        }
+        onAdd();
+      }}
+      onPointerDown={pressStart}
+      onPointerUp={pressEnd}
+      onPointerLeave={pressEnd}
+      onContextMenu={(e) => e.preventDefault()}
       aria-pressed={added}
       className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-colors ${
         added

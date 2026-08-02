@@ -151,6 +151,18 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
 
   const searchResults = useMemo(() => searchCatalog(query).slice(0, 8), [query]);
   const openKeys = new Set(open.map((i) => i.catalogKey));
+  const openIdByKey = new Map(
+    open.filter((i) => i.catalogKey).map((i) => [i.catalogKey as string, i.id])
+  );
+
+  function toggleTile(item: CatalogItem) {
+    const existingId = openIdByKey.get(item.key);
+    if (existingId) {
+      act(() => removeItemAction(list.token, existingId));
+    } else {
+      act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }));
+    }
+  }
   const suggestions = seasonal.filter((s) => !openKeys.has(s.key)).slice(0, 8);
   const rebuy = boughtBeforeKeys
     .map((k) => catalogItem(k))
@@ -379,14 +391,14 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
         />
       </div>
       {query ? (
-        <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
           {searchResults.map((item) => (
             <AddTile
               key={item.key}
               item={item}
               added={openKeys.has(item.key)}
               onAdd={() => {
-                act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }));
+                toggleTile(item);
                 setQuery("");
               }}
             />
@@ -409,15 +421,13 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
           return (
             <section key={cat.key} className="mb-5">
               <h3 className="mb-2 text-sm font-semibold text-ink-500">{cat.label}</h3>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {items.map((item) => (
                   <AddTile
                     key={item.key}
                     item={item}
                     added={openKeys.has(item.key)}
-                    onAdd={() =>
-                      act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }))
-                    }
+                    onAdd={() => toggleTile(item)}
                   />
                 ))}
               </div>
@@ -442,13 +452,30 @@ function AddTile({
   return (
     <button
       onClick={onAdd}
-      className={`flex flex-col items-center gap-1.5 rounded-tile p-3 text-center text-sm transition-shadow ${tint.tileBg} ${
-        added ? "ring-2 ring-terra-500" : "hover:ring-2 hover:ring-terra-300"
+      aria-pressed={added}
+      className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-colors ${
+        added
+          ? "bg-terra-600 text-white"
+          : `${tint.tileBg} hover:ring-2 hover:ring-terra-300`
       }`}
     >
-      {createElement(iconForItem(item), { width: 32, height: 32, className: tint.icon })}
-      <span className="leading-tight">{item.label}</span>
-      {item.nix18 && <span className="text-xs font-semibold text-ink-500">18+</span>}
+      {createElement(iconForItem(item), {
+        width: 36,
+        height: 36,
+        className: added ? "text-white" : tint.icon,
+      })}
+      <span className={`line-clamp-2 w-full text-sm leading-tight ${added ? "text-white" : ""}`}>
+        {item.label}
+      </span>
+      {item.nix18 && (
+        <span
+          className={`absolute right-1.5 top-1.5 rounded-full px-1.5 text-[10px] font-bold ${
+            added ? "bg-white/20 text-white" : "bg-ink-900 text-white"
+          }`}
+        >
+          18+
+        </span>
+      )}
     </button>
   );
 }

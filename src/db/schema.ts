@@ -142,6 +142,8 @@ export const listItems = pgTable(
     // wie van het gezin de locatie aandroeg ("tip van ...")
     storeSuggestedBy: text("store_suggested_by"),
     assignee: text("assignee"),
+    // gevalideerd gezinslid (alleen bij lijsten met een huishouden)
+    assigneeUserId: integer("assignee_user_id").references(() => users.id),
     dueAt: timestamp("due_at", { withTimezone: true }),
     checked: boolean("checked").notNull().default(false),
     checkedAt: timestamp("checked_at", { withTimezone: true }),

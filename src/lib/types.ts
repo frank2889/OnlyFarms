@@ -34,6 +34,7 @@ export type ListItem = {
   producerSlug: string | null;
   storeSuggestedBy: string | null;
   assignee: string | null;
+  assigneeUserId: number | null;
   dueAt: Date | null;
   checked: boolean;
   checkedAt: Date | null;

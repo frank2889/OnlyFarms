@@ -287,3 +287,11 @@ export function PencilIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function ChevronDownIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="m6 9 6 6 6-6" />
+    </Svg>
+  );
+}

@@ -87,6 +87,7 @@ export async function updateItem(
     producerSlug?: string | null;
     storeSuggestedBy?: string | null;
     assignee?: string;
+    assigneeUserId?: number | null;
     dueAt?: Date | null;
   }
 ): Promise<void> {
@@ -99,9 +100,17 @@ export async function updateItem(
       ...(patch.producerSlug !== undefined ? { producerSlug: patch.producerSlug } : {}),
       ...(patch.storeSuggestedBy !== undefined ? { storeSuggestedBy: patch.storeSuggestedBy } : {}),
       ...(patch.assignee !== undefined ? { assignee: patch.assignee.trim() || null } : {}),
+      ...(patch.assigneeUserId !== undefined ? { assigneeUserId: patch.assigneeUserId } : {}),
       ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
     })
     .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
+  await touch(listId);
+}
+
+export async function clearBought(listId: number): Promise<void> {
+  await db
+    .delete(listItems)
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)));
   await touch(listId);
 }
 

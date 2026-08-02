@@ -77,7 +77,7 @@ export default async function ProducersPage({
         </Link>
       </header>
 
-      <h1 className="mb-4 text-3xl font-bold">{t("producers.searchTitle")}</h1>
+      <h1 className="mb-4 text-2xl font-bold sm:text-3xl">{t("producers.searchTitle")}</h1>
 
       <LocationSearch initialQuery={params.q ?? ""} product={params.product} radius={radius} />
       {coords && !params.q && !params.lat && (
@@ -86,7 +86,7 @@ export default async function ProducersPage({
         </p>
       )}
 
-      <div className="my-4 flex flex-wrap gap-1.5">
+      <div className="-mx-4 my-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
         {CATEGORIES.filter((c) => c.key !== "overig").map((c) => {
           const Icon = iconForCategory(c.key);
           const active = c.key === category;
@@ -99,7 +99,7 @@ export default async function ProducersPage({
             <Link
               key={c.key}
               href={`/producenten?${query}`}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${
+              className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${
                 active
                   ? "border-terra-500 bg-terra-500 text-white"
                   : "border-cream-300 bg-white hover:border-terra-400"
@@ -121,39 +121,44 @@ export default async function ProducersPage({
           <ul className="flex flex-col gap-2">
             {results.producers.map((p) => (
               <li key={p.id}>
-                <div className="flex items-center gap-3 rounded-tile border border-cream-200 bg-white p-4">
-                  <div className="min-w-0 flex-1">
-                    <Link href={`/producent/${p.slug}`} className="font-medium hover:underline">
+                <div className="rounded-tile border border-cream-200 bg-white p-4">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/producent/${p.slug}`}
+                      className="min-w-0 flex-1 truncate font-medium hover:underline"
+                    >
                       {p.name}
                     </Link>
-                    <p className="truncate text-sm text-ink-500">
-                      {[p.city, p.products.slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
-                    </p>
+                    {p.isMember && (
+                      <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
+                        {t("producers.memberBadge")}
+                      </span>
+                    )}
                   </div>
-                  {p.isMember && (
-                    <span className="rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
-                      {t("producers.memberBadge")}
-                    </span>
-                  )}
-                  {p.distanceKm !== undefined && (
-                    <span className="shrink-0 text-sm text-ink-500">
-                      {t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} ·{" "}
-                      {t("common.travel", {
-                        min: travelInfo(p.distanceKm).minutes,
-                        mode: travelInfo(p.distanceKm).mode,
-                      })}
-                    </span>
-                  )}
-                  {p.lat != null && (
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="inline-flex shrink-0 items-center gap-1 text-sm text-terra-700 hover:underline"
-                    >
-                      <RouteIcon width={13} height={13} /> {t("common.route")}
-                    </a>
-                  )}
+                  <p className="truncate text-sm text-ink-500">
+                    {[p.city, p.products.slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
+                    {p.distanceKm !== undefined && (
+                      <span>
+                        {t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} ·{" "}
+                        {t("common.travel", {
+                          min: travelInfo(p.distanceKm).minutes,
+                          mode: travelInfo(p.distanceKm).mode,
+                        })}
+                      </span>
+                    )}
+                    {p.lat != null && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-1 text-terra-700 hover:underline"
+                      >
+                        <RouteIcon width={13} height={13} /> {t("common.route")}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}

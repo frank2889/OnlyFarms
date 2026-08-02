@@ -77,6 +77,16 @@ export async function claimList(
     .where(eq(lists.id, listId));
 }
 
+export async function membersOfHousehold(
+  householdId: number
+): Promise<{ id: number; name: string }[]> {
+  return db
+    .select({ id: users.id, name: users.name })
+    .from(householdMembers)
+    .innerJoin(users, eq(users.id, householdMembers.userId))
+    .where(eq(householdMembers.householdId, householdId));
+}
+
 export async function userByEmail(email: string) {
   const [user] = await db
     .select({ id: users.id })

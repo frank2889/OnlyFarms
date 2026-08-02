@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
-import { claimList, householdForUser, userById } from "@/lib/queries/accounts";
+import { claimList, householdForUser, membersOfHousehold, userById } from "@/lib/queries/accounts";
 import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 
@@ -12,6 +12,7 @@ import {
   getListByToken,
   removeItem,
   setItemChecked,
+  clearBought,
   setListLocation,
   setListRadius,
   updateItem,
@@ -74,6 +75,26 @@ export async function updateItemAction(
   }
 ): Promise<void> {
   const list = await requireList(token);
+  // "Wie haalt het": bij een gezinslijst alleen gevalideerde gezinsleden,
+  // en alleen toe te wijzen door een ingelogd gezinslid.
+  let assigneeUserId: number | null | undefined;
+  if (patch.assignee !== undefined && list.householdId) {
+    const userId = await currentUserId();
+    const members = await membersOfHousehold(list.householdId);
+    const isMember = userId != null && members.some((m) => m.id === userId);
+    if (!isMember) {
+      delete patch.assignee; // gasten/niet-leden mogen niet toewijzen
+    } else if (patch.assignee.trim()) {
+      const member = members.find((m) => m.name === patch.assignee!.trim());
+      if (!member) {
+        delete patch.assignee; // geen vrij verzonnen namen op gezinslijsten
+      } else {
+        assigneeUserId = member.id;
+      }
+    } else {
+      assigneeUserId = null;
+    }
+  }
   // Locatie gewijzigd? Leg vast wie de tip gaf (ingelogd gezinslid of "gast")
   let storeSuggestedBy: string | null | undefined;
   if (patch.store !== undefined) {
@@ -87,10 +108,17 @@ export async function updateItemAction(
   }
   await updateItem(list.id, itemId, {
     ...patch,
+    assigneeUserId,
     storeSuggestedBy,
     dueAt:
       patch.dueAt === undefined ? undefined : patch.dueAt ? new Date(patch.dueAt) : null,
   });
+  await bump(token);
+}
+
+export async function clearBoughtAction(token: string): Promise<void> {
+  const list = await requireList(token);
+  await clearBought(list.id);
   await bump(token);
 }
 

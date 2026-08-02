@@ -6,8 +6,8 @@ Herbouw van [deboervinder.nl](https://deboervinder.nl): boerderijwinkels in Nede
 
 ## Architectuur
 
-- De bestaande Google Sheet blijft (voorlopig) de plek waar de redactie boerderijen beheert.
-- Een sync-job (`/api/sync`, dagelijks via Vercel-cron) haalt de sheet op, normaliseert de data en upsert die in Postgres. De sheet hoeft dus **nooit meer publiek** te zijn voor bezoekers.
+- **Postgres is de enige bron van waarheid.** De oude deboervinder-sheet wordt één keer geïmporteerd als seed (`npm run import`) en daarna niet meer gebruikt — geen sheet in productie, dat was precies de fout van de oude site.
+- Beheer gebeurt (voorlopig) in de Neon-database-editor; een eigen admin-scherm staat op de takenlijst.
 - Bezoekers krijgen data via `/api/farms` — alleen wat in het kaartbeeld past, gecachet op de CDN.
 - Elke boerderij heeft verificatievelden (`status`, `source`, `last_verified_at`, `claimed_by_email`) plus een `reports`-tabel voor bezoekersmeldingen, als basis voor het actueel houden van de data.
 
@@ -29,7 +29,7 @@ Vereist: Node 22 (`nvm use` pakt de juiste versie via `.nvmrc`).
 ```bash
 git clone <repo-url> && cd OnlyFarms
 npm install
-cp .env.example .env.local   # en vul de drie variabelen in (vraag Frank)
+cp .env.example .env.local   # en vul de variabelen in (vraag Frank)
 npm run db:push              # maakt de tabellen aan in Postgres
 npm run import               # vult de database vanuit de sheet
 npm run dev                  # http://localhost:3000
@@ -40,8 +40,7 @@ npm run dev                  # http://localhost:3000
 | Variabele | Wat |
 | --- | --- |
 | `DATABASE_URL` | Postgres-connectiestring (Neon via de Vercel-integratie) |
-| `SHEET_ID` | ID van de bron-sheet (tussen `/d/` en `/edit` in de URL) |
-| `CRON_SECRET` | Geheim voor de sync-route; op Vercel als env-var zetten, cron stuurt hem automatisch mee |
+| `SHEET_ID` | Alleen nodig voor de eenmalige seed-import uit de oude sheet |
 
 ## Samenwerken (branch-workflow)
 
@@ -63,28 +62,27 @@ Vuistregels:
 - Loop je vast met git? Niet forceren (`--force` e.d.) — vraag even in de groep.
 - `main` moet altijd deploybaar zijn.
 
-> Let op: technisch afdwingen dat niemand direct naar `main` pusht (branch protection) kan op een gratis account alleen bij publieke repos. Tot die tijd is dit een teamafspraak.
+> Branch protection staat aan op `main`: pull request verplicht, minstens 1 review, CI moet groen zijn en force-pushes zijn geblokkeerd.
 
 ## Dagelijks werk
 
 ```bash
-npm run import:dry   # sheet ophalen + normaliseren + kwaliteitsrapport, zonder DB
-npm run import       # idem, maar schrijft ook naar de database
+npm run import:dry   # (eenmalig) seed-data normaliseren + kwaliteitsrapport, zonder DB
+npm run import       # (eenmalig) seed: oude sheet importeren in de database
 npm run db:generate  # na een schemawijziging: migratie genereren
 npm run db:push      # schema naar de database pushen
 npm run lint
 ```
 
-De import is idempotent (upsert op `source_id`), dus vaker draaien kan geen kwaad. Boerderijen die uit de sheet verdwijnen worden niet verwijderd maar op status `onbevestigd` gezet.
+De import is idempotent (upsert op `source_id`) en alleen bedoeld als eenmalige seed; daarna is de database leidend en wordt de sheet niet meer gebruikt.
 
 ## Belangrijkste mappen
 
 ```text
 src/db/schema.ts        Drizzle-schema (farms + reports)
-src/lib/sheet-sync.ts   Ophalen, normaliseren en upserten van sheet-data
-scripts/import-sheet.ts CLI-import met --dry-run
+src/lib/sheet-sync.ts   Eenmalige seed: ophalen, normaliseren, upserten
+scripts/import-sheet.ts CLI voor de seed-import, met --dry-run
 src/app/api/farms/      Kaartdata per bounding box, met product/bio/automaat-filters
-src/app/api/sync/       Dagelijkse sync (Vercel-cron, zie vercel.json)
 src/app/kaart/          Kaartpagina (Leaflet, client-side)
 ```
 
@@ -92,9 +90,7 @@ src/app/kaart/          Kaartpagina (Leaflet, client-side)
 
 1. Repo op GitHub, project importeren in Vercel.
 2. Neon Postgres toevoegen via de Vercel Marketplace-integratie (zet `DATABASE_URL` automatisch).
-3. `SHEET_ID` en `CRON_SECRET` als env-vars toevoegen.
-4. Eén keer `npm run db:push` + `npm run import` draaien (lokaal, tegen de productie-DB).
-5. De cron in `vercel.json` houdt de data daarna dagelijks bij.
+3. Eén keer `npm run db:push` + `npm run import` draaien (lokaal, tegen de productie-DB, met `SHEET_ID` in `.env.local`).
 
 ## Nog te doen
 
@@ -106,5 +102,5 @@ src/app/kaart/          Kaartpagina (Leaflet, client-side)
 - [ ] Provincie/plaats-pagina's (server-side gerenderd, voor SEO)
 - [ ] Product- en bio/automaat-filters in de kaart-UI (API ondersteunt ze al)
 - [ ] Boeren hun vermelding laten claimen en bijwerken
-- [ ] Bron-sheet op niet-openbaar zetten zodra de site live draait op Postgres
+- [ ] Oude bron-sheet op niet-openbaar zetten (en archiveren) zodra de seed is gedraaid
 - [ ] Besluit over de 3 Belgische boerderijen in de data (nu zonder coördinaten geïmporteerd)

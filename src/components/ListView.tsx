@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  Fragment,
   createElement,
   useEffect,
   useMemo,
   useOptimistic,
   useRef,
   useState,
+  useSyncExternalStore,
   useTransition,
 } from "react";
 import Link from "next/link";
@@ -97,6 +99,28 @@ function routeUrl(lat: number | null, lng: number | null): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
+function subscribeStorage(cb: () => void) {
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+}
+
+function subscribeOnline(cb: () => void) {
+  window.addEventListener("online", cb);
+  window.addEventListener("offline", cb);
+  return () => {
+    window.removeEventListener("online", cb);
+    window.removeEventListener("offline", cb);
+  };
+}
+
+/** Offline? Dan wachten we tot de verbinding terug is; de optimistic UI staat al goed. */
+async function ensureOnline(): Promise<void> {
+  if (typeof navigator === "undefined" || navigator.onLine) return;
+  await new Promise<void>((resolve) =>
+    window.addEventListener("online", () => resolve(), { once: true })
+  );
+}
+
 export default function ListView({
   list,
   open,
@@ -129,6 +153,19 @@ export default function ListView({
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tempId = useRef(-1);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const online = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true
+  );
+  const introFlag = useSyncExternalStore(
+    subscribeStorage,
+    () => localStorage.getItem("of_intro") ?? "",
+    () => "ssr"
+  );
+  const [introDismissed, setIntroDismissed] = useState(false);
+  const showIntro = introFlag === "" && !introDismissed;
 
   // Lijst registreren op dit apparaat + andere lijsten voor de switcher
   useEffect(() => {
@@ -173,10 +210,11 @@ export default function ListView({
     };
   }, [list.token, router]);
 
-  /** Directe UI-update; server volgt op de achtergrond */
+  /** Directe UI-update; server volgt op de achtergrond (offline: zodra er weer verbinding is) */
   function act(fn: () => Promise<unknown>, optimistic?: OptAction) {
     startTransition(async () => {
       if (optimistic) applyOptimistic(optimistic);
+      await ensureOnline();
       await fn();
       router.refresh();
     });
@@ -328,6 +366,23 @@ export default function ListView({
   }
 
   const searchResults = useMemo(() => searchCatalog(query).slice(0, 7), [query]);
+  const groupedOpen = useMemo(() => {
+    const order = new Map(CATEGORIES.map((c, i) => [c.key as string, i]));
+    const byKey = new Map<string, ListItem[]>();
+    for (const item of snapshot.open) {
+      const cat = item.catalogKey ? catalogItem(item.catalogKey) : undefined;
+      const key = cat?.category ?? "_los";
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key)!.push(item);
+    }
+    return [...byKey.entries()]
+      .sort((a, b) => (order.get(a[0]) ?? 99) - (order.get(b[0]) ?? 99))
+      .map(([key, items]) => ({
+        key,
+        label: key === "_los" ? "Zelf toegevoegd" : CATEGORIES.find((c) => c.key === key)?.label ?? key,
+        items,
+      }));
+  }, [snapshot.open]);
   const openKeys = new Set(snapshot.open.map((i) => i.catalogKey));
   const suggestions = seasonal.filter((s) => !openKeys.has(s.key)).slice(0, 6);
   const rebuy = boughtBeforeKeys
@@ -387,6 +442,30 @@ export default function ListView({
         <p className="mb-3 rounded-tile bg-terra-50 px-4 py-2 text-sm text-terra-700">
           {t("lists.shareCopied")}
         </p>
+      )}
+      {!online && (
+        <div className="mb-3 animate-rise rounded-tile bg-ink-900 px-4 py-2.5 text-sm text-white">
+          Offline — je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
+        </div>
+      )}
+      {showIntro && (
+        <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
+          <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
+          <ul className="mb-2 flex flex-col gap-1">
+            <li>· Tik op een tegel om iets toe te voegen — nog een tik haalt het eraf.</li>
+            <li>· Houd een tegel even vast om een aantal te kiezen.</li>
+            <li>· Deel de lijst met je gezin en vink samen af — alles synct vanzelf.</li>
+          </ul>
+          <button
+            onClick={() => {
+              localStorage.setItem("of_intro", "1");
+              setIntroDismissed(true);
+            }}
+            className="font-medium text-terra-700 underline"
+          >
+            Begrepen
+          </button>
+        </div>
       )}
 
       {/* Locatie: compact zodra ingesteld */}
@@ -459,14 +538,21 @@ export default function ListView({
         {t("lists.itemsOpen", { count: snapshot.open.length })}
       </h2>
       <ul className="flex flex-col gap-2">
-        {snapshot.open.map((item) => {
+        {groupedOpen.map((group) => (
+          <Fragment key={group.key}>
+            {groupedOpen.length > 1 && (
+              <li className="mt-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                {group.label}
+              </li>
+            )}
+            {group.items.map((item) => {
           const cat = item.catalogKey ? catalogItem(item.catalogKey) : undefined;
           const tint = cat
             ? tintForCategory(cat.category)
             : { tileBg: "bg-cream-100", icon: "text-ink-500" };
           const match = item.catalogKey ? matches[item.catalogKey] : undefined;
           return (
-            <li key={item.id} className="rounded-tile border border-cream-200 bg-white">
+            <li key={item.id} className="animate-rise rounded-tile border border-cream-200 bg-white">
               <div className="flex items-center gap-3 p-3">
                 <button
                   onClick={() => checkItem(item)}
@@ -495,7 +581,7 @@ export default function ListView({
                   {!item.store && item.id > 0 && (
                     <button
                       onClick={() => setEditItem(item.id)}
-                      className="mt-0.5 text-xs text-ink-300 underline hover:text-terra-700"
+                      className="mt-0.5 text-xs text-ink-500 underline hover:text-terra-700"
                     >
                       Weet jij waar? Geef een tip
                     </button>
@@ -506,14 +592,14 @@ export default function ListView({
                 )}
                 <button
                   onClick={() => setEditItem(editItem === item.id ? null : item.id)}
-                  className="p-1 text-ink-300 hover:text-terra-600"
+                  className="p-1 text-ink-500 hover:text-terra-600"
                   aria-label="Bewerken"
                 >
                   <PencilIcon width={16} height={16} />
                 </button>
                 <button
                   onClick={() => deleteItem(item)}
-                  className="p-1 text-ink-300 hover:text-terra-600"
+                  className="p-1 text-ink-500 hover:text-terra-600"
                   aria-label="Verwijderen"
                 >
                   <TrashIcon width={16} height={16} />
@@ -552,10 +638,19 @@ export default function ListView({
               )}
             </li>
           );
-        })}
+            })}
+          </Fragment>
+        ))}
         {snapshot.open.length === 0 && (
-          <li className="rounded-tile border border-dashed border-cream-300 p-6 text-center text-ink-500">
-            Je lijst is leeg — tik hieronder producten aan.
+          <li className="rounded-tile border border-dashed border-cream-300 p-5 text-center">
+            <p className="mb-3 text-ink-500">
+              Je lijst is leeg — probeer eens iets van het seizoen:
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {seasonal.slice(0, 4).map((item) => (
+                <AddTile key={item.key} item={item} onAdd={() => toggleTile(item)} />
+              ))}
+            </div>
           </li>
         )}
       </ul>
@@ -567,7 +662,7 @@ export default function ListView({
             <h2 className="text-sm font-semibold text-ink-500">{t("lists.recentlyBought")}</h2>
             <button
               onClick={() => act(() => clearBoughtAction(list.token), { type: "clearBought" })}
-              className="text-xs text-ink-300 underline hover:text-terra-700"
+              className="text-xs text-ink-500 underline hover:text-terra-700"
             >
               Wis gekochte items
             </button>
@@ -587,7 +682,7 @@ export default function ListView({
                 >
                   <PlusIcon width={14} height={14} />
                 </button>
-                <span className="text-ink-300 line-through">{item.label}</span>
+                <span className="text-ink-500 line-through">{item.label}</span>
               </li>
             ))}
           </ul>
@@ -693,7 +788,7 @@ export default function ListView({
 
       {/* Undo-snackbar */}
       {undo && (
-        <div className="fixed bottom-20 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
+        <div className="animate-snack fixed bottom-20 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
           <span className="truncate">{undo.label}</span>
           <button
             onClick={() => {
@@ -710,8 +805,14 @@ export default function ListView({
       {/* Hoeveelheid-paneel (long-press) */}
       {qtyItem && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Hoeveelheid voor ${qtyItem.label}`}
           className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 sm:items-center"
           onClick={() => setQtyItem(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setQtyItem(null);
+          }}
         >
           <div
             className="w-full max-w-sm rounded-t-tile bg-white p-5 sm:rounded-tile"
@@ -748,6 +849,7 @@ export default function ListView({
               className="flex flex-col gap-3"
             >
               <input
+                autoFocus
                 value={qtyValue}
                 onChange={(e) => setQtyValue(e.target.value)}
                 placeholder="Of typ zelf (bijv. 2 dozen)"
@@ -817,7 +919,7 @@ function AddTile({
       onPointerLeave={pressEnd}
       onContextMenu={(e) => e.preventDefault()}
       aria-pressed={added}
-      className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-colors ${
+      className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-[transform,colors] duration-100 active:scale-[.96] ${
         added ? "bg-terra-600 text-white" : `${tint.tileBg} hover:ring-2 hover:ring-terra-300`
       }`}
     >
@@ -903,7 +1005,7 @@ function ProducerRows({
 }) {
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-300">{title}</p>
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-500">{title}</p>
       <ul className="flex flex-col gap-2">
         {producers.slice(0, 5).map((p) => (
           <li key={p.id} className="text-sm">
@@ -973,7 +1075,7 @@ function ItemBadges({ item }: { item: ListItem }) {
             item.store
           )}
           {item.storeSuggestedBy && (
-            <span className="text-ink-300">· tip van {item.storeSuggestedBy}</span>
+            <span className="text-ink-500">· tip van {item.storeSuggestedBy}</span>
           )}
         </span>
       )}

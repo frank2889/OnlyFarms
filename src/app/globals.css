@@ -42,3 +42,16 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Micro-animaties: items en snackbar komen zacht binnen */
+@keyframes of-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-rise { animation: of-rise 0.22s ease-out; }
+
+@keyframes of-snack {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-snack { animation: of-snack 0.25s ease-out; }

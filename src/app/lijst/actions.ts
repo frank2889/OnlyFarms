@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
 import { claimList, householdForUser, userById } from "@/lib/queries/accounts";
-import { geocode } from "@/lib/geocode";
+import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 
 import {
@@ -122,7 +122,9 @@ export async function setLocationByCoordsAction(
   lng: number
 ): Promise<void> {
   const list = await requireList(token);
-  await setListLocation(list.id, { postcode: "Mijn locatie", lat, lng });
+  // Toon wélk punt de app gebruikt — geolocation op desktop kan er flink naast zitten
+  const label = await reverseGeocode(lat, lng);
+  await setListLocation(list.id, { postcode: label ?? "Mijn locatie", lat, lng });
   await bump(token);
 }
 

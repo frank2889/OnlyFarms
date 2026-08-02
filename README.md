@@ -8,7 +8,7 @@ Herbouw van [deboervinder.nl](https://deboervinder.nl): boerderijwinkels in Nede
 
 - **Postgres is de enige bron van waarheid.** De oude deboervinder-sheet wordt één keer geïmporteerd als seed (`npm run import`) en daarna niet meer gebruikt — geen sheet in productie, dat was precies de fout van de oude site.
 - Beheer gebeurt (voorlopig) in de Neon-database-editor; een eigen admin-scherm staat op de takenlijst.
-- Bezoekers krijgen data via `/api/farms` — alleen wat in het kaartbeeld past, gecachet op de CDN.
+- De kaartpagina krijgt alle boerderijen server-side mee (ISR, elke 5 min ververst) — geen aparte API-route, geen client-fetch.
 - Elke boerderij heeft verificatievelden (`status`, `source`, `last_verified_at`, `claimed_by_email`) plus een `reports`-tabel voor bezoekersmeldingen, als basis voor het actueel houden van de data.
 
 ## Verkopersplatform (Marktplaats-model)
@@ -20,7 +20,7 @@ Naast de boerderijwinkels-kaart kunnen **bedrijven** (KVK verplicht) zich aanmel
 - **Selectieproces** — aanmelding via `/verkopen` → status `aangemeld` → handmatige beoordeling (voorlopig via de database-editor) → `goedgekeurd`/`afgewezen`.
 - **Reviews zijn leidend** — gepubliceerde reviews bepalen de sortering in `/api/sellers`; slechte scores zijn de basis om een verkoper op `geschorst` te zetten. Reviews komen eerst in een moderatiewachtrij (`published=false`).
 
-⚠️ Laat de gebruikersvoorwaarden (platformrol, aansprakelijkheid, verwijzing naar verantwoordelijkheden van de verkoper) door een jurist opstellen vóór livegang van dit deel.
+**Let op:** laat de gebruikersvoorwaarden (platformrol, aansprakelijkheid, verwijzing naar verantwoordelijkheden van de verkoper) door een jurist opstellen vóór livegang van dit deel.
 
 ## Setup (voor iedereen in het team)
 
@@ -82,8 +82,7 @@ De import is idempotent (upsert op `source_id`) en alleen bedoeld als eenmalige 
 src/db/schema.ts        Drizzle-schema (farms + reports)
 src/lib/sheet-sync.ts   Eenmalige seed: ophalen, normaliseren, upserten
 scripts/import-sheet.ts CLI voor de seed-import, met --dry-run
-src/app/api/farms/      Kaartdata per bounding box, met product/bio/automaat-filters
-src/app/kaart/          Kaartpagina (Leaflet, client-side)
+src/app/kaart/          Kaartpagina: server-side data + Leaflet met clustering en filters
 ```
 
 ## Deploy (Vercel)
@@ -100,7 +99,6 @@ src/app/kaart/          Kaartpagina (Leaflet, client-side)
 - [ ] Gebruikersvoorwaarden door jurist (platformrol!)
 - [ ] Meldknop ("klopt dit niet meer?") die in `reports` schrijft
 - [ ] Provincie/plaats-pagina's (server-side gerenderd, voor SEO)
-- [ ] Product- en bio/automaat-filters in de kaart-UI (API ondersteunt ze al)
 - [ ] Boeren hun vermelding laten claimen en bijwerken
 - [ ] Oude bron-sheet op niet-openbaar zetten (en archiveren) zodra de seed is gedraaid
 - [ ] Besluit over de 3 Belgische boerderijen in de data (nu zonder coördinaten geïmporteerd)

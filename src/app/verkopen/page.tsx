@@ -41,7 +41,7 @@ export default function VerkopenPage() {
   if (done) {
     return (
       <main className="mx-auto max-w-xl p-8">
-        <h1 className="mb-4 text-2xl font-bold">Aanmelding ontvangen 🎉</h1>
+        <h1 className="mb-4 text-2xl font-bold">Aanmelding ontvangen</h1>
         <p className="text-neutral-600 dark:text-neutral-300">
           Bedankt voor je aanmelding. We beoordelen elke aanmelding handmatig en
           nemen contact met je op via het opgegeven e-mailadres.

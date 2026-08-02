@@ -1,16 +1,27 @@
 import Link from "next/link";
+import {
+  AppleIcon,
+  CarrotIcon,
+  CheeseIcon,
+  EggIcon,
+  HoneyIcon,
+  MapIcon,
+  MeatIcon,
+  MilkIcon,
+  PotatoIcon,
+} from "@/components/icons";
 
 export const revalidate = 3600;
 
 const CATEGORIES = [
-  { key: "eieren", emoji: "🥚", label: "Eieren" },
-  { key: "melk", emoji: "🥛", label: "Melk & zuivel" },
-  { key: "kaas", emoji: "🧀", label: "Kaas" },
-  { key: "vlees", emoji: "🥩", label: "Vlees" },
-  { key: "groente", emoji: "🥬", label: "Groente" },
-  { key: "fruit", emoji: "🍎", label: "Fruit" },
-  { key: "aardappelen", emoji: "🥔", label: "Aardappelen" },
-  { key: "honing", emoji: "🍯", label: "Honing" },
+  { key: "eieren", label: "Eieren", Icon: EggIcon },
+  { key: "melk", label: "Melk & zuivel", Icon: MilkIcon },
+  { key: "kaas", label: "Kaas", Icon: CheeseIcon },
+  { key: "vlees", label: "Vlees", Icon: MeatIcon },
+  { key: "groente", label: "Groente", Icon: CarrotIcon },
+  { key: "fruit", label: "Fruit", Icon: AppleIcon },
+  { key: "aardappelen", label: "Aardappelen", Icon: PotatoIcon },
+  { key: "honing", label: "Honing", Icon: HoneyIcon },
 ];
 
 const STEPS = [
@@ -59,9 +70,9 @@ export default async function Home() {
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/kaart"
-            className="rounded-lg bg-white px-6 py-3 font-medium text-green-800 hover:bg-green-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-green-800 hover:bg-green-50"
           >
-            🗺️ Bekijk de kaart
+            <MapIcon width={18} height={18} /> Bekijk de kaart
           </Link>
           <Link
             href="/verkopen"
@@ -93,14 +104,14 @@ export default async function Home() {
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-2xl font-bold">Wat zoek je?</h2>
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {CATEGORIES.map((c) => (
+            {CATEGORIES.map(({ key, label, Icon }) => (
               <Link
-                key={c.key}
-                href={`/kaart?product=${c.key}`}
+                key={key}
+                href={`/kaart?product=${key}`}
                 className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 hover:border-green-700 dark:border-neutral-700 dark:bg-neutral-950"
               >
-                <span className="text-2xl">{c.emoji}</span>
-                <span className="font-medium">{c.label}</span>
+                <Icon width={24} height={24} className="text-green-700" />
+                <span className="font-medium">{label}</span>
               </Link>
             ))}
           </div>

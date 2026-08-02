@@ -1,13 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from "react";
 import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import {
+  AppleIcon,
+  CarrotIcon,
+  CheeseIcon,
+  EggIcon,
+  HoneyIcon,
+  LeafIcon,
+  MapPinIcon,
+  MeatIcon,
+  MilkIcon,
+  PotatoIcon,
+  VendingIcon,
+} from "@/components/icons";
 
-type Farm = {
+export type Farm = {
   id: number;
   slug: string;
   name: string;
@@ -22,16 +35,20 @@ type Farm = {
   status: string;
 };
 
-const CATEGORIES = [
-  { key: "eieren", label: "🥚 Eieren" },
-  { key: "melk", label: "🥛 Melk & zuivel" },
-  { key: "kaas", label: "🧀 Kaas" },
-  { key: "vlees", label: "🥩 Vlees" },
-  { key: "groente", label: "🥬 Groente" },
-  { key: "fruit", label: "🍎 Fruit" },
-  { key: "aardappelen", label: "🥔 Aardappelen" },
-  { key: "honing", label: "🍯 Honing" },
-] as const;
+const CATEGORIES: {
+  key: string;
+  label: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+}[] = [
+  { key: "eieren", label: "Eieren", Icon: EggIcon },
+  { key: "melk", label: "Melk & zuivel", Icon: MilkIcon },
+  { key: "kaas", label: "Kaas", Icon: CheeseIcon },
+  { key: "vlees", label: "Vlees", Icon: MeatIcon },
+  { key: "groente", label: "Groente", Icon: CarrotIcon },
+  { key: "fruit", label: "Fruit", Icon: AppleIcon },
+  { key: "aardappelen", label: "Aardappelen", Icon: PotatoIcon },
+  { key: "honing", label: "Honing", Icon: HoneyIcon },
+];
 
 // Nederland, met een kleine marge
 const NL_BOUNDS = L.latLngBounds([50.55, 3.0], [53.75, 7.45]);
@@ -40,9 +57,9 @@ function popupHtml(farm: Farm): string {
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const badges = [
-    farm.organic ? "🌱 bio" : null,
-    farm.vendingMachine ? "🤖 automaat" : null,
-    farm.status === "seizoen" ? "📅 seizoensgebonden" : null,
+    farm.organic ? "Bio" : null,
+    farm.vendingMachine ? "Verkoopautomaat" : null,
+    farm.status === "seizoen" ? "Seizoensgebonden" : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -50,7 +67,7 @@ function popupHtml(farm: Farm): string {
     `<strong>${esc(farm.name)}</strong>`,
     farm.city ? esc(farm.city) : null,
     farm.products.length ? esc(farm.products.join(", ")) : null,
-    farm.openingHours ? `🕐 ${esc(farm.openingHours)}` : null,
+    farm.openingHours ? `Openingstijden: ${esc(farm.openingHours)}` : null,
     badges || null,
     [
       farm.website
@@ -64,17 +81,24 @@ function popupHtml(farm: Farm): string {
   return parts.filter(Boolean).join("<br/>");
 }
 
+const chipClass = (active: boolean) =>
+  `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+    active
+      ? "border-green-700 bg-green-700 text-white"
+      : "border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+  }`;
+
 export default function FarmMap({
+  farms,
   initialCategories = [],
 }: {
+  farms: Farm[];
   initialCategories?: string[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
 
-  const [farms, setFarms] = useState<Farm[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeCats, setActiveCats] = useState<Set<string>>(
     () => new Set(initialCategories)
   );
@@ -116,15 +140,6 @@ export default function FarmMap({
     };
   }, []);
 
-  // Alle boerderijen één keer laden (respons is CDN-gecachet)
-  useEffect(() => {
-    fetch("/api/farms")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((d: { farms: Farm[] }) => setFarms(d.farms))
-      .catch(() => setSearchError("Boerderijen laden mislukte — herlaad de pagina."))
-      .finally(() => setLoading(false));
-  }, []);
-
   const visible = useMemo(() => {
     return farms.filter((f) => {
       if (bioOnly && !f.organic) return false;
@@ -135,7 +150,7 @@ export default function FarmMap({
     });
   }, [farms, activeCats, bioOnly, automaatOnly]);
 
-  // Markers verversen als de filters of data veranderen
+  // Markers verversen als de filters veranderen
   useEffect(() => {
     const cluster = clusterRef.current;
     if (!cluster) return;
@@ -184,9 +199,7 @@ export default function FarmMap({
   }, [search]);
 
   function locateMe() {
-    const map = mapRef.current;
-    if (!map) return;
-    map.locate({ setView: true, maxZoom: 12 });
+    mapRef.current?.locate({ setView: true, maxZoom: 12 });
   }
 
   return (
@@ -215,49 +228,36 @@ export default function FarmMap({
           </form>
           <button
             onClick={locateMe}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-            title="Gebruik mijn locatie"
+            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
           >
-            📍 Mijn locatie
+            <MapPinIcon width={16} height={16} /> Mijn locatie
           </button>
           <span className="ml-auto text-sm text-neutral-500">
-            {loading ? "Laden…" : `${visible.length} boerderijen`}
+            {visible.length} boerderijen
           </span>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.map(({ key, label, Icon }) => (
             <button
-              key={c.key}
-              onClick={() => toggleCat(c.key)}
-              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                activeCats.has(c.key)
-                  ? "border-green-700 bg-green-700 text-white"
-                  : "border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-              }`}
+              key={key}
+              onClick={() => toggleCat(key)}
+              className={chipClass(activeCats.has(key))}
             >
-              {c.label}
+              <Icon width={15} height={15} /> {label}
             </button>
           ))}
           <button
             onClick={() => setBioOnly((v) => !v)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-              bioOnly
-                ? "border-green-700 bg-green-700 text-white"
-                : "border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-            }`}
+            className={chipClass(bioOnly)}
           >
-            🌱 Bio
+            <LeafIcon width={15} height={15} /> Bio
           </button>
           <button
             onClick={() => setAutomaatOnly((v) => !v)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-              automaatOnly
-                ? "border-green-700 bg-green-700 text-white"
-                : "border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-            }`}
+            className={chipClass(automaatOnly)}
           >
-            🤖 Automaat
+            <VendingIcon width={15} height={15} /> Automaat
           </button>
           {(activeCats.size > 0 || bioOnly || automaatOnly) && (
             <button

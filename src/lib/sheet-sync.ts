@@ -246,15 +246,16 @@ export async function syncFarms(db: typeof Db): Promise<{
       });
   }
 
-  // Sheet-records die verdwenen zijn niet weggooien, maar als onbevestigd markeren
-  const ids = normalized.map((f) => f.sourceId);
+  // Sheet-records die verdwenen zijn niet weggooien, maar als onbevestigd markeren.
+  // Array als één parameter met cast, anders klapt Drizzle hem uit tot een ROW-expressie.
+  const idsLiteral = `{${normalized.map((f) => f.sourceId).join(",")}}`;
   const orphanResult = await db
     .update(farms)
     .set({ status: "onbevestigd", updatedAt: sql`now()` })
     .where(
       sql`${farms.source} = 'sheet-import'
         and ${farms.status} <> 'onbevestigd'
-        and ${farms.sourceId} not in (select unnest(${sql`${ids}::int[]`}))`
+        and not (${farms.sourceId} = any(${idsLiteral}::int[]))`
     )
     .returning({ id: farms.id });
 

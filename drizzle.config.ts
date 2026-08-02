@@ -16,6 +16,10 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    // Migraties via de niet-gepoolde verbinding; runtime gebruikt de pooler
+    url:
+      process.env.DATABASE_URL_UNPOOLED ??
+      process.env.POSTGRES_URL_NON_POOLING ??
+      process.env.DATABASE_URL!,
   },
 });

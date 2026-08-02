@@ -31,6 +31,7 @@ const KEYWORDS: [pattern: RegExp, token: string][] = [
   [/bloemen|pluktuin/i, "bloemen"],
   [/\bsap\b|appelsap|perensap/i, "sap"],
   [/\bnoten|walnoten|hazelnoten/i, "noten"],
+  [/\bvis\b|forel|paling|rokerij|zalm/i, "vis"],
 ];
 
 async function main() {

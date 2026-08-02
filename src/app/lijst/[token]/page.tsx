@@ -34,7 +34,7 @@ export default async function ListPage({
     await Promise.all(
       keys.map(async (key) => {
         const item = catalogItem(key);
-        if (!item) return;
+        if (!item || item.matchTokens.length === 0) return;
         const result = await nearbyProducers({
           lat: list.lat!,
           lng: list.lng!,

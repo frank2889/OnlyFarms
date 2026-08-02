@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { currentUserId } from "@/auth";
+import { listsForUser } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
 import { CATEGORIES, type CategoryKey } from "@/lib/catalog";
 import { geocode } from "@/lib/geocode";
@@ -41,6 +43,20 @@ export default async function ProducersPage({
     coords = { lat: Number(params.lat), lng: Number(params.lng), label: "Mijn locatie" };
   } else if (params.q) {
     coords = await geocode(params.q);
+  } else {
+    // Ingelogd? Dan starten we vanaf je eigen locatie (die van je laatste lijst)
+    const userId = await currentUserId();
+    if (userId) {
+      const myLists = await listsForUser(userId);
+      const withLocation = myLists.find((l) => l.lat != null && l.lng != null);
+      if (withLocation) {
+        coords = {
+          lat: withLocation.lat!,
+          lng: withLocation.lng!,
+          label: withLocation.postcode ?? "jouw locatie",
+        };
+      }
+    }
   }
 
   const tokens = category ? [category === "zuivel" ? "melk" : category] : undefined;
@@ -64,6 +80,11 @@ export default async function ProducersPage({
       <h1 className="mb-4 text-3xl font-bold">{t("producers.searchTitle")}</h1>
 
       <LocationSearch initialQuery={params.q ?? ""} product={params.product} radius={radius} />
+      {coords && !params.q && !params.lat && (
+        <p className="mt-2 text-sm text-ink-500">
+          Vanaf jouw locatie: {coords.label} — pas hierboven aan als je ergens anders bent.
+        </p>
+      )}
 
       <div className="my-4 flex flex-wrap gap-1.5">
         {CATEGORIES.filter((c) => c.key !== "overig").map((c) => {

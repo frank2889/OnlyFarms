@@ -28,6 +28,8 @@ export type CatalogItem = {
   nix18?: boolean;
   /** maanden (1-12) waarin dit item in seizoen is */
   seasonMonths?: number[];
+  /** zoektermen die gebruikers typen maar niet in het label staan */
+  synonyms?: string[];
 };
 
 export const CATEGORIES: CatalogCategory[] = [
@@ -48,10 +50,10 @@ export const CATEGORIES: CatalogCategory[] = [
 
 export const CATALOG: CatalogItem[] = [
   // Zuivel
-  { key: "melk", label: "Verse melk", category: "zuivel", matchTokens: ["melk"] },
+  { key: "melk", label: "Verse melk", category: "zuivel", matchTokens: ["melk"] , synonyms: ["rauwe melk", "volle melk", "melktap"] },
   { key: "yoghurt", label: "Yoghurt", category: "zuivel", matchTokens: ["melk"] },
   { key: "kwark", label: "Kwark", category: "zuivel", matchTokens: ["melk"] },
-  { key: "boter", label: "Roomboter", category: "zuivel", matchTokens: ["melk"] },
+  { key: "boter", label: "Roomboter", category: "zuivel", matchTokens: ["melk"] , synonyms: ["boter"] },
   { key: "ijs", label: "Boerderij-ijs", category: "zuivel", matchTokens: ["melk", "ijs"] },
   { key: "karnemelk", label: "Karnemelk", category: "zuivel", matchTokens: ["melk"] },
   { key: "slagroom", label: "Slagroom", category: "zuivel", matchTokens: ["melk"] },
@@ -59,16 +61,16 @@ export const CATALOG: CatalogItem[] = [
   { key: "geitenzuivel", label: "Geitenzuivel", category: "zuivel", matchTokens: ["melk", "geitenkaas"] },
   { key: "kefir", label: "Kefir", category: "zuivel", matchTokens: ["melk"] },
   // Eieren
-  { key: "eieren", label: "Eieren", category: "eieren", matchTokens: ["eieren"] },
+  { key: "eieren", label: "Eieren", category: "eieren", matchTokens: ["eieren"] , synonyms: ["ei", "eitjes", "scharreleieren"] },
   // Kaas
   { key: "kaas", label: "Kaas", category: "kaas", matchTokens: ["kaas"] },
   { key: "geitenkaas", label: "Geitenkaas", category: "kaas", matchTokens: ["kaas", "geitenkaas"] },
   { key: "brie", label: "Zachte kaas & brie", category: "kaas", matchTokens: ["kaas"] },
   { key: "blauwekaas", label: "Blauwe kaas", category: "kaas", matchTokens: ["kaas"] },
   // Vlees
-  { key: "rundvlees", label: "Rundvlees", category: "vlees", matchTokens: ["vlees"] },
-  { key: "varkensvlees", label: "Varkensvlees", category: "vlees", matchTokens: ["vlees"] },
-  { key: "kip", label: "Kip", category: "vlees", matchTokens: ["vlees"] },
+  { key: "rundvlees", label: "Rundvlees", category: "vlees", matchTokens: ["vlees"] , synonyms: ["biefstuk", "sudderlappen", "riblappen"] },
+  { key: "varkensvlees", label: "Varkensvlees", category: "vlees", matchTokens: ["vlees"] , synonyms: ["karbonade", "speklap"] },
+  { key: "kip", label: "Kip", category: "vlees", matchTokens: ["vlees"] , synonyms: ["kipfilet", "drumsticks"] },
   { key: "worst", label: "Worst", category: "vlees", matchTokens: ["vlees"] },
   { key: "lamsvlees", label: "Lamsvlees", category: "vlees", matchTokens: ["vlees"] },
   { key: "gehakt", label: "Gehakt", category: "vlees", matchTokens: ["vlees"] },
@@ -77,7 +79,7 @@ export const CATALOG: CatalogItem[] = [
   { key: "kalkoen", label: "Kalkoen", category: "vlees", matchTokens: ["vlees"] },
   { key: "hamburgers", label: "Hamburgers", category: "vlees", matchTokens: ["vlees"] },
   { key: "saucijzen", label: "Saucijzen", category: "vlees", matchTokens: ["vlees"] },
-  { key: "drogeworst", label: "Droge worst", category: "vlees", matchTokens: ["vlees"] },
+  { key: "drogeworst", label: "Droge worst", category: "vlees", matchTokens: ["vlees"] , synonyms: ["salami", "fuet", "metworst"] },
   // Groente
   { key: "groente", label: "Verse groente", category: "groente", matchTokens: ["groente"] },
   { key: "tomaten", label: "Tomaten", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
@@ -86,14 +88,14 @@ export const CATALOG: CatalogItem[] = [
   { key: "courgette", label: "Courgette", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
   { key: "boerenkool", label: "Boerenkool", category: "groente", matchTokens: ["groente"], seasonMonths: [11, 12, 1, 2] },
   { key: "spruiten", label: "Spruitjes", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2] },
-  { key: "winterpeen", label: "Winterpeen", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2] },
+  { key: "winterpeen", label: "Winterpeen", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2] , synonyms: ["wortels", "wortel", "peen"] },
   { key: "radijs", label: "Radijs", category: "groente", matchTokens: ["groente"], seasonMonths: [4, 5, 6] },
-  { key: "stamppotgroente", label: "Stamppotgroente", category: "groente", matchTokens: ["groente"], seasonMonths: [11, 12, 1, 2] },
+  { key: "stamppotgroente", label: "Stamppotgroente", category: "groente", matchTokens: ["groente"], seasonMonths: [11, 12, 1, 2] , synonyms: ["stamppot", "hutspot"] },
   { key: "sla", label: "Sla", category: "groente", matchTokens: ["groente"], seasonMonths: [5, 6, 7, 8, 9] },
   { key: "komkommer", label: "Komkommer", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
   { key: "paprika", label: "Paprika", category: "groente", matchTokens: ["groente"], seasonMonths: [7, 8, 9, 10] },
   { key: "ui", label: "Uien", category: "groente", matchTokens: ["groente"] },
-  { key: "knoflook", label: "Knoflook", category: "groente", matchTokens: ["groente"] },
+  { key: "knoflook", label: "Knoflook", category: "groente", matchTokens: ["groente"] , synonyms: ["look"] },
   { key: "prei", label: "Prei", category: "groente", matchTokens: ["groente"], seasonMonths: [9, 10, 11, 12, 1, 2, 3] },
   { key: "broccoli", label: "Broccoli", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9, 10] },
   { key: "bloemkool", label: "Bloemkool", category: "groente", matchTokens: ["groente"], seasonMonths: [5, 6, 7, 8, 9, 10] },
@@ -101,7 +103,7 @@ export const CATALOG: CatalogItem[] = [
   { key: "sperziebonen", label: "Sperziebonen", category: "groente", matchTokens: ["groente"], seasonMonths: [7, 8, 9] },
   { key: "paddenstoelen", label: "Paddenstoelen", category: "groente", matchTokens: ["groente", "paddenstoelen"], seasonMonths: [9, 10, 11] },
   { key: "kruiden", label: "Verse kruiden", category: "groente", matchTokens: ["groente", "kruiden"] },
-  { key: "moestuinplantjes", label: "Moestuinplantjes", category: "groente", matchTokens: ["groente", "bloemen"], seasonMonths: [3, 4, 5] },
+  { key: "moestuinplantjes", label: "Moestuinplantjes", category: "groente", matchTokens: ["groente", "bloemen"], seasonMonths: [3, 4, 5] , synonyms: ["plantjes", "zaailingen", "stekjes"] },
   { key: "spinazie", label: "Spinazie", category: "groente", matchTokens: ["groente"], seasonMonths: [4, 5, 6, 9, 10] },
   { key: "andijvie", label: "Andijvie", category: "groente", matchTokens: ["groente"], seasonMonths: [5, 6, 7, 8, 9, 10] },
   { key: "witlof", label: "Witlof", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2, 3] },
@@ -113,7 +115,7 @@ export const CATALOG: CatalogItem[] = [
   { key: "mais", label: "Ma\u00efs", category: "groente", matchTokens: ["groente"], seasonMonths: [8, 9, 10] },
   { key: "pastinaak", label: "Pastinaak", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2] },
   { key: "knolselderij", label: "Knolselderij", category: "groente", matchTokens: ["groente"], seasonMonths: [9, 10, 11, 12, 1, 2] },
-  { key: "snoeptomaatjes", label: "Snoeptomaatjes", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
+  { key: "snoeptomaatjes", label: "Snoeptomaatjes", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] , synonyms: ["cherrytomaatjes", "kerstomaatjes"] },
   // Fruit
   { key: "fruit", label: "Vers fruit", category: "fruit", matchTokens: ["fruit"] },
   { key: "aardbeien", label: "Aardbeien", category: "fruit", matchTokens: ["fruit", "aardbeien"], seasonMonths: [5, 6, 7, 8] },
@@ -131,7 +133,7 @@ export const CATALOG: CatalogItem[] = [
   { key: "blauwebessen", label: "Blauwe bessen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [7, 8, 9] },
   { key: "kruisbessen", label: "Kruisbessen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [6, 7] },
   // Aardappelen
-  { key: "aardappelen", label: "Aardappelen", category: "aardappelen", matchTokens: ["aardappelen"] },
+  { key: "aardappelen", label: "Aardappelen", category: "aardappelen", matchTokens: ["aardappelen"], synonyms: ["piepers", "krieltjes", "pieper"] },
   // Vis
   { key: "forel", label: "Verse forel", category: "vis", matchTokens: ["vis"] },
   { key: "paling", label: "Gerookte paling", category: "vis", matchTokens: ["vis"] },
@@ -147,9 +149,9 @@ export const CATALOG: CatalogItem[] = [
   { key: "roggebrood", label: "Roggebrood", category: "brood", matchTokens: ["brood"] },
   { key: "krentenbrood", label: "Krentenbrood", category: "brood", matchTokens: ["brood"] },
   { key: "ontbijtkoek", label: "Ontbijtkoek", category: "brood", matchTokens: ["brood"] },
-  { key: "appeltaart", label: "Appeltaart", category: "brood", matchTokens: ["brood", "fruit"] },
+  { key: "appeltaart", label: "Appeltaart", category: "brood", matchTokens: ["brood", "fruit"] , synonyms: ["taart", "gebak"] },
   // Zoet
-  { key: "honing", label: "Honing", category: "zoet", matchTokens: ["honing"] },
+  { key: "honing", label: "Honing", category: "zoet", matchTokens: ["honing"] , synonyms: ["imker"] },
   { key: "jam", label: "Jam", category: "zoet", matchTokens: ["jam", "fruit"] },
   { key: "appelstroop", label: "Appelstroop", category: "zoet", matchTokens: ["jam", "fruit"] },
   { key: "stroopwafels", label: "Stroopwafels", category: "zoet", matchTokens: ["brood"] },
@@ -157,14 +159,14 @@ export const CATALOG: CatalogItem[] = [
   { key: "chocolade", label: "Chocolade", category: "zoet", matchTokens: [] },
   // Dranken
   { key: "sap", label: "Vers sap", category: "dranken", matchTokens: ["sap", "fruit"] },
-  { key: "bier", label: "Lokaal bier", category: "dranken", matchTokens: ["bier"], nix18: true },
+  { key: "bier", label: "Lokaal bier", category: "dranken", matchTokens: ["bier"], nix18: true , synonyms: ["speciaalbier", "pils"] },
   { key: "wijn", label: "Nederlandse wijn", category: "dranken", matchTokens: ["wijn"], nix18: true },
   { key: "cider", label: "Cider", category: "dranken", matchTokens: ["bier", "fruit"], nix18: true },
   { key: "appelsap", label: "Appelsap", category: "dranken", matchTokens: ["sap", "fruit"] },
   { key: "perensap", label: "Perensap", category: "dranken", matchTokens: ["sap", "fruit"] },
   { key: "siroop", label: "Limonadesiroop", category: "dranken", matchTokens: ["sap", "fruit"] },
-  { key: "kruidenthee", label: "Kruidenthee", category: "dranken", matchTokens: ["kruiden"] },
-  { key: "koffie", label: "Koffie (branderij)", category: "dranken", matchTokens: [] },
+  { key: "kruidenthee", label: "Kruidenthee", category: "dranken", matchTokens: ["kruiden"] , synonyms: ["thee"] },
+  { key: "koffie", label: "Koffie (branderij)", category: "dranken", matchTokens: [] , synonyms: ["koffiebonen", "bonen"] },
   // Overig
   { key: "noten", label: "Noten", category: "overig", matchTokens: ["noten"], seasonMonths: [9, 10, 11] },
   { key: "kastanjes", label: "Kastanjes", category: "overig", matchTokens: ["noten"], seasonMonths: [10, 11] },
@@ -184,16 +186,16 @@ export const CATALOG: CatalogItem[] = [
   { key: "suiker", label: "Suiker", category: "supermarkt", matchTokens: [] },
   { key: "zout", label: "Zout", category: "supermarkt", matchTokens: [] },
   { key: "peper", label: "Peper", category: "supermarkt", matchTokens: [] },
-  { key: "pindakaas", label: "Pindakaas", category: "supermarkt", matchTokens: [] },
-  { key: "hagelslag", label: "Hagelslag", category: "supermarkt", matchTokens: [] },
+  { key: "pindakaas", label: "Pindakaas", category: "supermarkt", matchTokens: [] , synonyms: ["pinda"] },
+  { key: "hagelslag", label: "Hagelslag", category: "supermarkt", matchTokens: [] , synonyms: ["vlokken", "chocoladehagel"] },
   { key: "chips", label: "Chips", category: "supermarkt", matchTokens: [] },
   { key: "water", label: "Water", category: "supermarkt", matchTokens: [] },
-  { key: "frisdrank", label: "Frisdrank", category: "supermarkt", matchTokens: [] },
-  { key: "wcpapier", label: "Wc-papier", category: "supermarkt", matchTokens: [] },
+  { key: "frisdrank", label: "Frisdrank", category: "supermarkt", matchTokens: [] , synonyms: ["cola", "sinas", "limonade", "sisi"] },
+  { key: "wcpapier", label: "Wc-papier", category: "supermarkt", matchTokens: [] , synonyms: ["toiletpapier", "wc papier"] },
   { key: "keukenrol", label: "Keukenrol", category: "supermarkt", matchTokens: [] },
-  { key: "schoonmaak", label: "Schoonmaak", category: "supermarkt", matchTokens: [] },
-  { key: "wasmiddel", label: "Wasmiddel", category: "supermarkt", matchTokens: [] },
-  { key: "vuilniszakken", label: "Vuilniszakken", category: "supermarkt", matchTokens: [] },
+  { key: "schoonmaak", label: "Schoonmaak", category: "supermarkt", matchTokens: [] , synonyms: ["allesreiniger", "schoonmaakmiddel", "reiniger"] },
+  { key: "wasmiddel", label: "Wasmiddel", category: "supermarkt", matchTokens: [] , synonyms: ["wasgel", "waspoeder"] },
+  { key: "vuilniszakken", label: "Vuilniszakken", category: "supermarkt", matchTokens: [] , synonyms: ["afvalzakken"] },
   { key: "zeep", label: "Zeep", category: "supermarkt", matchTokens: [] },
   { key: "shampoo", label: "Shampoo", category: "supermarkt", matchTokens: [] },
   { key: "tandpasta", label: "Tandpasta", category: "supermarkt", matchTokens: [] },
@@ -208,8 +210,33 @@ export function itemsInSeason(month: number): CatalogItem[] {
   return CATALOG.filter((i) => i.seasonMonths?.includes(month));
 }
 
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Accent-ongevoelig zoeken met rangschikking: exact begin > woordbegin > bevat.
+ * Synoniemen tellen mee ("piepers" vindt aardappelen).
+ */
 export function searchCatalog(query: string): CatalogItem[] {
-  const q = query.trim().toLowerCase();
+  const q = normalize(query.trim());
   if (!q) return [];
-  return CATALOG.filter((i) => i.label.toLowerCase().includes(q) || i.key.includes(q));
+  const scored: { item: CatalogItem; score: number }[] = [];
+  for (const item of CATALOG) {
+    const haystacks = [item.label, item.key, ...(item.synonyms ?? [])].map(normalize);
+    let score = 0;
+    for (const h of haystacks) {
+      if (h === q) score = Math.max(score, 5);
+      else if (h.startsWith(q)) score = Math.max(score, 4);
+      else if (h.split(/[\s-]/).some((w) => w.startsWith(q))) score = Math.max(score, 3);
+      else if (q.length >= 3 && h.includes(q)) score = Math.max(score, 1);
+    }
+    if (score > 0) scored.push({ item, score });
+  }
+  return scored
+    .sort((a, b) => b.score - a.score || a.item.label.length - b.item.label.length)
+    .map((s) => s.item);
 }

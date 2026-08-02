@@ -72,6 +72,10 @@ scripts/                 seed, migratie, datakwaliteit
 
 ## Roadmap (kort)
 
+**UX-uitgangspunt: Bring is de lat.** Bij twijfel over interactieontwerp doen we wat Bring doet (tegels, toggle, long-press voor aantal, gedeelde lijsten) — en wijken we alleen af waar lokaal-kopen erom vraagt.
+
+
 - **Fase 2**: accounts (Auth.js magic link + Google), profielen (bezocht/ervaringen/wishlist), foto's (Vercel Blob), KVK-API-validatie, admin-scherm, web-push.
+- **Verkenning (Chimene)**: mensen willen niet naar 5 plekken — antwoorden: slimme dekking (minder stops), marktstandplaatsen (één plek, veel producenten), en mogelijk supermarkt-alternatieven aanraden met schone ingrediënten/zonder toevoegingen (databron: Open Food Facts, open data) — let op: verbreedt de missie, bewust besluiten.
 - **Fase 3**: **marktstandplaatsen per producent** (weekmarkten als locaties — zo krijgt de stad wél aanbod op loopafstand, op de juiste dag), slimme dekking ("dit lid dekt 5 van je 7 items"), lijstsjablonen, recepten-import, aanbiedingen van leden (incl. locatiegebonden melding "de kaas waar je nu bent is goedkoper" — bij openen van de app op een andere plek via web, echte achtergrond-geofencing pas in de native app), deboervinder-migratie (301's), Skal/KVK-SBI-databronnen.
 - **Vóór launch**: definitieve naam + domein, voorwaarden via jurist, Neon naar EU-regio, Plausible + GA4.

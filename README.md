@@ -43,6 +43,28 @@ npm run dev                  # http://localhost:3000
 | `SHEET_ID` | ID van de bron-sheet (tussen `/d/` en `/edit` in de URL) |
 | `CRON_SECRET` | Geheim voor de sync-route; op Vercel als env-var zetten, cron stuurt hem automatisch mee |
 
+## Samenwerken (branch-workflow)
+
+We pushen **nooit rechtstreeks naar `main`** — alles gaat via een branch en een pull request. Zo werkt dat per klus:
+
+```bash
+git checkout main && git pull          # begin altijd vanaf de laatste main
+git checkout -b jouw-naam/korte-omschrijving   # bijv. chimene/meldknop
+# ... werken, committen (kleine commits met duidelijke boodschap) ...
+git push -u origin jouw-naam/korte-omschrijving
+gh pr create                           # of via de GitHub-site: "Compare & pull request"
+```
+
+Daarna kijkt iemand anders van het team naar je PR (review), de CI-check (lint + build) moet groen zijn, en dan pas mergen — via de knop op GitHub. Na het mergen: branch verwijderen en lokaal weer `git checkout main && git pull`.
+
+Vuistregels:
+
+- Eén PR = één onderwerp; liever drie kleine PR's dan één grote.
+- Loop je vast met git? Niet forceren (`--force` e.d.) — vraag even in de groep.
+- `main` moet altijd deploybaar zijn.
+
+> Let op: technisch afdwingen dat niemand direct naar `main` pusht (branch protection) kan op een gratis account alleen bij publieke repos. Tot die tijd is dit een teamafspraak.
+
 ## Dagelijks werk
 
 ```bash

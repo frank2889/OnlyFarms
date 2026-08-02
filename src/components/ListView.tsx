@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CATALOG, CATEGORIES, catalogItem, searchCatalog, type CatalogItem } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import type { ItemMatch, ListItem, ShoppingList } from "@/lib/types";
-import { iconForItem } from "@/components/catalog-icons";
+import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import {
   CheckIcon,
   MapPinIcon,
@@ -46,7 +46,6 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
   const [locQuery, setLocQuery] = useState("");
   const [locBusy, setLocBusy] = useState(false);
   const [locError, setLocError] = useState(false);
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Lijst registreren op dit apparaat (voor het "Mijn lijsten"-overzicht)
@@ -151,9 +150,6 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
     .filter((i): i is CatalogItem => !!i && !openKeys.has(i.key))
     .slice(0, 8);
 
-  const tile =
-    "flex flex-col items-center gap-1.5 rounded-tile border border-cream-200 bg-white p-3 text-center text-sm hover:border-terra-400 transition-colors";
-
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24">
       {/* Kop + delen */}
@@ -230,6 +226,7 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
       <ul className="flex flex-col gap-2">
         {open.map((item) => {
           const cat = item.catalogKey ? catalogItem(item.catalogKey) : undefined;
+          const tint = cat ? tintForCategory(cat.category) : { tileBg: "bg-cream-100", icon: "text-ink-500" };
           const match = item.catalogKey ? matches[item.catalogKey] : undefined;
           return (
             <li key={item.id} className="rounded-tile border border-cream-200 bg-white">
@@ -241,7 +238,13 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                 >
                   <CheckIcon width={16} height={16} />
                 </button>
-                {createElement(cat ? iconForItem(cat) : StoreIcon, { width: 22, height: 22, className: "shrink-0 text-terra-500" })}
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tint.tileBg}`}>
+                  {createElement(cat ? iconForItem(cat) : StoreIcon, {
+                    width: 26,
+                    height: 26,
+                    className: tint.icon,
+                  })}
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{item.label}</p>
                   {(item.qty || item.note) && (
@@ -313,7 +316,6 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
               title={t("lists.seasonNow")}
               items={suggestions}
               onAdd={(i) => act(() => addItemAction(list.token, { catalogKey: i.key, label: i.label }))}
-              tileClass={tile}
             />
           )}
           {rebuy.length > 0 && (
@@ -321,15 +323,14 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
               title="Vorige keer gekocht"
               items={rebuy}
               onAdd={(i) => act(() => addItemAction(list.token, { catalogKey: i.key, label: i.label }))}
-              tileClass={tile}
             />
           )}
         </div>
       )}
 
-      {/* Toevoegen */}
+      {/* Toevoegen: tegelwand zoals Bring — alles zichtbaar */}
       <h2 className="mt-8 mb-2 text-lg font-semibold">{t("lists.addItems")}</h2>
-      <div className="mb-3 flex items-center gap-2 rounded-full border border-cream-300 bg-white px-4 py-2">
+      <div className="mb-4 flex items-center gap-2 rounded-full border border-cream-300 bg-white px-4 py-2">
         <SearchIcon width={16} height={16} className="text-ink-300" />
         <input
           value={query}
@@ -338,13 +339,13 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
           className="w-full bg-transparent text-sm outline-none"
         />
       </div>
-      {query && (
+      {query ? (
         <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {searchResults.map((item) => (
             <AddTile
               key={item.key}
               item={item}
-              tileClass={tile}
+              added={openKeys.has(item.key)}
               onAdd={() => {
                 act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }));
                 setQuery("");
@@ -356,45 +357,35 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
               act(() => addItemAction(list.token, { label: query }));
               setQuery("");
             }}
-            className={`${tile} border-dashed`}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-tile border-2 border-dashed border-cream-300 p-3 text-center text-sm hover:border-terra-400"
           >
-            <PlusIcon width={20} height={20} className="text-terra-500" />
+            <PlusIcon width={22} height={22} className="text-terra-500" />
             <span>{t("lists.freeTextAdd", { label: query })}</span>
           </button>
         </div>
-      )}
-      {!query &&
+      ) : (
         CATEGORIES.map((cat) => {
           const items = CATALOG.filter((i) => i.category === cat.key);
           if (!items.length) return null;
-          const expanded = openCategory === cat.key;
           return (
-            <div key={cat.key} className="mb-2">
-              <button
-                onClick={() => setOpenCategory(expanded ? null : cat.key)}
-                className="flex w-full items-center justify-between rounded-tile bg-cream-100 px-4 py-2.5 font-medium hover:bg-cream-200"
-              >
-                {cat.label}
-                <span className="text-sm text-ink-500">{items.length}</span>
-              </button>
-              {expanded && (
-                <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {items.map((item) => (
-                    <AddTile
-                      key={item.key}
-                      item={item}
-                      tileClass={tile}
-                      added={openKeys.has(item.key)}
-                      onAdd={() =>
-                        act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }))
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <section key={cat.key} className="mb-5">
+              <h3 className="mb-2 text-sm font-semibold text-ink-500">{cat.label}</h3>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {items.map((item) => (
+                  <AddTile
+                    key={item.key}
+                    item={item}
+                    added={openKeys.has(item.key)}
+                    onAdd={() =>
+                      act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label }))
+                    }
+                  />
+                ))}
+              </div>
+            </section>
           );
-        })}
+        })
+      )}
     </div>
   );
 }
@@ -402,19 +393,23 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
 function AddTile({
   item,
   onAdd,
-  tileClass,
   added,
 }: {
   item: CatalogItem;
   onAdd: () => void;
-  tileClass: string;
   added?: boolean;
 }) {
+  const tint = tintForCategory(item.category);
   return (
-    <button onClick={onAdd} className={`${tileClass} ${added ? "border-terra-500 bg-terra-50" : ""}`}>
-      {createElement(iconForItem(item), { width: 24, height: 24, className: "text-terra-500" })}
+    <button
+      onClick={onAdd}
+      className={`flex flex-col items-center gap-1.5 rounded-tile p-3 text-center text-sm transition-shadow ${tint.tileBg} ${
+        added ? "ring-2 ring-terra-500" : "hover:ring-2 hover:ring-terra-300"
+      }`}
+    >
+      {createElement(iconForItem(item), { width: 32, height: 32, className: tint.icon })}
       <span className="leading-tight">{item.label}</span>
-      {item.nix18 && <span className="text-xs text-ink-500">18+</span>}
+      {item.nix18 && <span className="text-xs font-semibold text-ink-500">18+</span>}
     </button>
   );
 }
@@ -423,19 +418,17 @@ function TileRow({
   title,
   items,
   onAdd,
-  tileClass,
 }: {
   title: string;
   items: CatalogItem[];
   onAdd: (item: CatalogItem) => void;
-  tileClass: string;
 }) {
   return (
     <div className="mb-4">
       <h3 className="mb-2 text-sm font-semibold text-ink-500">{title}</h3>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
         {items.map((item) => (
-          <AddTile key={item.key} item={item} tileClass={tileClass} onAdd={() => onAdd(item)} />
+          <AddTile key={item.key} item={item} onAdd={() => onAdd(item)} />
         ))}
       </div>
     </div>

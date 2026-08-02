@@ -1,44 +1,123 @@
 import type { ComponentType, SVGProps } from "react";
 import type { CatalogItem, CategoryKey } from "@/lib/catalog";
+import { StoreIcon } from "@/components/icons";
 import {
-  AppleIcon,
-  BeerIcon,
-  BreadIcon,
-  CarrotIcon,
-  CheeseIcon,
-  EggIcon,
-  FlowerIcon,
-  HoneyIcon,
-  JarIcon,
-  MeatIcon,
-  MilkIcon,
-  PotatoIcon,
-  StoreIcon,
-  WineIcon,
-} from "@/components/icons";
+  FoodAardappel,
+  FoodAardbei,
+  FoodAppel,
+  FoodAsperge,
+  FoodBier,
+  FoodBloem,
+  FoodBoerenkool,
+  FoodBoter,
+  FoodBrood,
+  FoodCourgette,
+  FoodEi,
+  FoodFramboos,
+  FoodFruitMand,
+  FoodGeitenkaas,
+  FoodGroenteMand,
+  FoodHoning,
+  FoodIjs,
+  FoodJam,
+  FoodKaas,
+  FoodKers,
+  FoodKip,
+  FoodKwark,
+  FoodLam,
+  FoodMelk,
+  FoodNoot,
+  FoodPeer,
+  FoodPompoen,
+  FoodRabarber,
+  FoodRadijs,
+  FoodRund,
+  FoodSap,
+  FoodSpruiten,
+  FoodStamppot,
+  FoodStoofpeer,
+  FoodTomaat,
+  FoodVarken,
+  FoodWijn,
+  FoodWorst,
+  FoodWortel,
+  FoodYoghurt,
+} from "@/components/food-icons";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
+// Elk catalogusitem zijn eigen, onderscheidend icoon
+const ITEM_ICONS: Record<string, Icon> = {
+  melk: FoodMelk,
+  yoghurt: FoodYoghurt,
+  kwark: FoodKwark,
+  boter: FoodBoter,
+  ijs: FoodIjs,
+  eieren: FoodEi,
+  kaas: FoodKaas,
+  geitenkaas: FoodGeitenkaas,
+  rundvlees: FoodRund,
+  varkensvlees: FoodVarken,
+  kip: FoodKip,
+  worst: FoodWorst,
+  lamsvlees: FoodLam,
+  groente: FoodGroenteMand,
+  tomaten: FoodTomaat,
+  asperges: FoodAsperge,
+  pompoen: FoodPompoen,
+  courgette: FoodCourgette,
+  boerenkool: FoodBoerenkool,
+  spruiten: FoodSpruiten,
+  winterpeen: FoodWortel,
+  radijs: FoodRadijs,
+  stamppotgroente: FoodStamppot,
+  rabarber: FoodRabarber,
+  fruit: FoodFruitMand,
+  aardbeien: FoodAardbei,
+  appels: FoodAppel,
+  peren: FoodPeer,
+  kersen: FoodKers,
+  frambozen: FoodFramboos,
+  stoofperen: FoodStoofpeer,
+  aardappelen: FoodAardappel,
+  brood: FoodBrood,
+  honing: FoodHoning,
+  jam: FoodJam,
+  sap: FoodSap,
+  bier: FoodBier,
+  wijn: FoodWijn,
+  noten: FoodNoot,
+  bloemen: FoodBloem,
+};
+
 const CATEGORY_ICONS: Record<CategoryKey, Icon> = {
-  zuivel: MilkIcon,
-  eieren: EggIcon,
-  kaas: CheeseIcon,
-  vlees: MeatIcon,
-  groente: CarrotIcon,
-  fruit: AppleIcon,
-  aardappelen: PotatoIcon,
-  brood: BreadIcon,
-  zoet: HoneyIcon,
-  dranken: BeerIcon,
+  zuivel: FoodMelk,
+  eieren: FoodEi,
+  kaas: FoodKaas,
+  vlees: FoodWorst,
+  groente: FoodWortel,
+  fruit: FoodAppel,
+  aardappelen: FoodAardappel,
+  brood: FoodBrood,
+  zoet: FoodHoning,
+  dranken: FoodBier,
   overig: StoreIcon,
 };
 
-const ITEM_ICONS: Record<string, Icon> = {
-  wijn: WineIcon,
-  jam: JarIcon,
-  sap: JarIcon,
-  bloemen: FlowerIcon,
-  honing: HoneyIcon,
+// Tint per categorie: tegels krijgen een eigen achtergrond en icoonkleur
+// binnen de drie kleurfamilies — dat maakt de tegelwand leesbaar zoals Bring.
+const CATEGORY_TINTS: Record<CategoryKey, { tileBg: string; icon: string }> = {
+  zuivel: { tileBg: "bg-cream-100", icon: "text-terra-400" },
+  eieren: { tileBg: "bg-terra-50", icon: "text-terra-500" },
+  kaas: { tileBg: "bg-cream-200", icon: "text-terra-500" },
+  vlees: { tileBg: "bg-terra-100", icon: "text-terra-700" },
+  groente: { tileBg: "bg-terra-50", icon: "text-terra-600" },
+  fruit: { tileBg: "bg-terra-100", icon: "text-terra-500" },
+  aardappelen: { tileBg: "bg-cream-200", icon: "text-terra-600" },
+  brood: { tileBg: "bg-cream-100", icon: "text-terra-600" },
+  zoet: { tileBg: "bg-terra-50", icon: "text-terra-500" },
+  dranken: { tileBg: "bg-terra-100", icon: "text-terra-600" },
+  overig: { tileBg: "bg-cream-100", icon: "text-ink-500" },
 };
 
 export function iconForItem(item: Pick<CatalogItem, "key" | "category">): Icon {
@@ -47,4 +126,8 @@ export function iconForItem(item: Pick<CatalogItem, "key" | "category">): Icon {
 
 export function iconForCategory(key: CategoryKey): Icon {
   return CATEGORY_ICONS[key];
+}
+
+export function tintForCategory(key: CategoryKey): { tileBg: string; icon: string } {
+  return CATEGORY_TINTS[key];
 }

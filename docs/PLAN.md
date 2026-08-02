@@ -1,4 +1,26 @@
-# Lokale-producenten-platform (werktitel "OnlyFarms") — lijst-eerst, Bring-model
+# Lokale-producenten-platform (werktitel "OnlyFarms")
+
+## STATUS (bijgewerkt 2 aug 2026) — wat is er al?
+
+**Gebouwd en live** (onlyfarms-ten.vercel.app):
+
+- **Fase 0+1 volledig**: huisstijl-tokens (terra/ink/cream), i18n-taalbestand, seizoensthema, kaart volledig verwijderd, producers-datamodel (gids/leden-scheiding), catalogus **151 items met elk een eigen SVG** (incl. categorieen Vis en Supermarkt), lijsten met deel-links, matching per item (Haversine, straal + fallback, reistijden), SEO-pagina's (producent/producenten/provincie, sitemap 2.294 URL's, JSON-LD), meldknop, Klaviyo-events (env-guarded).
+- **Fase 2 grotendeels**: accounts (registreren, inloggen, wachtwoord wijzigen), **family accounts** met uitnodigingslink `/gezin/[code]`, lijsten claimen, gevalideerde "wie haalt het" (alleen gezinsleden, server-side afgedwongen), waar/wie/wanneer per item met locatietips ("tip van ..."), testaccounts voor Frank/Chimene/Sally (elk eigen gezin).
+- **UX-sprint (Bring-niveau)**: optimistic UI (~40 ms reactie), offline-modus (service worker + acties wachten op reconnect), bottom-nav met badge, lijst-switcher, sticky zoeken met categorie-chips, Enter-quick-add, undo-snackbar, hoeveelheid via long-press + presets, wis-gekocht, categorie-groepering (loopvolgorde winkel), onboarding-kaart, PWA-manifest + app-iconen, gerangschikt accent-ongevoelig zoeken met synoniemen, a11y-basis (dialogs, contrast, grote tikvlakken).
+- **Data**: 2.279 producenten geseed; ~89% met productdata (afgeleid uit omschrijvingen + steekproef); dubbele adressen gerapporteerd; 3 Belgische records bewust zonder coordinaten.
+
+**Openstaand**:
+
+- Pusher-keys aanmaken (gratis account, 4 env-vars) - realtime i.p.v. 10s-polling
+- Week echte-gebruikerstest (3-5 mensen incl. 65+) - belangrijkste volgende stap
+- Definitieve naam + domein; daarna Search Console + SEO-quick-wins (canonicals, og:image, dubbele titel-suffix, interne links producent->provincie)
+- Neon van us-east-1 naar EU-regio; voorwaarden via jurist
+- Admin-scherm (moderatie draait nu op de Neon-editor); eerste 25-50 leden werven ("founding members")
+- Fase 3: marktstandplaatsen, slimme dekking, sjablonen, recepten-import, aanbiedingen (incl. locatiegebonden), deboervinder-migratie met 301's; daarna Expo-app
+- Offline-beperking v1: pagina herladen zonder verbinding verliest nog niet-gesyncte vinkjes
+
+---
+
 
 ## Context
 

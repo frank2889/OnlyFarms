@@ -44,6 +44,8 @@ export type ShoppingList = {
   id: number;
   token: string;
   name: string;
+  ownerUserId: number | null;
+  householdId: number | null;
   postcode: string | null;
   lat: number | null;
   lng: number | null;

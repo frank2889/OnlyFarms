@@ -5,6 +5,7 @@ import { BRAND } from "@/lib/brand";
 import { householdForUser, listsForUser, userById } from "@/lib/queries/accounts";
 import { ListIcon, SproutIcon, UserIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
+import PasswordForm, { CopyInviteLink } from "@/components/PasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -57,11 +58,18 @@ export default async function ProfilePage() {
               </li>
             ))}
           </ul>
-          <p className="text-xs text-ink-300">
-            Uitnodigingscode voor nieuwe leden: <code className="rounded bg-cream-100 px-1.5 py-0.5">{household.inviteCode}</code>
-          </p>
+          <div className="flex items-center gap-3">
+            <CopyInviteLink code={household.inviteCode} />
+            <span className="text-xs text-ink-300">
+              of deel de code <code className="rounded bg-cream-100 px-1.5 py-0.5">{household.inviteCode}</code>
+            </span>
+          </div>
         </section>
       )}
+
+      <section className="mb-6">
+        <PasswordForm />
+      </section>
 
       <h2 className="mb-2 font-semibold">Lijsten van jou en je huishouden</h2>
       {myLists.length === 0 ? (

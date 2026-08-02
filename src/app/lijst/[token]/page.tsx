@@ -9,6 +9,7 @@ import { boughtBefore, getListByToken, getListItems } from "@/lib/queries/lists"
 import { nearbyProducers } from "@/lib/queries/producers";
 import type { ItemMatch } from "@/lib/types";
 import ListView from "@/components/ListView";
+import ClaimListButton from "@/components/ClaimListButton";
 import { SproutIcon } from "@/components/icons";
 
 // Altijd vers: gedeelde lijsten veranderen constant
@@ -69,6 +70,11 @@ export default async function ListPage({
           {t("lists.title")}
         </Link>
       </header>
+      {userId && !list.ownerUserId && (
+        <div className="mx-auto max-w-2xl px-4 pt-3">
+          <ClaimListButton token={list.token} />
+        </div>
+      )}
       <ListView
         list={list}
         open={open}

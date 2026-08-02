@@ -73,8 +73,10 @@ export default function LoginPage() {
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-ink-500">
-        Nog geen account? Aanmelden kan binnenkort — accounts worden nu nog
-        door het team aangemaakt.
+        Nog geen account?{" "}
+        <Link href="/registreren" className="text-terra-700 underline">
+          Maak er gratis een aan
+        </Link>
       </p>
     </main>
   );

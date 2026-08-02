@@ -49,6 +49,9 @@ export const CATALOG: CatalogItem[] = [
   { key: "kwark", label: "Kwark", category: "zuivel", matchTokens: ["melk"] },
   { key: "boter", label: "Roomboter", category: "zuivel", matchTokens: ["melk"] },
   { key: "ijs", label: "Boerderij-ijs", category: "zuivel", matchTokens: ["melk", "ijs"] },
+  { key: "karnemelk", label: "Karnemelk", category: "zuivel", matchTokens: ["melk"] },
+  { key: "slagroom", label: "Slagroom", category: "zuivel", matchTokens: ["melk"] },
+  { key: "vla", label: "Vla", category: "zuivel", matchTokens: ["melk"] },
   // Eieren
   { key: "eieren", label: "Eieren", category: "eieren", matchTokens: ["eieren"] },
   // Kaas
@@ -60,6 +63,8 @@ export const CATALOG: CatalogItem[] = [
   { key: "kip", label: "Kip", category: "vlees", matchTokens: ["vlees"] },
   { key: "worst", label: "Worst", category: "vlees", matchTokens: ["vlees"] },
   { key: "lamsvlees", label: "Lamsvlees", category: "vlees", matchTokens: ["vlees"] },
+  { key: "gehakt", label: "Gehakt", category: "vlees", matchTokens: ["vlees"] },
+  { key: "spek", label: "Spek", category: "vlees", matchTokens: ["vlees"] },
   // Groente
   { key: "groente", label: "Verse groente", category: "groente", matchTokens: ["groente"] },
   { key: "tomaten", label: "Tomaten", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
@@ -71,6 +76,19 @@ export const CATALOG: CatalogItem[] = [
   { key: "winterpeen", label: "Winterpeen", category: "groente", matchTokens: ["groente"], seasonMonths: [10, 11, 12, 1, 2] },
   { key: "radijs", label: "Radijs", category: "groente", matchTokens: ["groente"], seasonMonths: [4, 5, 6] },
   { key: "stamppotgroente", label: "Stamppotgroente", category: "groente", matchTokens: ["groente"], seasonMonths: [11, 12, 1, 2] },
+  { key: "sla", label: "Sla", category: "groente", matchTokens: ["groente"], seasonMonths: [5, 6, 7, 8, 9] },
+  { key: "komkommer", label: "Komkommer", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9] },
+  { key: "paprika", label: "Paprika", category: "groente", matchTokens: ["groente"], seasonMonths: [7, 8, 9, 10] },
+  { key: "ui", label: "Uien", category: "groente", matchTokens: ["groente"] },
+  { key: "knoflook", label: "Knoflook", category: "groente", matchTokens: ["groente"] },
+  { key: "prei", label: "Prei", category: "groente", matchTokens: ["groente"], seasonMonths: [9, 10, 11, 12, 1, 2, 3] },
+  { key: "broccoli", label: "Broccoli", category: "groente", matchTokens: ["groente"], seasonMonths: [6, 7, 8, 9, 10] },
+  { key: "bloemkool", label: "Bloemkool", category: "groente", matchTokens: ["groente"], seasonMonths: [5, 6, 7, 8, 9, 10] },
+  { key: "bieten", label: "Rode bieten", category: "groente", matchTokens: ["groente"], seasonMonths: [7, 8, 9, 10, 11] },
+  { key: "sperziebonen", label: "Sperziebonen", category: "groente", matchTokens: ["groente"], seasonMonths: [7, 8, 9] },
+  { key: "paddenstoelen", label: "Paddenstoelen", category: "groente", matchTokens: ["groente", "paddenstoelen"], seasonMonths: [9, 10, 11] },
+  { key: "kruiden", label: "Verse kruiden", category: "groente", matchTokens: ["groente", "kruiden"] },
+  { key: "moestuinplantjes", label: "Moestuinplantjes", category: "groente", matchTokens: ["groente", "bloemen"], seasonMonths: [3, 4, 5] },
   // Fruit
   { key: "fruit", label: "Vers fruit", category: "fruit", matchTokens: ["fruit"] },
   { key: "aardbeien", label: "Aardbeien", category: "fruit", matchTokens: ["fruit", "aardbeien"], seasonMonths: [5, 6, 7, 8] },
@@ -80,19 +98,33 @@ export const CATALOG: CatalogItem[] = [
   { key: "frambozen", label: "Frambozen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [6, 7, 8] },
   { key: "stoofperen", label: "Stoofperen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [10, 11, 12, 1] },
   { key: "rabarber", label: "Rabarber", category: "fruit", matchTokens: ["fruit", "groente"], seasonMonths: [4, 5, 6] },
+  { key: "druiven", label: "Druiven", category: "fruit", matchTokens: ["fruit", "wijn"], seasonMonths: [9, 10] },
+  { key: "bessen", label: "Rode bessen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [6, 7, 8] },
+  { key: "bramen", label: "Bramen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [7, 8, 9] },
+  { key: "pruimen", label: "Pruimen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [8, 9] },
+  { key: "meloen", label: "Meloen", category: "fruit", matchTokens: ["fruit"], seasonMonths: [7, 8, 9] },
   // Aardappelen
   { key: "aardappelen", label: "Aardappelen", category: "aardappelen", matchTokens: ["aardappelen"] },
   // Brood
   { key: "brood", label: "Brood", category: "brood", matchTokens: ["brood"] },
+  { key: "croissant", label: "Croissants", category: "brood", matchTokens: ["brood"] },
+  { key: "stokbrood", label: "Stokbrood", category: "brood", matchTokens: ["brood"] },
+  { key: "taart", label: "Taart & gebak", category: "brood", matchTokens: ["brood"] },
+  { key: "koekjes", label: "Koekjes", category: "brood", matchTokens: ["brood"] },
   // Zoet
   { key: "honing", label: "Honing", category: "zoet", matchTokens: ["honing"] },
   { key: "jam", label: "Jam", category: "zoet", matchTokens: ["jam", "fruit"] },
+  { key: "appelstroop", label: "Appelstroop", category: "zoet", matchTokens: ["jam", "fruit"] },
   // Dranken
   { key: "sap", label: "Vers sap", category: "dranken", matchTokens: ["sap", "fruit"] },
   { key: "bier", label: "Lokaal bier", category: "dranken", matchTokens: ["bier"], nix18: true },
   { key: "wijn", label: "Nederlandse wijn", category: "dranken", matchTokens: ["wijn"], nix18: true },
+  { key: "cider", label: "Cider", category: "dranken", matchTokens: ["bier", "fruit"], nix18: true },
   // Overig
   { key: "noten", label: "Noten", category: "overig", matchTokens: ["noten"], seasonMonths: [9, 10, 11] },
+  { key: "kastanjes", label: "Kastanjes", category: "overig", matchTokens: ["noten"], seasonMonths: [10, 11] },
+  { key: "meel", label: "Meel & bloem", category: "overig", matchTokens: ["meel", "brood"] },
+  { key: "mosterd", label: "Mosterd", category: "overig", matchTokens: ["streekproducten"] },
   { key: "bloemen", label: "Bloemen", category: "overig", matchTokens: ["bloemen"] },
 ];
 

@@ -497,3 +497,360 @@ export function FoodFruitMand(p: IconProps) {
     </Svg>
   );
 }
+
+/* ---------- Uitbreiding: zuivel ---------- */
+
+export function FoodKarnemelk(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M7 8.5 9 4h6l2 4.5V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z" />
+      <path d="M9 4h6l2 4.5H7Z" fill={DARK} />
+      <rect x="7" y="12" width="10" height="4.5" fill={CREAM} />
+    </Svg>
+  );
+}
+
+export function FoodSlagroom(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 13h16l-1.2 6a3 3 0 0 1-3 2.4H8.2a3 3 0 0 1-3-2.4Z" />
+      <path d="M8 12.5c-2 0-3-1.3-2.4-2.8C4 9 4.3 6.8 6 6.3c.3-1.8 2.4-2.6 3.8-1.5C10.5 3.6 12 3 13.2 3.8c1.7-.6 3.4.5 3.4 2.2 1.5.6 1.8 2.5.7 3.6.7 1.4-.3 2.9-2.3 2.9Z" fill={CREAM} stroke={DARK} strokeWidth="1" />
+    </Svg>
+  );
+}
+
+export function FoodVla(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 4h8v3l2 3v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10l2-3Z" />
+      <rect x="8.5" y="4" width="7" height="2" fill={DARK} />
+      <path d="M6 13c1.5 1 3 .3 4-.5s2.8-1 4 0 2.7 1 4 .3" stroke={CREAM} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/* ---------- Uitbreiding: vlees ---------- */
+
+export function FoodSpek(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 4c3 2 3 5 0 7s-3 5 0 7 6 2 8 0 1-4 4-5 5-3 4-6-4-4-7-2-6 1-9-1Z" />
+      <path d="M6.5 6.5c2 1.2 2 3.5.3 5.2-1.4 1.4-1.4 3.2 0 4.6" stroke={CREAM} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <path d="M10.5 7.2c1.5.4 3.2 0 4.6-1" stroke={CREAM} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/* ---------- Uitbreiding: groente ---------- */
+
+export function FoodSla(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 13c0-4.5 4-8.5 9-8.5s9 4 9 8.5c0 3.5-3 6.5-9 6.5S3 16.5 3 13Z" />
+      <path d="M7 17c-1-3 0-6.5 2.5-9M12 18V8.5M17 17c1-3 0-6.5-2.5-9" stroke={CREAM} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodKomkommer(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="9.5" y="2" width="5" height="17" rx="2.5" />
+      <circle cx="12" cy="21" r="2.5" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="12" cy="21" r=".8" fill={DARK} />
+      <path d="M11 5v10" stroke={CREAM} strokeWidth="1.2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodPaprika(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 7.5C5.5 8.5 4 11 4 14c0 4.5 3.5 8 8 8s8-3.5 8-8c0-3-1.5-5.5-4-6.5-1.2-.6-2.6-.6-4 0-1.4-.6-2.8-.6-4 0Z" />
+      <path d="M12 7V4.5c0-1 .8-2 2-2" stroke={INK} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+      <path d="M8.5 10c-1 1-1.6 2.4-1.6 4" stroke={CREAM} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodUi(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="14" r="8" />
+      <path d="M12 6c-1-1.2-1.2-2.5-.6-4M12 6c1-1.2 1.2-2.5.6-4M12 6V2" stroke={DARK} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M8.5 9.5c-1.8 2.5-1.8 6.5 0 9M15.5 9.5c1.8 2.5 1.8 6.5 0 9" stroke={CREAM} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodKnoflook(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 5c1 2 4.5 3 6 5.5 1.6 2.7.8 6.5-1.5 8.5-2.5 2.2-6.5 2.2-9 0-2.3-2-3.1-5.8-1.5-8.5C7.5 8 11 7 12 5Z" />
+      <path d="M12 5c-.3-1.3-.2-2.3.5-3.5" stroke={INK} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M12 8.5V20M9 10c-1.2 2.5-1.2 6.5 0 9M15 10c1.2 2.5 1.2 6.5 0 9" stroke={CREAM} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodPrei(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M10 10h4v9a2 2 0 0 1-4 0Z" />
+      <path d="M10 10C8 7 7.5 4.5 8 2c2 .8 3.3 2.2 4 4 .7-1.8 2-3.2 4-4 .5 2.5 0 5-2 8Z" fill={DARK} />
+      <path d="M12 11v8" stroke={CREAM} strokeWidth="1.2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodBroccoli(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="8" cy="8.5" r="4.2" />
+      <circle cx="15.5" cy="7.5" r="3.8" />
+      <circle cx="17" cy="12.5" r="3.2" />
+      <circle cx="6.5" cy="13" r="3" />
+      <circle cx="12" cy="11" r="4" />
+      <path d="M10.5 15 9.5 21h5l-1-6" fill={DARK} />
+    </Svg>
+  );
+}
+
+export function FoodBloemkool(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="8" cy="9" r="4.2" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="16" cy="8.5" r="3.8" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="12" cy="11.5" r="4.2" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <path d="M4.5 12c-1.5 2.5 0 5.5 2.5 5.5h10c2.5 0 4-3 2.5-5.5" />
+      <path d="M7 17.5 8 20h8l1-2.5" />
+    </Svg>
+  );
+}
+
+export function FoodBiet(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="13" r="7" />
+      <path d="M12 20c-.3 1.2-.2 2.2.5 3.2" stroke={DARK} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+      <path d="M10.5 6.5C9 4.5 9 2.5 10 1c1.5 1 2.2 2.5 2 4.5M13.5 6.5c.3-2 1.3-3.4 3-4 .5 1.8 0 3.5-1.5 5" stroke={DARK} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <circle cx="9.5" cy="11.5" r="1.3" fill={CREAM} opacity="0.7" />
+    </Svg>
+  );
+}
+
+export function FoodSperzieboon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="9" width="15" height="3.4" rx="1.7" transform="rotate(20 10 11)" />
+      <rect x="5" y="13" width="15" height="3.4" rx="1.7" transform="rotate(12 12 15)" />
+      <rect x="4" y="17.5" width="14" height="3.2" rx="1.6" transform="rotate(5 11 19)" />
+    </Svg>
+  );
+}
+
+export function FoodPaddenstoel(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M2.5 11C2.5 6 6.8 2.5 12 2.5S21.5 6 21.5 11c0 .8-.7 1.5-1.5 1.5H4c-.8 0-1.5-.7-1.5-1.5Z" />
+      <path d="M9 12.5h6l-.8 7A2 2 0 0 1 12.2 21.5h-.4a2 2 0 0 1-2-2Z" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="8" cy="7.5" r="1.2" fill={CREAM} />
+      <circle cx="14.5" cy="6.5" r="1" fill={CREAM} />
+    </Svg>
+  );
+}
+
+export function FoodKruiden(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M7 14h10l-1 7a1.5 1.5 0 0 1-1.5 1.3h-5A1.5 1.5 0 0 1 8 21Z" fill={DARK} />
+      <path d="M12 14V5" stroke={INK} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <path d="M12 8c-2 0-3.5-1.3-4-3.5C10 4 11.5 5 12 7c.5-2 2-3 4-2.5-.5 2.2-2 3.5-4 3.5Z" />
+      <path d="M12 12c-1.6 0-2.8-1-3.2-2.8 1.6-.4 2.8.4 3.2 2 .4-1.6 1.6-2.4 3.2-2-.4 1.8-1.6 2.8-3.2 2.8Z" />
+    </Svg>
+  );
+}
+
+export function FoodPlant(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M7 15h10l-1.2 6a1.5 1.5 0 0 1-1.5 1.2H9.7a1.5 1.5 0 0 1-1.5-1.2Z" fill={DARK} />
+      <path d="M12 15V9" stroke={INK} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <path d="M12 10C10 10 8.3 8.6 8 6.3c2.3-.3 4 .9 4 3.2 0-2.3 1.7-3.5 4-3.2-.3 2.3-2 3.7-4 3.7Z" />
+    </Svg>
+  );
+}
+
+/* ---------- Uitbreiding: fruit ---------- */
+
+export function FoodDruiven(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="9" cy="10" r="3" />
+      <circle cx="15" cy="10" r="3" />
+      <circle cx="6.8" cy="14.5" r="3" />
+      <circle cx="12" cy="14" r="3.2" />
+      <circle cx="17.2" cy="14.5" r="3" />
+      <circle cx="9.5" cy="18.5" r="2.8" />
+      <circle cx="14.5" cy="18.5" r="2.8" />
+      <circle cx="12" cy="21" r="2" />
+      <path d="M12 7V3.5M12 3.5c1.5-1 3-1.2 4.5-.5" stroke={DARK} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodBes(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M6 4c1 4 2.5 7 5 10" stroke={DARK} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <circle cx="8.5" cy="9" r="2.6" />
+      <circle cx="11" cy="13.5" r="2.6" />
+      <circle cx="14" cy="17" r="2.8" />
+      <circle cx="17.5" cy="13.5" r="2.4" />
+      <circle cx="16" cy="8" r="2.2" />
+      <circle cx="8" cy="17.5" r="2.4" />
+      <path d="M8.5 8.2v.01M11 12.7v.01M14 16.2v.01" stroke={CREAM} strokeWidth="1.4" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodBraam(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="9" cy="10" r="2.6" fill={DARK} />
+      <circle cx="15" cy="10" r="2.6" fill={DARK} />
+      <circle cx="12" cy="8.5" r="2.6" fill={DARK} />
+      <circle cx="8" cy="14" r="2.6" fill={DARK} />
+      <circle cx="16" cy="14" r="2.6" fill={DARK} />
+      <circle cx="12" cy="13" r="2.8" fill={DARK} />
+      <circle cx="10" cy="17.5" r="2.4" fill={DARK} />
+      <circle cx="14" cy="17.5" r="2.4" fill={DARK} />
+      <circle cx="12" cy="20" r="1.8" fill={DARK} />
+      <path d="M12 6 10.5 3M12 6l1.5-3" stroke={INK} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="10.5" cy="11.5" r=".8" fill={CREAM} opacity="0.6" />
+    </Svg>
+  );
+}
+
+export function FoodPruim(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="13.5" r="8" fill={DARK} />
+      <path d="M12 6.5c-.5 2.5-.5 9 0 14" stroke={INK} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.6" />
+      <path d="M12 5.5c0-1.5.8-2.7 2.3-3.5.4 1.6-.3 3-2.3 3.5Z" />
+      <circle cx="9" cy="10.5" r="1.5" fill={CREAM} opacity="0.5" />
+    </Svg>
+  );
+}
+
+export function FoodMeloen(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M2.5 12a10 10 0 0 0 19 0Z" />
+      <path d="M4.5 12a8 8 0 0 0 15 0Z" fill={CREAM} />
+      <path d="M12 12v7.5M8 12l1.5 6M16 12l-1.5 6" stroke={DARK} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <circle cx="10" cy="14.5" r=".7" fill={INK} />
+      <circle cx="14" cy="14.5" r=".7" fill={INK} />
+    </Svg>
+  );
+}
+
+/* ---------- Uitbreiding: brood & gebak ---------- */
+
+export function FoodCroissant(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 6c2 0 4.5 1 6.5 3s3 4.5 3 6.5c-1.5 1-3.5 1.2-5.5.5-1-2.5-2.5-4-5-5-.7-2-.5-4 1-5Z" />
+      <path d="M12 6C10 6 7.5 7 5.5 9s-3 4.5-3 6.5c1.5 1 3.5 1.2 5.5.5 1-2.5 2.5-4 5-5 .7-2 .5-4-1-5Z" fill={DARK} />
+      <path d="M11 11c1.5.8 2.6 2 3.4 3.4" stroke={CREAM} strokeWidth="1.3" strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
+export function FoodStokbrood(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="1" y="9" width="22" height="6.5" rx="3.2" transform="rotate(-18 12 12)" />
+      <path d="M8 13.8l2-2.4M12 12.5l2-2.4M16 11.2l2-2.4" stroke={CREAM} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
+export function FoodTaart(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 21 12 4l3.5 6.5L21 21Z" />
+      <path d="M12 4l3.5 6.5c-1.5 1.5-3 1.5-4.5 0S9 9 7.5 10.5Z" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="12" cy="3" r="1.6" fill={DARK} />
+      <path d="M9 16.5h7" stroke={CREAM} strokeWidth="1.3" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodKoek(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M21.5 12A9.5 9.5 0 1 1 12 2.5c0 2 1.5 3.5 3.5 3.5 0 2 1.5 3.5 3.5 3.5 1 0 2 .9 2.5 2.5Z" />
+      <circle cx="9" cy="9" r="1.2" fill={DARK} />
+      <circle cx="8" cy="14.5" r="1.2" fill={DARK} />
+      <circle cx="13" cy="16.5" r="1.2" fill={DARK} />
+      <circle cx="16.5" cy="13" r="1" fill={DARK} />
+    </Svg>
+  );
+}
+
+/* ---------- Uitbreiding: overig ---------- */
+
+export function FoodMeel(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M6 8h12l1.5 11a2 2 0 0 1-2 2.3H6.5a2 2 0 0 1-2-2.3Z" />
+      <path d="M7.5 8C7 6 8 4 10 3h4c2 1 3 3 2.5 5Z" fill={DARK} />
+      <rect x="7.5" y="12.5" width="9" height="4.5" rx="1" fill={CREAM} />
+      <path d="M12 13.5v2.5M10.5 14.8h3" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodKastanje(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3c3.5 2 7 5 7 9.5 0 3.5-3 6.5-7 6.5s-7-3-7-6.5C5 8 8.5 5 12 3Z" />
+      <path d="M6.5 15.5c1.5 2 3.5 3 5.5 3s4-1 5.5-3l-1 3.5c-1.2 1.5-2.8 2.3-4.5 2.3s-3.3-.8-4.5-2.3Z" fill={CREAM} stroke={DARK} strokeWidth="1" />
+      <circle cx="12" cy="19" r="1" fill={INK} />
+    </Svg>
+  );
+}
+
+export function FoodMosterd(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M7 9h10v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z" />
+      <rect x="8" y="5.5" width="8" height="3" rx="1" fill={DARK} />
+      <rect x="10.5" y="2.5" width="3" height="3" rx="1" fill={DARK} />
+      <rect x="8.8" y="12" width="6.4" height="5" rx="1" fill={CREAM} />
+    </Svg>
+  );
+}
+
+export function FoodStroop(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M6.5 8.5h11V19a2.5 2.5 0 0 1-2.5 2.5H9A2.5 2.5 0 0 1 6.5 19Z" fill={DARK} />
+      <rect x="5.5" y="4.5" width="13" height="3.5" rx="1.5" />
+      <path d="M9.5 12.5c1.5 1.2 3.5 1.2 5 0" stroke={CREAM} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
+export function FoodCider(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M9.5 2h5v4.5c0 1.5 2 2 2 4.5v9a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-9c0-2.5 2-3 2-4.5Z" />
+      <rect x="9.5" y="2" width="5" height="2.5" fill={DARK} />
+      <path d="M8.5 13.5h7" stroke={CREAM} strokeWidth="1.3" fill="none" />
+      <circle cx="12" cy="17" r="2.2" fill={CREAM} />
+      <path d="M12 15.8c-.2-.8.2-1.4 1-1.8" stroke={DARK} strokeWidth=".9" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}

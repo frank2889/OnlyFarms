@@ -191,7 +191,7 @@ export const CATALOG: CatalogItem[] = [
   { key: "frisdrank", label: "Frisdrank", category: "supermarkt", matchTokens: [] },
   { key: "wcpapier", label: "Wc-papier", category: "supermarkt", matchTokens: [] },
   { key: "keukenrol", label: "Keukenrol", category: "supermarkt", matchTokens: [] },
-  { key: "schoonmaak", label: "Schoonmaakmiddel", category: "supermarkt", matchTokens: [] },
+  { key: "schoonmaak", label: "Schoonmaak", category: "supermarkt", matchTokens: [] },
   { key: "wasmiddel", label: "Wasmiddel", category: "supermarkt", matchTokens: [] },
   { key: "vuilniszakken", label: "Vuilniszakken", category: "supermarkt", matchTokens: [] },
   { key: "zeep", label: "Zeep", category: "supermarkt", matchTokens: [] },

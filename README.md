@@ -73,5 +73,5 @@ scripts/                 seed, migratie, datakwaliteit
 ## Roadmap (kort)
 
 - **Fase 2**: accounts (Auth.js magic link + Google), profielen (bezocht/ervaringen/wishlist), foto's (Vercel Blob), KVK-API-validatie, admin-scherm, web-push.
-- **Fase 3**: slimme dekking ("dit lid dekt 5 van je 7 items"), lijstsjablonen, recepten-import, aanbiedingen van leden, deboervinder-migratie (301's), Skal/KVK-SBI-databronnen.
+- **Fase 3**: **marktstandplaatsen per producent** (weekmarkten als locaties — zo krijgt de stad wél aanbod op loopafstand, op de juiste dag), slimme dekking ("dit lid dekt 5 van je 7 items"), lijstsjablonen, recepten-import, aanbiedingen van leden, deboervinder-migratie (301's), Skal/KVK-SBI-databronnen.
 - **Vóór launch**: definitieve naam + domein, voorwaarden via jurist, Neon naar EU-regio, Plausible + GA4.

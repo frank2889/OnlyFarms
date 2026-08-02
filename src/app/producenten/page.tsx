@@ -5,6 +5,7 @@ import { CATEGORIES, type CategoryKey } from "@/lib/catalog";
 import { geocode } from "@/lib/geocode";
 import { t } from "@/lib/i18n";
 import { slugify } from "@/lib/slug";
+import { travelInfo } from "@/lib/travel";
 import { allProvinces, nearbyProducers } from "@/lib/queries/producers";
 import { iconForCategory } from "@/components/catalog-icons";
 import { RouteIcon, SproutIcon } from "@/components/icons";
@@ -115,7 +116,11 @@ export default async function ProducersPage({
                   )}
                   {p.distanceKm !== undefined && (
                     <span className="shrink-0 text-sm text-ink-500">
-                      {t("common.distanceKm", { km: p.distanceKm.toFixed(1) })}
+                      {t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} ·{" "}
+                      {t("common.travel", {
+                        min: travelInfo(p.distanceKm).minutes,
+                        mode: travelInfo(p.distanceKm).mode,
+                      })}
                     </span>
                   )}
                   {p.lat != null && (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CATALOG, CATEGORIES, catalogItem, searchCatalog, type CatalogItem } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import type { ItemMatch, ListItem, ShoppingList } from "@/lib/types";
+import { travelInfo } from "@/lib/travel";
 import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import {
   CalendarIcon,
@@ -527,7 +528,13 @@ function ProducerRows({
               </span>
             )}
             {p.distanceKm !== undefined && (
-              <span className="text-ink-500">{t("common.distanceKm", { km: p.distanceKm.toFixed(1) })}</span>
+              <span className="whitespace-nowrap text-ink-500">
+                {t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} ·{" "}
+                {t("common.travel", {
+                  min: travelInfo(p.distanceKm).minutes,
+                  mode: travelInfo(p.distanceKm).mode,
+                })}
+              </span>
             )}
             <a
               href={routeUrl(p.lat, p.lng)}

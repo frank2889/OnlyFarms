@@ -10,7 +10,8 @@
     "clearAll": "Wis alles",
     "backHome": "terug naar home",
     "loading": "Laden…",
-    "nix18": "NIX18 — geen 18, geen alcohol"
+    "nix18": "NIX18 — geen 18, geen alcohol",
+    "travel": "±{min} min {mode}"
   },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",

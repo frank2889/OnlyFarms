@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
+import { claimList, householdForUser, userById } from "@/lib/queries/accounts";
 import { geocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
-import { claimList, householdForUser } from "@/lib/queries/accounts";
+
 import {
   addItem,
   createList,
@@ -73,8 +74,20 @@ export async function updateItemAction(
   }
 ): Promise<void> {
   const list = await requireList(token);
+  // Locatie gewijzigd? Leg vast wie de tip gaf (ingelogd gezinslid of "gast")
+  let storeSuggestedBy: string | null | undefined;
+  if (patch.store !== undefined) {
+    if (patch.store.trim()) {
+      const userId = await currentUserId();
+      const user = userId ? await userById(userId) : null;
+      storeSuggestedBy = user?.name ?? "gast";
+    } else {
+      storeSuggestedBy = null;
+    }
+  }
   await updateItem(list.id, itemId, {
     ...patch,
+    storeSuggestedBy,
     dueAt:
       patch.dueAt === undefined ? undefined : patch.dueAt ? new Date(patch.dueAt) : null,
   });

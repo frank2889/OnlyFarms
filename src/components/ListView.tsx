@@ -259,6 +259,14 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                     </p>
                   )}
                   <ItemBadges item={item} />
+                  {!item.store && (
+                    <button
+                      onClick={() => setEditItem(item.id)}
+                      className="mt-1 text-xs text-terra-700 underline"
+                    >
+                      Weet jij waar? Geef een locatietip
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={() => setEditItem(editItem === item.id ? null : item.id)}
@@ -560,6 +568,9 @@ function ItemBadges({ item }: { item: ListItem }) {
             </a>
           ) : (
             item.store
+          )}
+          {item.storeSuggestedBy && (
+            <span className="text-ink-300">· tip van {item.storeSuggestedBy}</span>
           )}
         </span>
       )}

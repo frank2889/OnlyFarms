@@ -32,6 +32,7 @@ export type ListItem = {
   note: string | null;
   store: string | null;
   producerSlug: string | null;
+  storeSuggestedBy: string | null;
   assignee: string | null;
   dueAt: Date | null;
   checked: boolean;

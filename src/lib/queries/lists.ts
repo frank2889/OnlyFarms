@@ -85,6 +85,7 @@ export async function updateItem(
     note?: string;
     store?: string;
     producerSlug?: string | null;
+    storeSuggestedBy?: string | null;
     assignee?: string;
     dueAt?: Date | null;
   }
@@ -96,6 +97,7 @@ export async function updateItem(
       ...(patch.note !== undefined ? { note: patch.note.trim() || null } : {}),
       ...(patch.store !== undefined ? { store: patch.store.trim() || null } : {}),
       ...(patch.producerSlug !== undefined ? { producerSlug: patch.producerSlug } : {}),
+      ...(patch.storeSuggestedBy !== undefined ? { storeSuggestedBy: patch.storeSuggestedBy } : {}),
       ...(patch.assignee !== undefined ? { assignee: patch.assignee.trim() || null } : {}),
       ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
     })

@@ -139,6 +139,8 @@ export const listItems = pgTable(
     // Taakverdeling: waar halen (vrije tekst of gekozen producent), wie, uiterlijk wanneer
     store: text("store"),
     producerSlug: text("producer_slug"),
+    // wie van het gezin de locatie aandroeg ("tip van ...")
+    storeSuggestedBy: text("store_suggested_by"),
     assignee: text("assignee"),
     dueAt: timestamp("due_at", { withTimezone: true }),
     checked: boolean("checked").notNull().default(false),

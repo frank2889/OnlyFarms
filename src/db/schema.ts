@@ -102,6 +102,11 @@ export const listItems = pgTable(
     label: text("label").notNull(),
     qty: text("qty"),
     note: text("note"),
+    // Taakverdeling: waar halen (vrije tekst of gekozen producent), wie, uiterlijk wanneer
+    store: text("store"),
+    producerSlug: text("producer_slug"),
+    assignee: text("assignee"),
+    dueAt: timestamp("due_at", { withTimezone: true }),
     checked: boolean("checked").notNull().default(false),
     checkedAt: timestamp("checked_at", { withTimezone: true }),
     position: integer("position").notNull().default(0),

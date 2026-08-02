@@ -261,3 +261,29 @@ export function RouteIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function UserIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5" />
+    </Svg>
+  );
+}
+
+export function CalendarIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="17" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </Svg>
+  );
+}
+
+export function PencilIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </Svg>
+  );
+}

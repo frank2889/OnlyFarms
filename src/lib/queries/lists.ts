@@ -80,11 +80,25 @@ export async function setItemChecked(
 export async function updateItem(
   listId: number,
   itemId: number,
-  patch: { qty?: string; note?: string }
+  patch: {
+    qty?: string;
+    note?: string;
+    store?: string;
+    producerSlug?: string | null;
+    assignee?: string;
+    dueAt?: Date | null;
+  }
 ): Promise<void> {
   await db
     .update(listItems)
-    .set({ qty: patch.qty?.trim() || null, note: patch.note?.trim() || null })
+    .set({
+      ...(patch.qty !== undefined ? { qty: patch.qty.trim() || null } : {}),
+      ...(patch.note !== undefined ? { note: patch.note.trim() || null } : {}),
+      ...(patch.store !== undefined ? { store: patch.store.trim() || null } : {}),
+      ...(patch.producerSlug !== undefined ? { producerSlug: patch.producerSlug } : {}),
+      ...(patch.assignee !== undefined ? { assignee: patch.assignee.trim() || null } : {}),
+      ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
+    })
     .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
   await touch(listId);
 }

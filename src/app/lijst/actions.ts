@@ -55,10 +55,21 @@ export async function toggleItemAction(
 export async function updateItemAction(
   token: string,
   itemId: number,
-  patch: { qty?: string; note?: string }
+  patch: {
+    qty?: string;
+    note?: string;
+    store?: string;
+    producerSlug?: string | null;
+    assignee?: string;
+    dueAt?: string | null;
+  }
 ): Promise<void> {
   const list = await requireList(token);
-  await updateItem(list.id, itemId, patch);
+  await updateItem(list.id, itemId, {
+    ...patch,
+    dueAt:
+      patch.dueAt === undefined ? undefined : patch.dueAt ? new Date(patch.dueAt) : null,
+  });
   await bump(token);
 }
 

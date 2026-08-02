@@ -7,18 +7,22 @@ import { t } from "@/lib/i18n";
 import type { ItemMatch, ListItem, ShoppingList } from "@/lib/types";
 import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import {
+  CalendarIcon,
   CheckIcon,
   MapPinIcon,
+  PencilIcon,
   PlusIcon,
   RouteIcon,
   SearchIcon,
   ShareIcon,
   StoreIcon,
   TrashIcon,
+  UserIcon,
 } from "@/components/icons";
 import {
   addItemAction,
   removeItemAction,
+  updateItemAction,
   setLocationByCoordsAction,
   setLocationByQueryAction,
   setRadiusAction,
@@ -46,6 +50,7 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
   const [locQuery, setLocQuery] = useState("");
   const [locBusy, setLocBusy] = useState(false);
   const [locError, setLocError] = useState(false);
+  const [editItem, setEditItem] = useState<number | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Lijst registreren op dit apparaat (voor het "Mijn lijsten"-overzicht)
@@ -252,7 +257,15 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                       {[item.qty, item.note].filter(Boolean).join(" · ")}
                     </p>
                   )}
+                  <ItemBadges item={item} />
                 </div>
+                <button
+                  onClick={() => setEditItem(editItem === item.id ? null : item.id)}
+                  className="text-ink-300 hover:text-terra-600"
+                  aria-label="Bewerken"
+                >
+                  <PencilIcon width={15} height={15} />
+                </button>
                 {cat?.nix18 && (
                   <span className="rounded-full bg-ink-900 px-2 py-0.5 text-xs text-white">18+</span>
                 )}
@@ -264,6 +277,15 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                   <TrashIcon width={16} height={16} />
                 </button>
               </div>
+              {editItem === item.id && (
+                <ItemEditor
+                  item={item}
+                  onSave={(patch) => {
+                    act(() => updateItemAction(list.token, item.id, patch));
+                    setEditItem(null);
+                  }}
+                />
+              )}
               {match && list.lat && (
                 <details className="border-t border-cream-100 px-3 py-2">
                   <summary className="cursor-pointer text-sm text-terra-700">
@@ -272,7 +294,13 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
                       ({match.members.length + match.guide.length})
                     </span>
                   </summary>
-                  <MatchList match={match} radiusKm={list.radiusKm} />
+                  <MatchList
+                    match={match}
+                    radiusKm={list.radiusKm}
+                    onPick={(name, slug) =>
+                      act(() => updateItemAction(list.token, item.id, { store: name, producerSlug: slug }))
+                    }
+                  />
                 </details>
               )}
             </li>
@@ -435,17 +463,25 @@ function TileRow({
   );
 }
 
-function MatchList({ match, radiusKm }: { match: ItemMatch; radiusKm: number }) {
+function MatchList({
+  match,
+  radiusKm,
+  onPick,
+}: {
+  match: ItemMatch;
+  radiusKm: number;
+  onPick?: (name: string, slug: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-2 pb-1 pt-2">
       {match.usedFallback && (
         <p className="text-xs text-ink-500">{t("lists.nearestFallback", { km: radiusKm })}</p>
       )}
       {match.members.length > 0 && (
-        <ProducerRows title={t("lists.membersNearby")} producers={match.members} member />
+        <ProducerRows title={t("lists.membersNearby")} producers={match.members} member onPick={onPick} />
       )}
       {match.guide.length > 0 && (
-        <ProducerRows title={t("lists.guideNearby")} producers={match.guide} />
+        <ProducerRows title={t("lists.guideNearby")} producers={match.guide} onPick={onPick} />
       )}
       {match.members.length + match.guide.length === 0 && (
         <p className="text-sm text-ink-500">{t("lists.noMatch")}</p>
@@ -458,10 +494,12 @@ function ProducerRows({
   title,
   producers,
   member,
+  onPick,
 }: {
   title: string;
   producers: ItemMatch["members"];
   member?: boolean;
+  onPick?: (name: string, slug: string) => void;
 }) {
   return (
     <div>
@@ -489,9 +527,134 @@ function ProducerRows({
             >
               <RouteIcon width={13} height={13} /> {t("common.route")}
             </a>
+            {onPick && (
+              <button
+                onClick={() => onPick(p.name, p.slug)}
+                className="rounded-full border border-terra-300 px-2 py-0.5 text-xs text-terra-700 hover:bg-terra-50"
+              >
+                Hier halen
+              </button>
+            )}
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function ItemBadges({ item }: { item: ListItem }) {
+  if (!item.store && !item.assignee && !item.dueAt) return null;
+  const due = item.dueAt ? new Date(item.dueAt) : null;
+  // eslint-disable-next-line react-hooks/purity -- klokvergelijking voor "te laat"-badge is hier bewust
+  const overdue = due ? due.getTime() < Date.now() - 86_400_000 : false;
+  return (
+    <div className="mt-1 flex flex-wrap gap-1.5">
+      {item.store && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-cream-100 px-2 py-0.5 text-xs text-ink-700">
+          <StoreIcon width={11} height={11} />
+          {item.producerSlug ? (
+            <a href={`/producent/${item.producerSlug}`} className="hover:underline">
+              {item.store}
+            </a>
+          ) : (
+            item.store
+          )}
+        </span>
+      )}
+      {item.assignee && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-800">
+          <UserIcon width={11} height={11} /> {item.assignee}
+        </span>
+      )}
+      {due && (
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
+            overdue ? "bg-terra-700 text-white" : "bg-cream-100 text-ink-700"
+          }`}
+        >
+          <CalendarIcon width={11} height={11} />
+          {due.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ItemEditor({
+  item,
+  onSave,
+}: {
+  item: ListItem;
+  onSave: (patch: {
+    qty?: string;
+    note?: string;
+    store?: string;
+    producerSlug?: string | null;
+    assignee?: string;
+    dueAt?: string | null;
+  }) => void;
+}) {
+  const [qty, setQty] = useState(item.qty ?? "");
+  const [note, setNote] = useState(item.note ?? "");
+  const [store, setStore] = useState(item.store ?? "");
+  const [assignee, setAssignee] = useState(item.assignee ?? "");
+  const [dueAt, setDueAt] = useState(
+    item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 10) : ""
+  );
+
+  const field =
+    "w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-1.5 text-sm";
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-cream-100 p-3">
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          Aantal
+          <input value={qty} onChange={(e) => setQty(e.target.value)} placeholder="2 dozen" className={field} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          Notitie
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="de grote bruine" className={field} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          Waar halen
+          <input
+            value={store}
+            onChange={(e) => setStore(e.target.value)}
+            placeholder="winkel of producent"
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          Wie haalt het
+          <input value={assignee} onChange={(e) => setAssignee(e.target.value)} placeholder="naam" className={field} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          Uiterlijk
+          <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className={field} />
+        </label>
+      </div>
+      <p className="text-xs text-ink-300">
+        Tip: onder &ldquo;{t("lists.whereToBuy")}&rdquo; kun je met &ldquo;Hier halen&rdquo; direct een producent uit de buurt kiezen.
+      </p>
+      <div>
+        <button
+          onClick={() =>
+            onSave({
+              qty,
+              note,
+              store,
+              // handmatig gewijzigde winkel verbreekt de producent-koppeling
+              producerSlug: store === (item.store ?? "") ? undefined : null,
+              assignee,
+              dueAt: dueAt || null,
+            })
+          }
+          className="rounded-full bg-terra-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-terra-600"
+        >
+          Opslaan
+        </button>
+      </div>
     </div>
   );
 }

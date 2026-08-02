@@ -30,6 +30,10 @@ export type ListItem = {
   label: string;
   qty: string | null;
   note: string | null;
+  store: string | null;
+  producerSlug: string | null;
+  assignee: string | null;
+  dueAt: Date | null;
   checked: boolean;
   checkedAt: Date | null;
   position: number;

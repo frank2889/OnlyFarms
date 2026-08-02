@@ -73,12 +73,46 @@ export const producers = pgTable(
   ]
 );
 
-// Boodschappenlijsten (Bring-model): anoniem, gedeeld via geheime token-link.
-// In fase 2 komt hier een koppeling met users/list_members bij.
+// Accounts + family accounts (huishoudens): iedereen in het huishouden
+// ziet dezelfde lijsten en kan meedoen.
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("gebruiker"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const households = pgTable("households", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  inviteCode: text("invite_code").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const householdMembers = pgTable("household_members", {
+  id: serial("id").primaryKey(),
+  householdId: integer("household_id")
+    .notNull()
+    .references(() => households.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+// Boodschappenlijsten (Bring-model): anoniem via geheime token-link, of
+// gekoppeld aan een account/huishouden zodat het hele gezin ze ziet.
 export const lists = pgTable("lists", {
   id: serial("id").primaryKey(),
   token: text("token").notNull().unique(),
   name: text("name").notNull(),
+  ownerUserId: integer("owner_user_id").references(() => users.id),
+  householdId: integer("household_id").references(() => households.id),
   postcode: text("postcode"),
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),

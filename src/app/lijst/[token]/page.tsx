@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { currentUserId } from "@/auth";
+import { householdForUser } from "@/lib/queries/accounts";
 import { catalogItem, itemsInSeason } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
@@ -51,6 +53,11 @@ export default async function ListPage({
 
   const seasonal = itemsInSeason(new Date().getMonth() + 1);
 
+  // Family account: huishoudleden als snelkeuze voor "wie haalt het"
+  const userId = await currentUserId();
+  const household = userId ? await householdForUser(userId) : null;
+  const memberNames = household?.members.map((m) => m.name) ?? [];
+
   return (
     <main>
       <header className="flex items-center justify-between border-b border-cream-200 bg-white px-4 py-3">
@@ -69,6 +76,7 @@ export default async function ListPage({
         matches={matches}
         seasonal={seasonal}
         boughtBeforeKeys={boughtBeforeKeys}
+        memberNames={memberNames}
       />
     </main>
   );

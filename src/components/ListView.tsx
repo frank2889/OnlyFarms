@@ -36,13 +36,14 @@ type Props = {
   matches: Record<string, ItemMatch>;
   seasonal: CatalogItem[];
   boughtBeforeKeys: string[];
+  memberNames?: string[];
 };
 
 function routeUrl(lat: number | null, lng: number | null): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-export default function ListView({ list, open, bought, matches, seasonal, boughtBeforeKeys }: Props) {
+export default function ListView({ list, open, bought, matches, seasonal, boughtBeforeKeys, memberNames = [] }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [shareMsg, setShareMsg] = useState(false);
@@ -280,6 +281,7 @@ export default function ListView({ list, open, bought, matches, seasonal, bought
               {editItem === item.id && (
                 <ItemEditor
                   item={item}
+                  memberNames={memberNames}
                   onSave={(patch) => {
                     act(() => updateItemAction(list.token, item.id, patch));
                     setEditItem(null);
@@ -583,8 +585,10 @@ function ItemBadges({ item }: { item: ListItem }) {
 function ItemEditor({
   item,
   onSave,
+  memberNames = [],
 }: {
   item: ListItem;
+  memberNames?: string[];
   onSave: (patch: {
     qty?: string;
     note?: string;
@@ -628,6 +632,22 @@ function ItemEditor({
         <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
           Wie haalt het
           <input value={assignee} onChange={(e) => setAssignee(e.target.value)} placeholder="naam" className={field} />
+          {memberNames.length > 0 && (
+            <span className="mt-1 flex flex-wrap gap-1">
+              {memberNames.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setAssignee(name)}
+                  className={`rounded-full px-2 py-0.5 text-xs ${
+                    assignee === name ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
           Uiterlijk

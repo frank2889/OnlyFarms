@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { currentUserId } from "@/auth";
+import { userById } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
 import { CATEGORIES } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
@@ -6,10 +8,12 @@ import { currentSeason } from "@/lib/season";
 import { iconForCategory } from "@/components/catalog-icons";
 import { ListIcon, SproutIcon, StoreIcon } from "@/components/icons";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
   const season = currentSeason();
+  const userId = await currentUserId();
+  const user = userId ? await userById(userId) : null;
 
   return (
     <main>
@@ -24,6 +28,9 @@ export default function Home() {
           </Link>
           <Link href="/verkopen" className="text-terra-700 underline">
             Verkopen
+          </Link>
+          <Link href={user ? "/profiel" : "/inloggen"} className="text-terra-700 underline">
+            {user ? user.name : "Inloggen"}
           </Link>
         </nav>
       </header>

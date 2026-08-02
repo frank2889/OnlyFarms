@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { currentUserId } from "@/auth";
 import { geocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
+import { claimList, householdForUser } from "@/lib/queries/accounts";
 import {
   addItem,
   createList,
@@ -28,6 +30,12 @@ async function bump(token: string) {
 
 export async function createListAction(name: string): Promise<{ token: string; name: string }> {
   const list = await createList(name);
+  // Ingelogd? Dan hoort de lijst bij het account en het huishouden (family account)
+  const userId = await currentUserId();
+  if (userId) {
+    const household = await householdForUser(userId);
+    await claimList(list.id, userId, household?.id ?? null);
+  }
   await trackEvent("list_created", { listName: list.name });
   return { token: list.token, name: list.name };
 }

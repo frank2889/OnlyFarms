@@ -69,6 +69,7 @@ type OptAction =
   | { type: "uncheck"; id: number }
   | { type: "remove"; id: number }
   | { type: "add"; item: ListItem }
+  | { type: "setQty"; id: number; qty: string }
   | { type: "clearBought" };
 
 function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
@@ -96,6 +97,11 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
       };
     case "add":
       return { ...state, open: [...state.open, action.item] };
+    case "setQty":
+      return {
+        ...state,
+        open: state.open.map((i) => (i.id === action.id ? { ...i, qty: action.qty } : i)),
+      };
     case "clearBought":
       return { ...state, bought: [] };
   }
@@ -359,13 +365,29 @@ export default function ListView({
     return Math.max(0, ...item.matchTokens.map((token) => nearbyCounts[token] ?? 0));
   }
 
-  function toggleTile(item: CatalogItem) {
+  function tapTile(item: CatalogItem) {
     const existing = snapshot.open.find((i) => i.catalogKey === item.key);
-    if (existing) {
-      act(() => removeItemAction(list.token, existing.id), { type: "remove", id: existing.id });
-    } else {
+    if (!existing) {
       addCatalogItem(item);
+      return;
     }
+    // Nog een keer tikken = eentje extra
+    navigator.vibrate?.(10);
+    const q = (existing.qty ?? "").trim();
+    let next: string;
+    if (q === "") next = "2";
+    else if (/^\d+$/.test(q)) next = String(Number(q) + 1);
+    else {
+      // niet-numeriek aantal ("500 g"): laat de gebruiker kiezen
+      setQtyValue(q);
+      setQtyItem(item);
+      return;
+    }
+    act(() => updateItemAction(list.token, existing.id, { qty: next }), {
+      type: "setQty",
+      id: existing.id,
+      qty: next,
+    });
   }
 
   function addWithQty() {
@@ -433,7 +455,7 @@ export default function ListView({
     const q = query.trim();
     if (!q) return;
     const first = searchCatalog(q)[0];
-    if (first) toggleTile(first);
+    if (first) tapTile(first);
     else addFreeText(q);
     setQuery("");
     setProducerHits([]);
@@ -441,7 +463,7 @@ export default function ListView({
   }
 
   function pickFromPanel(item: CatalogItem) {
-    toggleTile(item);
+    tapTile(item);
     setQuery("");
     setProducerHits([]);
     searchInputRef.current?.focus();
@@ -638,8 +660,8 @@ export default function ListView({
         <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
           <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
           <ul className="mb-2 flex flex-col gap-1">
-            <li>· Tik op een tegel om iets toe te voegen; nog een tik haalt het eraf.</li>
-            <li>· Houd een tegel even vast om een aantal te kiezen.</li>
+            <li>· Tik op een tegel om iets toe te voegen; tik nog een keer voor eentje extra.</li>
+            <li>· Houd een tegel vast om een aantal te kiezen of iets te verwijderen.</li>
             <li>· Deel de lijst met je gezin en vink samen af; alles synct vanzelf.</li>
           </ul>
           <button
@@ -724,10 +746,10 @@ export default function ListView({
       {(suggestions.length > 0 || rebuy.length > 0) && (
         <div className="mt-6">
           {suggestions.length > 0 && (
-            <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={toggleTile} />
+            <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={tapTile} />
           )}
           {rebuy.length > 0 && (
-            <TileRow title="Vorige keer gekocht" items={rebuy} onAdd={toggleTile} />
+            <TileRow title="Vorige keer gekocht" items={rebuy} onAdd={tapTile} />
           )}
         </div>
       )}
@@ -762,8 +784,9 @@ export default function ListView({
                       key={item.key}
                       item={item}
                       added={openKeys.has(item.key)}
+                      qty={qtyByKey.get(item.key)}
                       nearby={countNearby(item)}
-                      onAdd={() => toggleTile(item)}
+                      onAdd={() => tapTile(item)}
                       onLongPress={() => setQtyItem(item)}
                     />
                   ))}
@@ -979,7 +1002,7 @@ export default function ListView({
             </p>
             <div className="grid grid-cols-4 gap-2">
               {seasonal.slice(0, 4).map((item) => (
-                <AddTile key={item.key} item={item} onAdd={() => toggleTile(item)} />
+                <AddTile key={item.key} item={item} onAdd={() => tapTile(item)} />
               ))}
             </div>
           </li>
@@ -1052,11 +1075,14 @@ export default function ListView({
                       <span className="text-xs text-terra-700">{t("lists.nearbyCount", { n })}</span>
                     )}
                   </span>
-                  {added ? (
-                    <CheckIcon width={18} height={18} className="shrink-0 text-terra-600" />
-                  ) : (
-                    <PlusIcon width={18} height={18} className="shrink-0 text-terra-500" />
+                  {added && (
+                    <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs font-bold text-terra-700">
+                      {/^\d+$/.test(snapshot.open.find((i) => i.catalogKey === item.key)?.qty ?? "") 
+                        ? `${snapshot.open.find((i) => i.catalogKey === item.key)?.qty}\u00d7`
+                        : "op de lijst"}
+                    </span>
                   )}
+                  <PlusIcon width={18} height={18} className="shrink-0 text-terra-500" />
                 </button>
               );
             })}
@@ -1220,6 +1246,23 @@ export default function ListView({
                   Annuleren
                 </button>
               </div>
+              {(() => {
+                const existing = snapshot.open.find((i) => i.catalogKey === qtyItem.key);
+                if (!existing) return null;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteItem(existing);
+                      setQtyItem(null);
+                      setQtyValue("");
+                    }}
+                    className="mt-1 inline-flex items-center gap-2 self-start rounded-full px-1 text-sm text-terra-800 underline"
+                  >
+                    <TrashIcon width={14} height={14} /> Van de lijst halen
+                  </button>
+                );
+              })()}
             </form>
           </div>
         </div>
@@ -1233,12 +1276,14 @@ function AddTile({
   onAdd,
   onLongPress,
   added,
+  qty,
   nearby = 0,
 }: {
   item: CatalogItem;
   onAdd: () => void;
   onLongPress?: () => void;
   added?: boolean;
+  qty?: string | null;
   nearby?: number;
 }) {
   const tint = tintForCategory(item.category);
@@ -1290,6 +1335,11 @@ function AddTile({
           }`}
         >
           18+
+        </span>
+      )}
+      {added && qty && (
+        <span className="absolute left-1.5 top-1.5 rounded-full bg-white/25 px-1.5 py-0.5 text-[11px] font-bold text-white">
+          {/^\d+$/.test(qty) ? `${qty}\u00d7` : qty}
         </span>
       )}
       {nearby > 0 && (

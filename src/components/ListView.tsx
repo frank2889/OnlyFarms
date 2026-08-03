@@ -52,6 +52,7 @@ import {
 } from "@/app/lijst/actions";
 import { hoursStatusText } from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
+import NearbyWatch from "@/components/NearbyWatch";
 
 type Props = {
   list: ShoppingList;
@@ -741,6 +742,9 @@ export default function ListView({
           )}
         </div>
       )}
+
+      {/* "Je bent vlakbij"-melding: alleen zinvol met locatie en matches */}
+      {list.lat != null && <NearbyWatch open={snapshot.open} matches={matches} />}
 
       {/* De lijst zelf leeft in de drawer (cart-model) */}
       {/* Suggesties */}

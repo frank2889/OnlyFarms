@@ -55,7 +55,13 @@
     "preset2": "Weet je het zeker bij deze winkel? Ik ben er nu.",
     "preset3": "Zal ik het bij een andere winkel halen?",
     "preset4": "Hoeveel heb je er nodig?",
-    "preset5": "Deze is er niet. Is iets anders ook goed?"
+    "preset5": "Deze is er niet. Is iets anders ook goed?",
+    "askProducer": "Vraag je cheffs",
+    "producerPreset1": "Ik ben nu hier. Nog iets nodig?",
+    "producerPreset2": "Zal ik hier iets van de lijst halen?",
+    "producerPreset3": "Kennen we deze? Is die goed?",
+    "sentToList": "Verstuurd naar de cheffs van \"{list}\".",
+    "viewInList": "Bekijk in je lijst"
   },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",

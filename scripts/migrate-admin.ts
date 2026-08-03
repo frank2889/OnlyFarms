@@ -138,6 +138,15 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_indexes where indexname='list_messages_list_idx'",
     "CREATE INDEX list_messages_list_idx ON list_messages (list_id, created_at)",
   ],
+  // Cheffs-anker op een producent ("ik ben nu hier, nog iets nodig?")
+  [
+    "select 1 from information_schema.columns where table_name='list_messages' and column_name='producer_slug'",
+    "ALTER TABLE list_messages ADD COLUMN producer_slug text",
+  ],
+  [
+    "select 1 from information_schema.columns where table_name='list_messages' and column_name='producer_name'",
+    "ALTER TABLE list_messages ADD COLUMN producer_name text",
+  ],
 ];
 
 async function main() {

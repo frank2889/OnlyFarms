@@ -244,6 +244,10 @@ export const listMessages = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     itemId: integer("item_id").references(() => listItems.id, { onDelete: "set null" }),
     itemLabel: text("item_label"),
+    // Anker op een producent ("ik ben nu hier, nog iets nodig?"); naam komt
+    // uit de DB (nooit client-input), slug maakt de chip klikbaar
+    producerSlug: text("producer_slug"),
+    producerName: text("producer_name"),
     body: text("body").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

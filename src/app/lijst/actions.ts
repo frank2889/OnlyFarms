@@ -25,7 +25,7 @@ import {
   updateItem,
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
-import { nearbyProducers, searchProducersByName } from "@/lib/queries/producers";
+import { nearbyProducers, producerBySlug, searchProducersByName } from "@/lib/queries/producers";
 import { catalogItem } from "@/lib/catalog";
 import type { Producer } from "@/lib/types";
 
@@ -132,14 +132,16 @@ export async function removeCatalogItemAction(token: string, catalogKey: string)
 }
 
 /**
- * "Chefs": bericht sturen in de lijst-chat. Alleen met een account (de naam
+ * "Cheffs": bericht sturen in de lijst-chat. Alleen met een account (de naam
  * komt uit je account); optioneel gekoppeld aan een item van deze lijst
- * ("waarom heb je deze melk nodig"). Lezen kan iedereen met de lijst-link.
+ * ("waarom heb je deze melk nodig") of aan een producent ("ik ben nu hier,
+ * nog iets nodig?"). Lezen kan iedereen met de lijst-link.
  */
 export async function sendChatMessageAction(
   token: string,
   body: string,
-  itemId?: number | null
+  itemId?: number | null,
+  producerSlug?: string | null
 ): Promise<{ ok: boolean; error?: string }> {
   const list = await requireList(token);
   const userId = await currentUserId();
@@ -152,7 +154,12 @@ export async function sendChatMessageAction(
     const match = items.find((i) => i.id === itemId);
     if (match) item = { id: match.id, label: match.label };
   }
-  await sendListMessage(list.id, userId, clean, item);
+  let producer: { slug: string; name: string } | null = null;
+  if (producerSlug) {
+    const found = await producerBySlug(producerSlug);
+    if (found) producer = { slug: found.slug, name: found.name };
+  }
+  await sendListMessage(list.id, userId, clean, { item, producer });
   await bump(token);
   return { ok: true };
 }

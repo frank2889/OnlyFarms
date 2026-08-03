@@ -10,6 +10,7 @@ import { hoursStatusText } from "@/lib/opening-hours";
 import { LeafIcon, RouteIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
+import AskChefsButton from "@/components/AskChefsButton";
 
 export const revalidate = 300;
 
@@ -116,6 +117,7 @@ export default async function ProducerPage({
             {t("common.website")}
           </a>
         )}
+        <AskChefsButton producerSlug={producer.slug} producerName={producer.name} />
       </div>
 
       {producer.photos.length > 0 && (

@@ -157,6 +157,7 @@ export default function ListView({
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [myLists, setMyLists] = useState<{ token: string; name: string }[]>([]);
   const [undo, setUndo] = useState<{ label: string; action: () => void } | null>(null);
+  const [justChecked, setJustChecked] = useState<number | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tempId = useRef(-1);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -282,10 +283,15 @@ export default function ListView({
 
   function checkItem(item: ListItem) {
     navigator.vibrate?.(10);
-    act(() => toggleItemAction(list.token, item.id, true), { type: "check", id: item.id });
-    showUndo(`${item.label} afgevinkt`, () =>
-      act(() => toggleItemAction(list.token, item.id, false), { type: "uncheck", id: item.id })
-    );
+    setJustChecked(item.id);
+    // vinkje even laten zien voordat het item naar "gekocht" schuift
+    setTimeout(() => {
+      setJustChecked(null);
+      act(() => toggleItemAction(list.token, item.id, true), { type: "check", id: item.id });
+      showUndo(`${item.label} afgevinkt`, () =>
+        act(() => toggleItemAction(list.token, item.id, false), { type: "uncheck", id: item.id })
+      );
+    }, 350);
   }
 
   function makeTempItem(partial: Partial<ListItem> & { label: string }): ListItem {
@@ -771,7 +777,11 @@ export default function ListView({
               <div className="flex items-center gap-3 p-3">
                 <button
                   onClick={() => checkItem(item)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-terra-400 text-transparent hover:bg-terra-50 hover:text-terra-400"
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150 ${
+                    justChecked === item.id
+                      ? "border-terra-500 bg-terra-500 text-white"
+                      : "border-terra-400 text-transparent hover:bg-terra-50 hover:text-terra-400"
+                  }`}
                   aria-label="Afvinken"
                 >
                   <CheckIcon width={17} height={17} />
@@ -892,10 +902,10 @@ export default function ListView({
                       id: item.id,
                     })
                   }
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-terra-500 text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-terra-500 bg-terra-500 text-white hover:bg-terra-600"
                   aria-label="Terug op de lijst"
                 >
-                  <PlusIcon width={14} height={14} />
+                  <CheckIcon width={16} height={16} />
                 </button>
                 <span className="text-ink-500 line-through">{item.label}</span>
               </li>

@@ -6,7 +6,7 @@ import { t } from "@/lib/i18n";
 import { catalogItem } from "@/lib/catalog";
 import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import { CheckIcon, XIcon } from "@/components/icons";
-import { addItemAction, removeCatalogItemAction } from "@/app/lijst/actions";
+import { addItemAction, recordSwipeAction, removeCatalogItemAction } from "@/app/lijst/actions";
 
 export type SwipeCard = { key: string; label: string; category: string; times?: number };
 
@@ -47,6 +47,8 @@ export default function SwipeDeck({ token, cards }: { token: string; cards: Swip
     } else {
       setSkipped((s) => [...s, current]);
     }
+    // Voedt de bèta-smaakmodus, ongeacht welke modus nu actief is
+    void recordSwipeAction(token, current.key, flying === "right");
     setLast({ card: current, dir: flying });
     setFlying(null);
     setDx(0);

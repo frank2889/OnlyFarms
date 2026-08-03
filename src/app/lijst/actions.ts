@@ -5,6 +5,7 @@ import { currentUserId } from "@/auth";
 import { claimList, householdForUser, membersOfHousehold, userById } from "@/lib/queries/accounts";
 import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
+import { recordSwipeSignal } from "@/lib/queries/swipe";
 
 import {
   addItem,
@@ -126,6 +127,16 @@ export async function removeCatalogItemAction(token: string, catalogKey: string)
   const list = await requireList(token);
   await removeOpenItemByCatalogKey(list.id, catalogKey);
   await bump(token);
+}
+
+/** Voorkeurssignaal van een swipe (rechts/links): voedt de bèta-smaakmodus, geen list-refresh nodig */
+export async function recordSwipeAction(
+  token: string,
+  catalogKey: string,
+  liked: boolean
+): Promise<void> {
+  const list = await requireList(token);
+  await recordSwipeSignal({ id: list.id, householdId: list.householdId ?? null }, catalogKey, liked);
 }
 
 export async function updateItemAction(

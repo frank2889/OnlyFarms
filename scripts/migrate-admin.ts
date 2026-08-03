@@ -65,6 +65,26 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_indexes where indexname='bought_stats_household_idx'",
     "CREATE INDEX bought_stats_household_idx ON bought_stats (household_id)",
   ],
+  // Voorkeurssignaal per swipe (los van koophistorie): voedt de bèta-smaakmodus
+  [
+    "select 1 from information_schema.tables where table_name='swipe_signals'",
+    `CREATE TABLE swipe_signals (
+      id serial PRIMARY KEY,
+      list_id integer NOT NULL,
+      household_id integer,
+      catalog_key text NOT NULL,
+      likes integer NOT NULL DEFAULT 0,
+      skips integer NOT NULL DEFAULT 0,
+      last_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT swipe_signals_list_id_lists_id_fk FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+      CONSTRAINT swipe_signals_household_id_households_id_fk FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE SET NULL,
+      CONSTRAINT swipe_signals_list_id_catalog_key_unique UNIQUE (list_id, catalog_key)
+    )`,
+  ],
+  [
+    "select 1 from pg_indexes where indexname='swipe_signals_household_idx'",
+    "CREATE INDEX swipe_signals_household_idx ON swipe_signals (household_id)",
+  ],
 ];
 
 async function main() {

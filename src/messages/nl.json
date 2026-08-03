@@ -35,7 +35,11 @@
     "viewList": "Bekijk je lijst",
     "again": "Overgeslagen items opnieuw",
     "empty": "Alles wat we konden voorstellen staat al op je lijst.",
-    "backToList": "Terug naar je lijst"
+    "backToList": "Terug naar je lijst",
+    "modeShop": "Winkelen",
+    "modeTaste": "Smaak",
+    "beta": "Bèta",
+    "modeTasteHint": "Bèta: dit onthoudt van je swipes wat je lekker vindt. Hoe meer je swipet, hoe beter de volgorde."
   },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",

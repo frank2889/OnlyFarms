@@ -194,6 +194,30 @@ export const boughtStats = pgTable(
   ]
 );
 
+// Voorkeurssignaal per swipe (rechts = leuk, links = sla ik over): voedt de
+// bèta-smaakmodus van het swipe-deck. Los van bought_stats, dat is "wat kocht
+// je echt"; dit is "wat wil je wel/niet nog eens zien".
+export const swipeSignals = pgTable(
+  "swipe_signals",
+  {
+    id: serial("id").primaryKey(),
+    listId: integer("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    householdId: integer("household_id").references(() => households.id, {
+      onDelete: "set null",
+    }),
+    catalogKey: text("catalog_key").notNull(),
+    likes: integer("likes").notNull().default(0),
+    skips: integer("skips").notNull().default(0),
+    lastAt: timestamp("last_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("swipe_signals_list_id_catalog_key_unique").on(t.listId, t.catalogKey),
+    index("swipe_signals_household_idx").on(t.householdId),
+  ]
+);
+
 // Aangesloten verkopers: bedrijven (KVK verplicht) die via het platform
 // producten aanbieden. Het platform is alleen prikbord — geen betalingen,
 // geen logistiek; de verkoper is als voedselondernemer zelf verantwoordelijk.

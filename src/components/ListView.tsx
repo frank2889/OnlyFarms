@@ -185,7 +185,7 @@ export default function ListView({
   );
   const [introDismissed, setIntroDismissed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [kbOffset, setKbOffset] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [producerHits, setProducerHits] = useState<Producer[]>([]);
   const [catOrder, setCatOrder] = useState<string[]>(() =>
     list.categoryOrder?.length ? list.categoryOrder : CATEGORIES.map((c) => c.key as string)
@@ -209,29 +209,15 @@ export default function ListView({
     };
   }, []);
 
-  // Achtergrond niet mee laten scrollen zolang de drawer open is
+  // Achtergrond niet mee laten scrollen zolang drawer of zoek-overlay open is
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!drawerOpen && !searchOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [drawerOpen]);
-
-  // Toetsenbord-veilig: onderbalk boven het virtuele toetsenbord houden
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onChange = () =>
-      setKbOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
-    vv.addEventListener("resize", onChange);
-    vv.addEventListener("scroll", onChange);
-    return () => {
-      vv.removeEventListener("resize", onChange);
-      vv.removeEventListener("scroll", onChange);
-    };
-  }, []);
+  }, [drawerOpen, searchOpen]);
 
   // Lijst registreren op dit apparaat + andere lijsten voor de switcher
   useEffect(() => {
@@ -450,6 +436,12 @@ export default function ListView({
     }
   }
 
+  function closeSearch() {
+    setSearchOpen(false);
+    setQuery("");
+    setProducerHits([]);
+  }
+
   function quickAdd(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
@@ -512,6 +504,9 @@ export default function ListView({
     act(() => setCategoryOrderAction(list.token, next));
   }
   const openKeys = new Set(snapshot.open.map((i) => i.catalogKey));
+  const qtyByKey = new Map(
+    snapshot.open.filter((i) => i.catalogKey).map((i) => [i.catalogKey as string, i.qty])
+  );
   const suggestions = seasonal.filter((s) => !openKeys.has(s.key)).slice(0, 6);
   const rebuy = boughtBeforeKeys
     .map((k) => catalogItem(k))
@@ -1046,121 +1041,153 @@ export default function ListView({
         </div>
       </div>
 
-      {/* Vast toevoeg-veld onderaan (Bring-patroon): altijd binnen handbereik */}
-      {query && (searchResults.length > 0 || producerHits.length > 0 || query.trim()) && (
-        <div
-          className="fixed inset-x-0 bottom-[7.9rem] z-40 mx-auto max-w-2xl px-4 sm:bottom-[4.2rem]"
-          style={kbOffset > 0 ? { bottom: kbOffset + 62 } : undefined}
+      {/* Toevoeg-trigger onderaan; typen gebeurt in de overlay met het veld bovenaan */}
+      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-cream-200 bg-white/95 px-4 py-2 backdrop-blur sm:bottom-0">
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-full border border-cream-300 bg-cream-50 px-4 py-2.5 text-left text-ink-500"
         >
-          <div className="max-h-80 divide-y divide-cream-100 overflow-y-auto rounded-tile border border-cream-200 bg-white shadow-xl">
-            {searchResults.map((item) => {
-              const added = openKeys.has(item.key);
-              const n = countNearby(item);
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => pickFromPanel(item)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-cream-50"
-                >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tintForCategory(item.category).tileBg}`}>
-                    {createElement(iconForItem(item), {
-                      width: 22,
-                      height: 22,
-                      className: tintForCategory(item.category).icon,
-                    })}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{item.label}</span>
-                    {n > 0 && (
-                      <span className="text-xs text-terra-700">{t("lists.nearbyCount", { n })}</span>
-                    )}
-                  </span>
-                  {added && (
-                    <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs font-bold text-terra-700">
-                      {/^\d+$/.test(snapshot.open.find((i) => i.catalogKey === item.key)?.qty ?? "") 
-                        ? `${snapshot.open.find((i) => i.catalogKey === item.key)?.qty}\u00d7`
-                        : "op de lijst"}
-                    </span>
-                  )}
-                  <PlusIcon width={18} height={18} className="shrink-0 text-terra-500" />
-                </button>
-              );
-            })}
-            <button
-              onClick={() => {
-                addFreeText(query);
-                setQuery("");
-                setProducerHits([]);
-                searchInputRef.current?.focus();
-              }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-cream-50"
+          <SearchIcon width={16} height={16} className="shrink-0" />
+          {t("lists.searchCatalog")}
+        </button>
+      </div>
+
+      {/* Zoek-overlay: het veld staat bovenaan, dus het toetsenbord zit nooit in de weg */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[70] flex flex-col bg-cream-50">
+          <div className="border-b border-cream-200 bg-white px-4 py-2">
+            <form
+              onSubmit={quickAdd}
+              className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-cream-300 bg-cream-50 px-4 py-2.5"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-cream-300">
-                <PlusIcon width={18} height={18} className="text-terra-500" />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-sm">
-                {t("lists.freeTextAdd", { label: query })}
-              </span>
-            </button>
-            {producerHits.length > 0 && (
-              <div className="px-4 py-2.5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
-                  {t("lists.producersFound")}
-                </p>
-                <ul className="flex flex-col gap-1.5">
-                  {producerHits.map((p) => (
-                    <li key={p.id} className="text-sm">
-                      <a href={`/producent/${p.slug}`} className="font-medium hover:underline">
-                        {p.name}
-                      </a>
-                      <span className="text-ink-500">
-                        {" "}
-                        {p.city ? `· ${p.city}` : ""}
-                        {p.distanceKm !== undefined &&
-                          ` · ${t("common.distanceKm", { km: p.distanceKm.toFixed(1) })}`}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              <SearchIcon width={16} height={16} className="shrink-0 text-ink-500" />
+              <input
+                ref={searchInputRef}
+                autoFocus
+                value={query}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setQuery(value);
+                  if (searchDebounce.current) clearTimeout(searchDebounce.current);
+                  if (value.trim().length >= 3 && list.lat != null) {
+                    searchDebounce.current = setTimeout(async () => {
+                      setProducerHits(await searchProducersAction(list.token, value));
+                    }, 300);
+                  } else {
+                    setProducerHits([]);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") closeSearch();
+                }}
+                placeholder={t("lists.searchCatalog")}
+                className="w-full bg-transparent outline-none"
+              />
+              <button
+                type="button"
+                onClick={closeSearch}
+                className="shrink-0 text-sm font-medium text-terra-700"
+              >
+                Klaar
+              </button>
+            </form>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+            <div className="mx-auto max-w-2xl">
+              {query ? (
+                <div className="divide-y divide-cream-100 rounded-tile border border-cream-200 bg-white">
+                  {searchResults.map((item) => {
+                    const added = openKeys.has(item.key);
+                    const n = countNearby(item);
+                    const currentQty = qtyByKey.get(item.key) ?? "";
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => pickFromPanel(item)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-cream-50"
+                      >
+                        <span
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tintForCategory(item.category).tileBg}`}
+                        >
+                          {createElement(iconForItem(item), {
+                            width: 24,
+                            height: 24,
+                            className: tintForCategory(item.category).icon,
+                          })}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{item.label}</span>
+                          {n > 0 && (
+                            <span className="text-xs text-terra-700">
+                              {t("lists.nearbyCount", { n })}
+                            </span>
+                          )}
+                        </span>
+                        {added && (
+                          <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs font-bold text-terra-700">
+                            {/^\d+$/.test(currentQty ?? "") ? `${currentQty}\u00d7` : "op de lijst"}
+                          </span>
+                        )}
+                        <PlusIcon width={18} height={18} className="shrink-0 text-terra-500" />
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => {
+                      addFreeText(query);
+                      setQuery("");
+                      setProducerHits([]);
+                      searchInputRef.current?.focus();
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-cream-50"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-cream-300">
+                      <PlusIcon width={18} height={18} className="text-terra-500" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {t("lists.freeTextAdd", { label: query })}
+                    </span>
+                  </button>
+                  {producerHits.length > 0 && (
+                    <div className="px-4 py-3">
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                        {t("lists.producersFound")}
+                      </p>
+                      <ul className="flex flex-col gap-1.5">
+                        {producerHits.map((p) => (
+                          <li key={p.id} className="text-sm">
+                            <a href={`/producent/${p.slug}`} className="font-medium hover:underline">
+                              {p.name}
+                            </a>
+                            <span className="text-ink-500">
+                              {" "}
+                              {p.city ? `\u00b7 ${p.city}` : ""}
+                              {p.distanceKm !== undefined &&
+                                ` \u00b7 ${t("common.distanceKm", { km: p.distanceKm.toFixed(1) })}`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {suggestions.length > 0 && (
+                    <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={tapTile} />
+                  )}
+                  {rebuy.length > 0 && (
+                    <TileRow title="Vaak gekocht" items={rebuy} onAdd={tapTile} />
+                  )}
+                  <p className="mt-2 text-center text-sm text-ink-500">
+                    Typ hierboven wat je zoekt; Enter voegt het eerste resultaat toe.
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
-      <div
-        className="fixed inset-x-0 bottom-16 z-40 border-t border-cream-200 bg-white/95 px-4 py-2 backdrop-blur sm:bottom-0"
-        style={kbOffset > 0 ? { bottom: kbOffset } : undefined}
-      >
-        <form
-          onSubmit={quickAdd}
-          className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-cream-300 bg-cream-50 px-4 py-2.5"
-        >
-          <SearchIcon width={16} height={16} className="shrink-0 text-ink-500" />
-          <input
-            ref={searchInputRef}
-            value={query}
-            onChange={(e) => {
-              const value = e.target.value;
-              setQuery(value);
-              if (searchDebounce.current) clearTimeout(searchDebounce.current);
-              if (value.trim().length >= 3 && list.lat != null) {
-                searchDebounce.current = setTimeout(async () => {
-                  setProducerHits(await searchProducersAction(list.token, value));
-                }, 300);
-              } else {
-                setProducerHits([]);
-              }
-            }}
-            placeholder={t("lists.searchCatalog")}
-            className="w-full bg-transparent outline-none"
-          />
-          {query && (
-            <button type="submit" className="shrink-0 text-sm font-medium text-terra-700">
-              Voeg toe
-            </button>
-          )}
-        </form>
-      </div>
 
       {/* Undo-snackbar */}
       {undo && (

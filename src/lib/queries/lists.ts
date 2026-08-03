@@ -36,7 +36,15 @@ export async function getListItems(listId: number): Promise<{
 
 export async function addItem(
   listId: number,
-  item: { catalogKey?: string | null; label: string; qty?: string; note?: string }
+  item: {
+    catalogKey?: string | null;
+    label: string;
+    qty?: string;
+    note?: string;
+    store?: string;
+    producerSlug?: string | null;
+    storeSuggestedBy?: string | null;
+  }
 ): Promise<void> {
   // Zelfde item opnieuw toevoegen terwijl het afgevinkt staat = weer op de lijst
   if (item.catalogKey) {
@@ -49,7 +57,13 @@ export async function addItem(
     if (existing) {
       await db
         .update(listItems)
-        .set({ checked: false, checkedAt: null, qty: item.qty || null, note: item.note || null })
+        .set({
+          checked: false,
+          checkedAt: null,
+          qty: item.qty || null,
+          note: item.note || null,
+          ...(item.store ? { store: item.store, producerSlug: item.producerSlug ?? null, storeSuggestedBy: item.storeSuggestedBy ?? null } : {}),
+        })
         .where(eq(listItems.id, existing.id));
       await touch(listId);
       return;
@@ -61,6 +75,9 @@ export async function addItem(
     label: item.label.trim(),
     qty: item.qty?.trim() || null,
     note: item.note?.trim() || null,
+    store: item.store?.trim() || null,
+    producerSlug: item.producerSlug ?? null,
+    storeSuggestedBy: item.storeSuggestedBy ?? null,
   });
   await touch(listId);
 }

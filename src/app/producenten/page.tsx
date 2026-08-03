@@ -82,7 +82,7 @@ export default async function ProducersPage({
       <LocationSearch initialQuery={params.q ?? ""} product={params.product} radius={radius} />
       {coords && !params.q && !params.lat && (
         <p className="mt-2 text-sm text-ink-500">
-          Vanaf jouw locatie: {coords.label} — pas hierboven aan als je ergens anders bent.
+          Vanaf jouw locatie: {coords.label}. pas hierboven aan als je ergens anders bent.
         </p>
       )}
 
@@ -166,7 +166,17 @@ export default async function ProducersPage({
         </>
       )}
 
+      {!results && (
+        <div className="mb-8 rounded-tile border border-cream-200 bg-white p-5 text-center">
+          <p className="mb-1 font-semibold">Waar ben je?</p>
+          <p className="text-sm text-ink-500">
+            Vul hierboven je postcode in of gebruik je locatie, dan zie je direct wat er bij jou in de buurt is.
+          </p>
+        </div>
+      )}
       {!results && provinces.length > 0 && (
+        <>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">Blader per provincie</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {provinces.map((p) => (
             <Link
@@ -179,6 +189,7 @@ export default async function ProducersPage({
             </Link>
           ))}
         </div>
+        </>
       )}
     </main>
   );

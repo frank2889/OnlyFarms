@@ -172,13 +172,37 @@ export default function ListView({
     () => "ssr"
   );
   const [introDismissed, setIntroDismissed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [kbOffset, setKbOffset] = useState(0);
   const [producerHits, setProducerHits] = useState<Producer[]>([]);
   const [catOrder, setCatOrder] = useState<string[]>(() =>
     list.categoryOrder?.length ? list.categoryOrder : CATEGORIES.map((c) => c.key as string)
   );
   const [orderMode, setOrderMode] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const showIntro = introFlag === "" && !introDismissed;
+
+  // Deep-link #lijst opent de drawer (voor pill op producentpagina's)
+  useEffect(() => {
+    if (window.location.hash !== "#lijst") return;
+    const id = setTimeout(() => setDrawerOpen(true), 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Toetsenbord-veilig: onderbalk boven het virtuele toetsenbord houden
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onChange = () =>
+      setKbOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener("resize", onChange);
+    vv.addEventListener("scroll", onChange);
+    return () => {
+      vv.removeEventListener("resize", onChange);
+      vv.removeEventListener("scroll", onChange);
+    };
+  }, []);
 
   // Lijst registreren op dit apparaat + andere lijsten voor de switcher
   useEffect(() => {
@@ -240,6 +264,7 @@ export default function ListView({
   }
 
   function checkItem(item: ListItem) {
+    navigator.vibrate?.(10);
     act(() => toggleItemAction(list.token, item.id, true), { type: "check", id: item.id });
     showUndo(`${item.label} afgevinkt`, () =>
       act(() => toggleItemAction(list.token, item.id, false), { type: "uncheck", id: item.id })
@@ -287,6 +312,7 @@ export default function ListView({
   }
 
   function addCatalogItem(item: CatalogItem, qty?: string) {
+    navigator.vibrate?.(10);
     act(() => addItemAction(list.token, { catalogKey: item.key, label: item.label, qty }), {
       type: "add",
       item: makeTempItem({ label: item.label, catalogKey: item.key, qty: qty ?? null }),
@@ -382,6 +408,15 @@ export default function ListView({
     if (first) toggleTile(first);
     else addFreeText(q);
     setQuery("");
+    setProducerHits([]);
+    searchInputRef.current?.focus();
+  }
+
+  function pickFromPanel(item: CatalogItem) {
+    toggleTile(item);
+    setQuery("");
+    setProducerHits([]);
+    searchInputRef.current?.focus();
   }
 
   const searchResults = useMemo(() => searchCatalog(query).slice(0, 7), [query]);
@@ -434,7 +469,7 @@ export default function ListView({
     .slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-28">
+    <div className="mx-auto max-w-2xl px-4 pb-48 sm:pb-36">
       {/* Kop: lijst-switcher + delen */}
       <div className="flex items-center justify-between py-4">
         <div className="relative min-w-0">
@@ -474,12 +509,6 @@ export default function ListView({
             </div>
           )}
         </div>
-        <button
-          onClick={share}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
-        >
-          <ShareIcon width={16} height={16} /> {t("lists.share")}
-        </button>
       </div>
       {shareMsg && (
         <p className="mb-3 rounded-tile bg-terra-50 px-4 py-2 text-sm text-terra-700">
@@ -488,16 +517,16 @@ export default function ListView({
       )}
       {!online && (
         <div className="mb-3 animate-rise rounded-tile bg-ink-900 px-4 py-2.5 text-sm text-white">
-          Offline — je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
+          Offline. je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
         </div>
       )}
       {showIntro && (
         <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
           <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
           <ul className="mb-2 flex flex-col gap-1">
-            <li>· Tik op een tegel om iets toe te voegen — nog een tik haalt het eraf.</li>
+            <li>· Tik op een tegel om iets toe te voegen. nog een tik haalt het eraf.</li>
             <li>· Houd een tegel even vast om een aantal te kiezen.</li>
-            <li>· Deel de lijst met je gezin en vink samen af — alles synct vanzelf.</li>
+            <li>· Deel de lijst met je gezin en vink samen af. alles synct vanzelf.</li>
           </ul>
           <button
             onClick={() => {
@@ -570,12 +599,119 @@ export default function ListView({
           </div>
           {locError && (
             <p className="mt-2 text-sm text-terra-700">
-              Locatie bepalen lukte niet — probeer een postcode.
+              Locatie bepalen lukte niet. probeer een postcode.
             </p>
           )}
         </div>
       )}
 
+      {/* De lijst zelf leeft in de drawer (cart-model) */}
+      {/* Suggesties */}
+      {(suggestions.length > 0 || rebuy.length > 0) && (
+        <div className="mt-6">
+          {suggestions.length > 0 && (
+            <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={toggleTile} />
+          )}
+          {rebuy.length > 0 && (
+            <TileRow title="Vorige keer gekocht" items={rebuy} onAdd={toggleTile} />
+          )}
+        </div>
+      )}
+
+      {/* Toevoegen: sticky categorie-springer + tegelwand; het zoekveld staat vast onderaan */}
+      <h2 className="mt-8 mb-2 text-lg font-semibold">{t("lists.addItems")}</h2>
+      <div className="sticky top-0 z-20 -mx-4 bg-cream-50/95 px-4 pb-1 pt-2 backdrop-blur">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {orderedCategories.map((c) => (
+            <a
+              key={c.key}
+              href={`#cat-${c.key}`}
+              className="shrink-0 rounded-full bg-cream-100 px-3 py-1.5 text-sm hover:bg-cream-200"
+            >
+              {c.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {(
+        <div className="mt-3">
+          {orderedCategories.map((cat) => {
+            const items = CATALOG.filter((i) => i.category === cat.key);
+            if (!items.length) return null;
+            return (
+              <section key={cat.key} id={`cat-${cat.key}`} className="mb-5 scroll-mt-28">
+                <h3 className="mb-2 text-sm font-semibold text-ink-500">{cat.label}</h3>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {items.map((item) => (
+                    <AddTile
+                      key={item.key}
+                      item={item}
+                      added={openKeys.has(item.key)}
+                      nearby={countNearby(item)}
+                      onAdd={() => toggleTile(item)}
+                      onLongPress={() => setQtyItem(item)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Drawer-pill: altijd zichtbaar boven de toevoegbalk */}
+      <button
+        onClick={() => setDrawerOpen(true)}
+        className="fixed inset-x-0 bottom-[7.4rem] z-40 mx-auto flex w-[calc(100%-2rem)] max-w-2xl items-center justify-between rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-white shadow-lg sm:bottom-[3.9rem]"
+        style={kbOffset > 0 ? { display: "none" } : undefined}
+      >
+        <span className="inline-flex items-center gap-2">
+          <ListIcon width={16} height={16} />
+          Je lijst
+        </span>
+        <span className="inline-flex items-center gap-2">
+          {t("lists.itemsOpen", { count: snapshot.open.length })}
+          <ChevronDownIcon width={16} height={16} className="rotate-180" />
+        </span>
+      </button>
+
+      {/* De lijst-drawer (cart-model) */}
+      <div className={`fixed inset-0 z-50 ${drawerOpen ? "" : "pointer-events-none"}`}>
+        <div
+          onClick={() => setDrawerOpen(false)}
+          className={`absolute inset-0 bg-ink-900/40 transition-opacity duration-300 ${
+            drawerOpen ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Je lijst"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setDrawerOpen(false);
+          }}
+          className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-tile bg-cream-50 shadow-2xl transition-transform duration-300 ${
+            drawerOpen ? "translate-y-0" : "translate-y-full"
+          }`}
+        >
+          <div className="mx-auto max-w-2xl px-4 pb-10">
+            <button
+              onClick={() => setDrawerOpen(false)}
+              className="mx-auto block w-full pt-2.5 pb-1"
+              aria-label="Lijst sluiten"
+            >
+              <span className="mx-auto block h-1.5 w-12 rounded-full bg-cream-300" />
+            </button>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold">{list.name}</h2>
+              <button
+                onClick={share}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
+              >
+                <ShareIcon width={16} height={16} /> {t("lists.share")}
+              </button>
+            </div>
       {/* Open items */}
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink-500">
@@ -715,7 +851,7 @@ export default function ListView({
         {snapshot.open.length === 0 && (
           <li className="rounded-tile border border-dashed border-cream-300 p-5 text-center">
             <p className="mb-3 text-ink-500">
-              Je lijst is leeg — probeer eens iets van het seizoen:
+              Je lijst is leeg. probeer eens iets van het seizoen:
             </p>
             <div className="grid grid-cols-4 gap-2">
               {seasonal.slice(0, 4).map((item) => (
@@ -759,28 +895,99 @@ export default function ListView({
           </ul>
         </>
       )}
+          </div>
+        </div>
+      </div>
 
-      {/* Suggesties */}
-      {(suggestions.length > 0 || rebuy.length > 0) && (
-        <div className="mt-6">
-          {suggestions.length > 0 && (
-            <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={toggleTile} />
-          )}
-          {rebuy.length > 0 && (
-            <TileRow title="Vorige keer gekocht" items={rebuy} onAdd={toggleTile} />
-          )}
+      {/* Vast toevoeg-veld onderaan (Bring-patroon): altijd binnen handbereik */}
+      {query && (searchResults.length > 0 || producerHits.length > 0 || query.trim()) && (
+        <div
+          className="fixed inset-x-0 bottom-[7.9rem] z-40 mx-auto max-w-2xl px-4 sm:bottom-[4.2rem]"
+          style={kbOffset > 0 ? { bottom: kbOffset + 62 } : undefined}
+        >
+          <div className="max-h-80 divide-y divide-cream-100 overflow-y-auto rounded-tile border border-cream-200 bg-white shadow-xl">
+            {searchResults.map((item) => {
+              const added = openKeys.has(item.key);
+              const n = countNearby(item);
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => pickFromPanel(item)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-cream-50"
+                >
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tintForCategory(item.category).tileBg}`}>
+                    {createElement(iconForItem(item), {
+                      width: 22,
+                      height: 22,
+                      className: tintForCategory(item.category).icon,
+                    })}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{item.label}</span>
+                    {n > 0 && (
+                      <span className="text-xs text-terra-700">{t("lists.nearbyCount", { n })}</span>
+                    )}
+                  </span>
+                  {added ? (
+                    <CheckIcon width={18} height={18} className="shrink-0 text-terra-600" />
+                  ) : (
+                    <PlusIcon width={18} height={18} className="shrink-0 text-terra-500" />
+                  )}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => {
+                addFreeText(query);
+                setQuery("");
+                setProducerHits([]);
+                searchInputRef.current?.focus();
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-cream-50"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-cream-300">
+                <PlusIcon width={18} height={18} className="text-terra-500" />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm">
+                {t("lists.freeTextAdd", { label: query })}
+              </span>
+            </button>
+            {producerHits.length > 0 && (
+              <div className="px-4 py-2.5">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  {t("lists.producersFound")}
+                </p>
+                <ul className="flex flex-col gap-1.5">
+                  {producerHits.map((p) => (
+                    <li key={p.id} className="text-sm">
+                      <a href={`/producent/${p.slug}`} className="font-medium hover:underline">
+                        {p.name}
+                      </a>
+                      <span className="text-ink-500">
+                        {" "}
+                        {p.city ? `· ${p.city}` : ""}
+                        {p.distanceKm !== undefined &&
+                          ` · ${t("common.distanceKm", { km: p.distanceKm.toFixed(1) })}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
-
-      {/* Toevoegen: sticky zoekbalk + categorie-springer + tegelwand */}
-      <h2 className="mt-8 mb-2 text-lg font-semibold">{t("lists.addItems")}</h2>
-      <div className="sticky top-0 z-20 -mx-4 bg-cream-50/95 px-4 pb-2 pt-2 backdrop-blur">
+      <div
+        className="fixed inset-x-0 bottom-16 z-40 border-t border-cream-200 bg-white/95 px-4 py-2 backdrop-blur sm:bottom-0"
+        style={kbOffset > 0 ? { bottom: kbOffset } : undefined}
+      >
         <form
           onSubmit={quickAdd}
-          className="flex items-center gap-2 rounded-full border border-cream-300 bg-white px-4 py-2.5"
+          className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-cream-300 bg-cream-50 px-4 py-2.5"
         >
-          <SearchIcon width={16} height={16} className="shrink-0 text-ink-300" />
+          <SearchIcon width={16} height={16} className="shrink-0 text-ink-500" />
           <input
+            ref={searchInputRef}
             value={query}
             onChange={(e) => {
               const value = e.target.value;
@@ -803,98 +1010,11 @@ export default function ListView({
             </button>
           )}
         </form>
-        {!query && (
-          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-            {orderedCategories.map((c) => (
-              <a
-                key={c.key}
-                href={`#cat-${c.key}`}
-                className="shrink-0 rounded-full bg-cream-100 px-3 py-1.5 text-sm hover:bg-cream-200"
-              >
-                {c.label}
-              </a>
-            ))}
-          </div>
-        )}
       </div>
-
-      {query ? (
-        <div className="mb-4 mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {searchResults.map((item) => (
-            <AddTile
-              key={item.key}
-              item={item}
-              added={openKeys.has(item.key)}
-              nearby={countNearby(item)}
-              onAdd={() => {
-                toggleTile(item);
-                setQuery("");
-              }}
-              onLongPress={() => setQtyItem(item)}
-            />
-          ))}
-          <button
-            onClick={() => {
-              addFreeText(query);
-              setQuery("");
-            }}
-            className="flex flex-col items-center justify-center gap-1.5 rounded-tile border-2 border-dashed border-cream-300 p-3 text-center text-sm hover:border-terra-400"
-          >
-            <PlusIcon width={22} height={22} className="text-terra-500" />
-            <span className="line-clamp-2">{t("lists.freeTextAdd", { label: query })}</span>
-          </button>
-          {producerHits.length > 0 && (
-            <div className="col-span-full mt-1 rounded-tile border border-cream-200 bg-white p-3">
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500">
-                {t("lists.producersFound")}
-              </p>
-              <ul className="flex flex-col gap-2">
-                {producerHits.map((p) => (
-                  <li key={p.id} className="text-sm">
-                    <a href={`/producent/${p.slug}`} className="font-medium hover:underline">
-                      {p.name}
-                    </a>
-                    <span className="text-ink-500">
-                      {" "}
-                      {p.city ? `· ${p.city}` : ""}
-                      {p.distanceKm !== undefined &&
-                        ` · ${t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} · ${t("common.travel", { min: travelInfo(p.distanceKm).minutes, mode: travelInfo(p.distanceKm).mode })}`}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mt-3">
-          {orderedCategories.map((cat) => {
-            const items = CATALOG.filter((i) => i.category === cat.key);
-            if (!items.length) return null;
-            return (
-              <section key={cat.key} id={`cat-${cat.key}`} className="mb-5 scroll-mt-28">
-                <h3 className="mb-2 text-sm font-semibold text-ink-500">{cat.label}</h3>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {items.map((item) => (
-                    <AddTile
-                      key={item.key}
-                      item={item}
-                      added={openKeys.has(item.key)}
-                      nearby={countNearby(item)}
-                      onAdd={() => toggleTile(item)}
-                      onLongPress={() => setQtyItem(item)}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      )}
 
       {/* Undo-snackbar */}
       {undo && (
-        <div className="animate-snack fixed bottom-20 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
+        <div className="animate-snack fixed bottom-[11.2rem] sm:bottom-[7.5rem] left-1/2 z-[60] z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
           <span className="truncate">{undo.label}</span>
           <button
             onClick={() => {

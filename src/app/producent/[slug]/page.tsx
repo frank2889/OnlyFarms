@@ -6,6 +6,7 @@ import { t } from "@/lib/i18n";
 import { producerBySlug } from "@/lib/queries/producers";
 import { LeafIcon, RouteIcon, SproutIcon, VendingIcon } from "@/components/icons";
 import ReportForm from "@/components/ReportForm";
+import ProducerActions from "@/components/ProducerActions";
 
 export const revalidate = 3600;
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const producer = await producerBySlug((await params).slug);
   if (!producer) return {};
-  const title = `${producer.name}${producer.city ? ` — ${producer.city}` : ""}`;
+  const title = `${producer.name}${producer.city ? `, ${producer.city}` : ""}`;
   return {
     title: `${title} | ${BRAND.name}`,
     description:
@@ -55,7 +56,7 @@ export default async function ProducerPage({
   };
 
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-16">
+    <main className="mx-auto max-w-2xl px-4 pb-40">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -112,6 +113,12 @@ export default async function ProducerPage({
       </div>
 
       {producer.description && <p className="mb-6 leading-relaxed">{producer.description}</p>}
+
+      <ProducerActions
+        producerName={producer.name}
+        producerSlug={producer.slug}
+        products={producer.products}
+      />
 
       <dl className="mb-6 flex flex-col gap-3 rounded-tile border border-cream-200 bg-white p-4">
         {producer.products.length > 0 && (

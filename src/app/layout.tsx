@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     apple: "/icon-192.png",
   },
   title: {
-    default: `${BRAND.name} — ${BRAND.tagline}`,
+    default: `${BRAND.name}. ${BRAND.tagline}`,
     template: `%s | ${BRAND.name}`,
   },
   description: BRAND.tagline,

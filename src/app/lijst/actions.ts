@@ -47,10 +47,23 @@ export async function createListAction(name: string): Promise<{ token: string; n
 
 export async function addItemAction(
   token: string,
-  item: { catalogKey?: string | null; label: string; qty?: string; note?: string }
+  item: {
+    catalogKey?: string | null;
+    label: string;
+    qty?: string;
+    note?: string;
+    store?: string;
+    producerSlug?: string | null;
+  }
 ): Promise<void> {
   const list = await requireList(token);
-  await addItem(list.id, item);
+  let storeSuggestedBy: string | null | undefined;
+  if (item.store) {
+    const userId = await currentUserId();
+    const user = userId ? await userById(userId) : null;
+    storeSuggestedBy = user?.name ?? "gast";
+  }
+  await addItem(list.id, { ...item, storeSuggestedBy });
   await trackEvent("item_added", { item: item.catalogKey ?? item.label });
   await bump(token);
 }

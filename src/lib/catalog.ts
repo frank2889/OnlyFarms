@@ -206,6 +206,14 @@ export function catalogItem(key: string): CatalogItem | undefined {
   return CATALOG.find((i) => i.key === key);
 }
 
+/** Producten-token van een producent naar het best passende catalogusitem */
+export function itemForToken(token: string): CatalogItem | undefined {
+  return (
+    CATALOG.find((i) => i.key === token) ??
+    CATALOG.find((i) => i.matchTokens.includes(token))
+  );
+}
+
 export function itemsInSeason(month: number): CatalogItem[] {
   return CATALOG.filter((i) => i.seasonMonths?.includes(month));
 }

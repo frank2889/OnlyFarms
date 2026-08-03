@@ -25,11 +25,8 @@ export default async function Home() {
           <SproutIcon width={22} height={22} className="text-terra-500" />
           {BRAND.name}
         </span>
-        <nav className="flex gap-4 text-sm">
-          <Link href="/producenten" className="text-terra-700 underline">
-            {t("producers.title")}
-          </Link>
-          <Link href="/verkopen" className="text-terra-700 underline">
+        <nav className="flex items-center gap-4 text-sm">
+          <Link href="/verkopen" className="hidden text-terra-700 underline sm:inline">
             Verkopen
           </Link>
           <Link href={user ? "/profiel" : "/inloggen"} className="text-terra-700 underline">
@@ -38,15 +35,15 @@ export default async function Home() {
         </nav>
       </header>
 
-      <section className={`${season.heroBg} px-6 py-20 text-center`}>
+      <section className={`${season.heroBg} px-6 py-10 text-center sm:py-16`}>
         <p className={`mb-3 text-sm font-semibold uppercase tracking-wide ${season.accentText}`}>
           {season.label}
         </p>
-        <h1 className="mx-auto max-w-2xl text-4xl font-bold sm:text-5xl">
+        <h1 className="mx-auto max-w-2xl text-3xl font-bold sm:text-5xl">
           {t("home.heroTitle")}
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-ink-500">{t("home.heroText")}</p>
-        <div className="mt-8">
+        <p className="mx-auto mt-3 max-w-xl text-base text-ink-500 sm:text-lg">{t("home.heroText")}</p>
+        <div className="mt-6">
           <HomeListPanel
             serverLists={serverLists.map((l) => ({ token: l.token, name: l.name }))}
           />

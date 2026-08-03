@@ -19,9 +19,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     () => ""
   );
   const badgeCount = Number(badge) || 0;
+  // Tab "Lijst" opent direct je actieve (nieuwste) lijst; zonder lijsten het overzicht
+  const rawLists = useSyncExternalStore(
+    subscribeStorage,
+    () => localStorage.getItem("of_lists") ?? "[]",
+    () => "[]"
+  );
+  let listHref = "/lijsten";
+  try {
+    const lists: { token: string }[] = JSON.parse(rawLists);
+    if (lists[0]?.token) listHref = `/lijst/${lists[0].token}`;
+  } catch {}
 
   const tabs = [
-    { href: "/lijsten", label: "Lijst", Icon: ListIcon, active: pathname.startsWith("/lijst"), badge: badgeCount },
+    { href: listHref, label: "Lijst", Icon: ListIcon, active: pathname.startsWith("/lijst"), badge: badgeCount },
     { href: "/producenten", label: "Ontdek", Icon: StoreIcon, active: pathname.startsWith("/produc") || pathname.startsWith("/provincie") },
     { href: "/profiel", label: "Profiel", Icon: UserIcon, active: pathname.startsWith("/profiel") || pathname.startsWith("/inloggen") },
   ];
@@ -41,7 +52,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Icon width={24} height={24} />
               <span className="text-xs font-medium">{label}</span>
-              {!!count && href === "/lijsten" && (
+              {!!count && label === "Lijst" && (
                 <span className="absolute right-3 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra-500 px-1 text-[11px] font-bold text-white">
                   {count}
                 </span>

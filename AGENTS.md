@@ -18,7 +18,9 @@ Live: https://onlyfarms-ten.vercel.app · Repo: github.com/frank2889/OnlyFarms (
 4. **Naam is werktitel**: alles via `src/lib/brand.ts`, nergens "OnlyFarms" hardcoden.
 5. **Alle UI-teksten** in `src/messages/nl.json` via `t()` uit `src/lib/i18n.ts` (i18n-klaar).
 6. **Alles moet instant voelen**: optimistic UI is de norm (zie `act()` + `useOptimistic` in `src/components/ListView.tsx`); offline wacht een actie op reconnect i.p.v. te falen.
-7. **Platformrol bewaken**: geen betalingen via het platform, geen partij bij de verkoop (buiten NVWA/DAC7 blijven). Alcohol-items dragen `nix18: true`.
+7. **Geen em-dashes** in gebruikersteksten; vervang door punt, komma of dubbele punt.
+8. **Cart-drawer-model**: de lijst is een drawer (winkelwagen-patroon), de tegelwand is de "winkel"; toevoegen kan overal via de vaste onderbalk en vanaf producentpagina's ("hier halen" vult de winkel in).
+9. **Platformrol bewaken**: geen betalingen via het platform, geen partij bij de verkoop (buiten NVWA/DAC7 blijven). Alcohol-items dragen `nix18: true`.
 
 ## Architectuur in het kort
 

@@ -61,7 +61,7 @@ export default function LoginPage() {
         />
         {error && (
           <p className="rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">
-            Inloggen mislukt — controleer je e-mailadres en wachtwoord.
+            Inloggen mislukt. controleer je e-mailadres en wachtwoord.
           </p>
         )}
         <button

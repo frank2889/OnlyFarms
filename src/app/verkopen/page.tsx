@@ -62,7 +62,7 @@ export default function VerkopenPage() {
         Voor bedrijven met een KVK-inschrijving. Na aanmelding volgt een
         handmatige beoordeling. OnlyFarms is een platform dat vraag en aanbod
         bij elkaar brengt: wij verwerken geen betalingen en zijn geen partij
-        bij de verkoop — jij blijft als verkoper zelf verantwoordelijk voor je
+        bij de verkoop. jij blijft als verkoper zelf verantwoordelijk voor je
         producten en voor het naleven van de regels die daarvoor gelden.
       </p>
 

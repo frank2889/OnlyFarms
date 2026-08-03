@@ -74,7 +74,7 @@ export default async function ProfilePage() {
       <h2 className="mb-2 font-semibold">Lijsten van jou en je huishouden</h2>
       {myLists.length === 0 ? (
         <p className="rounded-tile border border-dashed border-cream-300 p-6 text-center text-ink-500">
-          Nog geen lijsten — <Link href="/lijsten" className="underline">maak er een</Link>.
+          Nog geen lijsten. <Link href="/lijsten" className="underline">maak er een</Link>.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

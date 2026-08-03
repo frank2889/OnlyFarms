@@ -35,18 +35,36 @@ export default async function ListPage({
       keys.map(async (key) => {
         const item = catalogItem(key);
         if (!item || item.matchTokens.length === 0) return;
-        const result = await nearbyProducers({
-          lat: list.lat!,
-          lng: list.lng!,
-          radiusKm: list.radiusKm,
-          tokens: item.matchTokens,
-          limit: 10,
-        });
+        // Laag 1: producenten met dit specifieke product; laag 2: alleen de categorie (suggestie)
+        const categoryTokens = item.matchTokens.filter((token) => token !== item.key);
+        const [exactResult, categoryResult] = await Promise.all([
+          nearbyProducers({
+            lat: list.lat!,
+            lng: list.lng!,
+            radiusKm: list.radiusKm,
+            tokens: [item.key],
+            limit: 6,
+          }),
+          categoryTokens.length
+            ? nearbyProducers({
+                lat: list.lat!,
+                lng: list.lng!,
+                radiusKm: list.radiusKm,
+                tokens: categoryTokens,
+                limit: 8,
+              })
+            : Promise.resolve({ producers: [], usedFallback: false }),
+        ]);
+        const exactIds = new Set(exactResult.producers.map((p) => p.id));
+        const exact = exactResult.usedFallback ? [] : exactResult.producers;
         matches[key] = {
           catalogKey: key,
-          members: result.producers.filter((p) => p.isMember),
-          guide: result.producers.filter((p) => !p.isMember),
-          usedFallback: result.usedFallback,
+          exact,
+          category: categoryResult.usedFallback
+            ? []
+            : categoryResult.producers.filter((p) => !exactIds.has(p.id)).slice(0, 5),
+          usedFallback:
+            exact.length === 0 && (categoryResult.usedFallback || categoryResult.producers.length === 0),
         };
       })
     );

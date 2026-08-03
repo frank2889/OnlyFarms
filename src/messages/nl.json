@@ -54,7 +54,13 @@
     "nearbyCount": "{n} in de buurt",
     "producersFound": "Producenten in de buurt",
     "priorityLabel": "Urgentie",
-    "orderCategories": "Volgorde aanpassen"
+    "orderCategories": "Volgorde aanpassen",
+    "sellsThis": "Verkoopt dit",
+    "suggestion": "Suggestie: verkoopt wel de categorie",
+    "supermarketFallback": "Niet lokaal gevonden? Dit vind je ook bij de supermarkt.",
+    "supermarketItem": "Haal je bij de supermarkt",
+    "rowTipExact": "Bij {name} · {km} km",
+    "rowTipSuggestion": "Suggestie: {name} · {km} km"
   },
   "producers": {
     "title": "Lokale producenten",

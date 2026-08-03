@@ -803,7 +803,23 @@ export default function ListView({
                     </p>
                   )}
                   <ItemBadges item={item} />
-                  {!item.store && item.id > 0 && (
+                  {!item.store && match && (match.exact[0] ?? match.category[0]) && (
+                    <p className="mt-0.5 truncate text-xs text-terra-700">
+                      {match.exact[0]
+                        ? t("lists.rowTipExact", {
+                            name: match.exact[0].name,
+                            km: (match.exact[0].distanceKm ?? 0).toFixed(1),
+                          })
+                        : t("lists.rowTipSuggestion", {
+                            name: match.category[0].name,
+                            km: (match.category[0].distanceKm ?? 0).toFixed(1),
+                          })}
+                    </p>
+                  )}
+                  {!item.store && cat && cat.matchTokens.length === 0 && (
+                    <p className="mt-0.5 text-xs text-ink-500">{t("lists.supermarketItem")}</p>
+                  )}
+                  {!item.store && item.id > 0 && !match && cat && cat.matchTokens.length > 0 && (
                     <button
                       onClick={() => setEditItem(item.id)}
                       className="mt-0.5 text-xs text-ink-500 underline hover:text-terra-700"
@@ -847,12 +863,11 @@ export default function ListView({
                   <summary className="cursor-pointer text-sm text-terra-700">
                     {t("lists.whereToBuy")}{" "}
                     <span className="text-ink-500">
-                      ({match.members.length + match.guide.length})
+                      ({match.exact.length + match.category.length})
                     </span>
                   </summary>
                   <MatchList
                     match={match}
-                    radiusKm={list.radiusKm}
                     onPick={(name, slug) =>
                       act(() =>
                         updateItemAction(list.token, item.id, { store: name, producerSlug: slug })
@@ -1222,27 +1237,26 @@ function TileRow({
 
 function MatchList({
   match,
-  radiusKm,
   onPick,
 }: {
   match: ItemMatch;
-  radiusKm: number;
+  radiusKm?: number;
   onPick?: (name: string, slug: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 pb-1 pt-2">
-      {match.usedFallback && (
-        <p className="text-xs text-ink-500">{t("lists.nearestFallback", { km: radiusKm })}</p>
+      {match.exact.length > 0 && (
+        <ProducerRows title={t("lists.sellsThis")} producers={match.exact} member onPick={onPick} />
       )}
-      {match.members.length > 0 && (
-        <ProducerRows title={t("lists.membersNearby")} producers={match.members} member onPick={onPick} />
+      {match.category.length > 0 && (
+        <ProducerRows title={t("lists.suggestion")} producers={match.category} onPick={onPick} />
       )}
-      {match.guide.length > 0 && (
-        <ProducerRows title={t("lists.guideNearby")} producers={match.guide} onPick={onPick} />
-      )}
-      {match.members.length + match.guide.length === 0 && (
+      {match.exact.length + match.category.length === 0 && (
         <p className="text-sm text-ink-500">{t("lists.noMatch")}</p>
       )}
+      <p className="border-t border-cream-100 pt-2 text-xs text-ink-500">
+        {t("lists.supermarketFallback")}
+      </p>
     </div>
   );
 }
@@ -1254,7 +1268,7 @@ function ProducerRows({
   onPick,
 }: {
   title: string;
-  producers: ItemMatch["members"];
+  producers: Producer[];
   member?: boolean;
   onPick?: (name: string, slug: string) => void;
 }) {
@@ -1271,7 +1285,7 @@ function ProducerRows({
               >
                 {p.name}
               </a>
-              {member && (
+              {member && p.isMember && (
                 <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
                   {t("producers.memberBadge")}
                 </span>

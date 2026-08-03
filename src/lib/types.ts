@@ -58,7 +58,9 @@ export type ShoppingList = {
 
 export type ItemMatch = {
   catalogKey: string;
-  members: Producer[];
-  guide: Producer[];
+  /** verkoopt dit specifieke product (token-match op het item zelf) */
+  exact: Producer[];
+  /** suggestie: verkoopt de categorie, niet zeker of ze dit product hebben */
+  category: Producer[];
   usedFallback: boolean;
 };

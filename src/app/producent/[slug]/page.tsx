@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { producerBySlug } from "@/lib/queries/producers";
+import { hoursStatusText } from "@/lib/opening-hours";
 import { LeafIcon, RouteIcon, SproutIcon, VendingIcon } from "@/components/icons";
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -136,7 +137,19 @@ export default async function ProducerPage({
         {producer.openingHours && (
           <div>
             <dt className="text-sm font-semibold text-ink-500">{t("producers.openingHours")}</dt>
-            <dd className="mt-1">{producer.openingHours}</dd>
+            {(() => {
+              const status = hoursStatusText(producer.openingHours);
+              return status ? (
+                <dd
+                  className={`mt-1 ${
+                    status.startsWith("Nu open") ? "font-medium text-terra-700" : ""
+                  }`}
+                >
+                  {status}
+                </dd>
+              ) : null;
+            })()}
+            <dd className="mt-1 text-sm text-ink-500">{producer.openingHours}</dd>
           </div>
         )}
         <div className="flex flex-wrap gap-3">

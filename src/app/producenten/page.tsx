@@ -8,6 +8,7 @@ import { geocode } from "@/lib/geocode";
 import { t } from "@/lib/i18n";
 import { slugify } from "@/lib/slug";
 import { travelInfo } from "@/lib/travel";
+import { hoursStatusText } from "@/lib/opening-hours";
 import { allProvinces, nearbyProducers } from "@/lib/queries/producers";
 import { iconForCategory } from "@/components/catalog-icons";
 import { RouteIcon, SproutIcon } from "@/components/icons";
@@ -138,11 +139,21 @@ export default async function ProducersPage({
                   <p className="truncate text-sm text-ink-500">
                     {[p.city, p.products.slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
                   </p>
-                  {p.openingHours && (
-                    <p className="truncate text-sm text-ink-700">
-                      {t("producers.openingHours")}: {p.openingHours}
-                    </p>
-                  )}
+                  {p.openingHours &&
+                    (() => {
+                      const status = hoursStatusText(p.openingHours);
+                      return (
+                        <p
+                          className={`truncate text-sm ${
+                            status?.startsWith("Nu open")
+                              ? "font-medium text-terra-700"
+                              : "text-ink-700"
+                          }`}
+                        >
+                          {status ?? `${t("producers.openingHours")}: ${p.openingHours}`}
+                        </p>
+                      );
+                    })()}
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
                     {p.distanceKm !== undefined && (
                       <span>

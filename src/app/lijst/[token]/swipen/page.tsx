@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
-import { BASICS, catalogItem, itemsInSeason } from "@/lib/catalog";
+import { currentUserId } from "@/auth";
+import { BASICS, CATALOG, catalogItem, itemsInSeason } from "@/lib/catalog";
 import { boughtStatsFor, getListByToken, getListItems } from "@/lib/queries/lists";
 import { swipeSignalsFor } from "@/lib/queries/swipe";
 import { SproutIcon } from "@/components/icons";
@@ -29,32 +30,51 @@ export default async function SwipePage({
   const list = await getListByToken(token);
   if (!list) notFound();
 
+  const userId = await currentUserId();
   const [items, stats, signals] = await Promise.all([
     getListItems(list.id),
     boughtStatsFor({ id: list.id, householdId: list.householdId ?? null }),
-    swipeSignalsFor({ id: list.id, householdId: list.householdId ?? null }),
+    swipeSignalsFor({ listId: list.id, userId }),
   ]);
   const openKeys = new Set(items.open.map((i) => i.catalogKey).filter(Boolean));
 
-  // Kandidatenpool: eigen historie, seizoen, basisset; wat al open op de lijst
-  // staat wordt niet nog eens voorgesteld. Beide modi husselen deze pool door
-  // elkaar (geen vaste categorie-volgorde) — dat maakt aanvullen impulsiever.
-  const cards: SwipeCard[] = [];
+  // Winkelmodus: eigen historie, seizoen, basisset, willekeurig door elkaar
+  // (geen vaste categorie-volgorde); wat al open staat wordt niet voorgesteld.
+  const shopPool: SwipeCard[] = [];
   const seen = new Set<string>();
   const push = (key: string, times?: number) => {
     if (seen.has(key) || openKeys.has(key)) return;
     const item = catalogItem(key);
     if (!item) return;
     seen.add(key);
-    cards.push({ key, label: item.label, category: item.category, times });
+    shopPool.push({ key, label: item.label, category: item.category, times });
   };
   for (const s of stats) push(s.key, s.times);
   for (const item of itemsInSeason(new Date().getMonth() + 1)) push(item.key);
   for (const key of BASICS) push(key);
+  const shopCards = weightedShuffle(shopPool, () => 1).slice(0, 30);
 
+  // Smaakmodus (bèta): de HELE catalogus als pool (incl. supermarkt-items,
+  // die horen er bewust bij), gewogen op het persoonlijke swipe-profiel plus
+  // een zetje voor eerder gekocht en seizoen. Wat je vaak wegswipet zakt weg
+  // maar verdwijnt nooit helemaal: smaak kan veranderen.
   const signalScore = new Map(signals.map((s) => [s.key, s.score]));
-  const shopCards = weightedShuffle(cards, () => 1).slice(0, 30);
-  const tasteCards = weightedShuffle(cards, (c) => (signalScore.get(c.key) ?? 0) + 3).slice(0, 30);
+  const boughtTimes = new Map(stats.map((s) => [s.key, s.times]));
+  const seasonKeys = new Set(itemsInSeason(new Date().getMonth() + 1).map((i) => i.key));
+  const tastePool: SwipeCard[] = CATALOG.filter((i) => !openKeys.has(i.key)).map((i) => ({
+    key: i.key,
+    label: i.label,
+    category: i.category,
+    times: boughtTimes.get(i.key),
+  }));
+  const tasteCards = weightedShuffle(
+    tastePool,
+    (c) =>
+      3 +
+      (signalScore.get(c.key) ?? 0) +
+      (boughtTimes.has(c.key) ? 2 : 0) +
+      (seasonKeys.has(c.key) ? 1 : 0)
+  ).slice(0, 30);
 
   return (
     <main className="mx-auto max-w-md px-4 pb-24">

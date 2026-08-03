@@ -136,7 +136,12 @@ export async function recordSwipeAction(
   liked: boolean
 ): Promise<void> {
   const list = await requireList(token);
-  await recordSwipeSignal({ id: list.id, householdId: list.householdId ?? null }, catalogKey, liked);
+  const userId = await currentUserId();
+  await recordSwipeSignal(
+    { listId: list.id, householdId: list.householdId ?? null, userId },
+    catalogKey,
+    liked
+  );
 }
 
 export async function updateItemAction(

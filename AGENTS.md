@@ -4,7 +4,7 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Raccolo (werktitel, repo/projectmap heten nog OnlyFarms) — projectkennis
+# OnlyFarms (werktitel) — projectkennis
 
 Lokale-producenten-platform met **gedeelde boodschappenlijsten (Bring-model) als kern**: lijst maken → per item zien welke lokale producent het in de buurt verkoopt → samen afvinken. Geen kaart, nergens. Volledig productplan en status: [docs/PLAN.md](docs/PLAN.md); teamuitleg: [README.md](README.md).
 
@@ -14,8 +14,8 @@ Live: https://onlyfarms-ten.vercel.app · Repo: github.com/frank2889/OnlyFarms (
 
 1. **Bring is de UX-lat.** Bij elke interactievraag: doe wat de Bring-app doet (tegel-toggle, long-press = aantal, undo, sticky zoeken, bottom-nav). Nooit hun assets/code kopiëren — alleen patronen. Toegankelijk voor oudere gebruikers: grote tikvlakken, leesbare labels, contrast.
 2. **Geen emoji's, nergens.** Alleen eigen SVG-iconen: UI-iconen in `src/components/icons.tsx` (lijnstijl), item-iconen in `src/components/food-icons.tsx` (gevuld, twee-tonig via currentColor + CSS-vars). Elk catalogusitem een eigen, onderscheidend silhouet.
-3. **Max 3 kleurfamilies**: `terra`/`ink`/`cream` als tokens in `src/app/globals.css` — de enige plek met hexwaarden. **Bijgewerkt 3 aug 2026 op basis van het merkblad: `terra` is nu groen** (was oranje-terracotta; tokennaam ongewijzigd, dus geen code-refactor nodig), `ink` groen-getint donker, `cream` warm licht. Eén losse `--color-accent` (terracotta #c97553) voor een smal accent (bijv. het vinkje in het logo-icoon), bewust geen eigen kleurenfamilie. Geen dark mode (bewust licht). Seizoensaccenten via `src/lib/season.ts`.
-4. **Naam is werktitel**: "Raccolo" is de huidige favoriet (zie [docs/NAAMKEUZE.md](docs/NAAMKEUZE.md)), nog geen definitief besluit. Alles via `src/lib/brand.ts`, nergens de naam hardcoden. Repo en projectmap heten om historische redenen nog "OnlyFarms".
+3. **Max 3 kleurfamilies**: `terra`/`ink`/`cream` als tokens in `src/app/globals.css` — de enige plek met hexwaarden. Geen dark mode (bewust licht). Seizoensaccenten via `src/lib/season.ts`.
+4. **Naam is werktitel**: alles via `src/lib/brand.ts`, nergens "OnlyFarms" hardcoden.
 5. **Alle UI-teksten** in `src/messages/nl.json` via `t()` uit `src/lib/i18n.ts` (i18n-klaar).
 6. **Alles moet instant voelen**: optimistic UI is de norm (zie `act()` + `useOptimistic` in `src/components/ListView.tsx`); offline wacht een actie op reconnect i.p.v. te falen.
 7. **Geen em-dashes** in gebruikersteksten; vervang door punt, komma of dubbele punt.

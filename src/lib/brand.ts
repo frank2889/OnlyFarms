@@ -1,8 +1,6 @@
-// Werktitel/voorlopige naam (favoriet uit docs/NAAMKEUZE.md, nog GEEN definitief
-// besluit) — nergens anders hardcoden, alles via deze constante.
-// domain is bewust nog de Vercel-URL: het echte domein is nog niet geregistreerd/gekoppeld.
+// Werktitel — de naam kan nog wijzigen; nergens anders hardcoden.
 export const BRAND = {
-  name: "Raccolo",
-  tagline: "Jouw lijst. Lokale oogst.",
+  name: "OnlyFarms",
+  tagline: "Je boodschappenlijst, vers van de lokale producent",
   domain: "onlyfarms-ten.vercel.app",
 } as const;

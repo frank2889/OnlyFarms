@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { producerBySlug } from "@/lib/queries/producers";
+import { publicOffersForSeller } from "@/lib/queries/portal";
 import { hoursStatusText } from "@/lib/opening-hours";
-import { LeafIcon, RouteIcon, SproutIcon, VendingIcon } from "@/components/icons";
+import { LeafIcon, RouteIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 
@@ -34,6 +36,9 @@ export default async function ProducerPage({
 }) {
   const producer = await producerBySlug((await params).slug);
   if (!producer) notFound();
+  const offers = producer.claimedBySellerId
+    ? await publicOffersForSeller(producer.claimedBySellerId)
+    : [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -113,7 +118,72 @@ export default async function ProducerPage({
         )}
       </div>
 
+      {producer.photos.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-2">
+          <Image
+            src={producer.photos[0]}
+            alt={producer.name}
+            width={800}
+            height={600}
+            priority
+            className={`aspect-4/3 w-full rounded-tile border border-cream-200 object-cover ${
+              producer.photos.length === 1 ? "col-span-2 aspect-2/1" : "row-span-2 h-full"
+            }`}
+          />
+          {producer.photos.slice(1, 3).map((url) => (
+            <Image
+              key={url}
+              src={url}
+              alt={producer.name}
+              width={400}
+              height={300}
+              className="aspect-4/3 w-full rounded-tile border border-cream-200 object-cover"
+            />
+          ))}
+        </div>
+      )}
+
       {producer.description && <p className="mb-6 leading-relaxed">{producer.description}</p>}
+
+      {offers.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-lg font-bold">{t("producers.offersTitle")}</h2>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {offers.map((offer) => (
+              <li
+                key={offer.id}
+                className="overflow-hidden rounded-tile border border-cream-200 bg-white"
+              >
+                {offer.photoUrl ? (
+                  <Image
+                    src={offer.photoUrl}
+                    alt={offer.title}
+                    width={400}
+                    height={300}
+                    className="aspect-4/3 w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex aspect-4/3 w-full items-center justify-center bg-cream-100 text-ink-300">
+                    <StoreIcon width={26} height={26} />
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="font-medium">{offer.title}</p>
+                  {offer.priceIndication && (
+                    <p className="text-sm font-semibold text-terra-700">{offer.priceIndication}</p>
+                  )}
+                  {offer.description && (
+                    <p className="mt-0.5 line-clamp-2 text-sm text-ink-500">{offer.description}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-ink-500">
+            {t("producers.offersNote", { brand: BRAND.name })}
+          </p>
+        </section>
+      )}
 
       <ProducerActions
         producerName={producer.name}

@@ -285,6 +285,7 @@ export type ProducerPatch = Partial<{
   description: string | null;
   openingHours: string | null;
   products: string[];
+  photos: string[];
 }>;
 
 /**

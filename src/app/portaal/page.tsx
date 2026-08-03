@@ -1,8 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { requireSellerUser } from "@/lib/authz";
-import { producerForSeller } from "@/lib/queries/admin";
+import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
+import { offersForSeller } from "@/lib/queries/portal";
 import { t } from "@/lib/i18n";
+import { StoreIcon } from "@/components/icons";
 import { SELLER_STATUS_LABELS, sellerStatusBadgeClass } from "@/app/beheer/aanmeldingen/labels";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +16,11 @@ export default async function PortaalPage() {
   const ctx = await requireSellerUser();
   if (!ctx) redirect("/inloggen?terug=/portaal");
   const { seller } = ctx;
-  const producer = seller.status === "goedgekeurd" ? await producerForSeller(seller.id) : null;
+  const linked = seller.status === "goedgekeurd" ? await producerForSeller(seller.id) : null;
+  const [producer, offers] = await Promise.all([
+    linked ? producerByIdAdmin(linked.id) : Promise.resolve(null),
+    seller.status === "goedgekeurd" ? offersForSeller(seller.id) : Promise.resolve([]),
+  ]);
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -50,24 +57,59 @@ export default async function PortaalPage() {
       </section>
 
       {seller.status === "goedgekeurd" && (
-        <section className="rounded-tile border border-cream-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
-            {t("portal.myListing")}
-          </h2>
+        <section className="overflow-hidden rounded-tile border border-cream-200 bg-white">
           {producer ? (
             <>
-              <p className="mb-1 font-medium">{producer.name}</p>
-              <div className="flex flex-wrap gap-3 text-sm">
-                <Link href="/portaal/vermelding" className="text-terra-700 underline">
-                  {t("portal.editListing")}
-                </Link>
-                <Link href={`/producent/${producer.slug}`} className="text-ink-500 underline">
-                  {t("admin.openOnSite")}
-                </Link>
+              {producer.photos[0] ? (
+                <Image
+                  src={producer.photos[0]}
+                  alt={producer.name}
+                  width={800}
+                  height={400}
+                  className="aspect-2/1 w-full object-cover"
+                />
+              ) : (
+                <div className="flex aspect-3/1 w-full items-center justify-center bg-cream-100 text-ink-300">
+                  <StoreIcon width={40} height={40} />
+                </div>
+              )}
+              <div className="p-4">
+                <h2 className="text-lg font-bold">{producer.name}</h2>
+                {producer.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-ink-700">{producer.description}</p>
+                )}
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Link
+                    href="/portaal/fotos"
+                    className="rounded-xl border border-cream-200 p-3 text-center hover:border-terra-400"
+                  >
+                    <span className="block text-xl font-bold">{producer.photos.length}</span>
+                    <span className="block text-xs text-ink-500">{t("portal.tabPhotos")}</span>
+                  </Link>
+                  <Link
+                    href="/portaal/producten"
+                    className="rounded-xl border border-cream-200 p-3 text-center hover:border-terra-400"
+                  >
+                    <span className="block text-xl font-bold">{offers.length}</span>
+                    <span className="block text-xs text-ink-500">{t("portal.tabProducts")}</span>
+                  </Link>
+                  <Link
+                    href="/portaal/vermelding"
+                    className="col-span-1 flex items-center justify-center rounded-xl border border-cream-200 p-3 text-center text-sm font-medium hover:border-terra-400"
+                  >
+                    {t("portal.tabDetails")}
+                  </Link>
+                  <Link
+                    href={`/producent/${producer.slug}`}
+                    className="col-span-1 flex items-center justify-center rounded-xl bg-terra-500 p-3 text-center text-sm font-medium text-white hover:bg-terra-600"
+                  >
+                    {t("portal.viewPublic")}
+                  </Link>
+                </div>
               </div>
             </>
           ) : (
-            <p className="text-sm text-ink-700">{t("portal.noListing")}</p>
+            <p className="p-4 text-sm text-ink-700">{t("portal.noListing")}</p>
           )}
         </section>
       )}

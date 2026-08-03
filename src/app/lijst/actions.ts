@@ -22,8 +22,48 @@ import {
   updateItem,
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
-import { searchProducersByName } from "@/lib/queries/producers";
+import { nearbyProducers, searchProducersByName } from "@/lib/queries/producers";
+import { catalogItem } from "@/lib/catalog";
 import type { Producer } from "@/lib/types";
+
+export type NearbyLite = {
+  name: string;
+  slug: string;
+  city: string | null;
+  distanceKm: number;
+  openingHours: string | null;
+  isMember: boolean;
+  lat: number | null;
+  lng: number | null;
+};
+
+/** Producenten in de buurt voor één catalogusitem (het "N in de buurt"-badge) */
+export async function nearbyForItemAction(
+  token: string,
+  catalogKey: string
+): Promise<NearbyLite[]> {
+  const list = await requireList(token);
+  if (list.lat == null || list.lng == null) return [];
+  const item = catalogItem(catalogKey);
+  if (!item || !item.matchTokens.length) return [];
+  const { producers } = await nearbyProducers({
+    lat: list.lat,
+    lng: list.lng,
+    radiusKm: list.radiusKm ?? 10,
+    tokens: item.matchTokens,
+    limit: 8,
+  });
+  return producers.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    city: p.city,
+    distanceKm: p.distanceKm ?? 0,
+    openingHours: p.openingHours,
+    isMember: p.isMember,
+    lat: p.lat,
+    lng: p.lng,
+  }));
+}
 
 async function requireList(token: string) {
   const list = await getListByToken(token);

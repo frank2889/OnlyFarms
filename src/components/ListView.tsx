@@ -38,6 +38,7 @@ import {
   addItemAction,
   clearBoughtAction,
   deleteListAction,
+  nearbyForItemAction,
   renameListAction,
   removeItemAction,
   searchProducersAction,
@@ -47,7 +48,9 @@ import {
   setRadiusAction,
   toggleItemAction,
   updateItemAction,
+  type NearbyLite,
 } from "@/app/lijst/actions";
+import { hoursStatusText } from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
 
 type Props = {
@@ -163,6 +166,17 @@ export default function ListView({
   const [editItem, setEditItem] = useState<number | null>(null);
   const [qtyItem, setQtyItem] = useState<CatalogItem | null>(null);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
+  // "N in de buurt"-badge aangetikt: paneel met de producenten voor dat item
+  const [nearbyItem, setNearbyItem] = useState<CatalogItem | null>(null);
+  const [nearbyResults, setNearbyResults] = useState<NearbyLite[] | null>(null);
+
+  function openNearby(item: CatalogItem) {
+    setNearbyItem(item);
+    setNearbyResults(null);
+    if (list.lat != null) {
+      nearbyForItemAction(list.token, item.key).then(setNearbyResults).catch(() => setNearbyResults([]));
+    }
+  }
   const [qtyValue, setQtyValue] = useState("");
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -733,10 +747,22 @@ export default function ListView({
       {(suggestions.length > 0 || rebuy.length > 0) && (
         <div className="mt-6">
           {suggestions.length > 0 && (
-            <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={tapTile} />
+            <TileRow
+              title={t("lists.seasonNow")}
+              items={suggestions}
+              onAdd={tapTile}
+              nearbyOf={countNearby}
+              onNearby={openNearby}
+            />
           )}
           {rebuy.length > 0 && (
-            <TileRow title={t("lists.boughtBefore")} items={rebuy} onAdd={tapTile} />
+            <TileRow
+              title={t("lists.boughtBefore")}
+              items={rebuy}
+              onAdd={tapTile}
+              nearbyOf={countNearby}
+              onNearby={openNearby}
+            />
           )}
         </div>
       )}
@@ -787,6 +813,7 @@ export default function ListView({
                       nearby={countNearby(item)}
                       onAdd={() => tapTile(item)}
                       onLongPress={() => setQtyItem(item)}
+                      onNearby={() => openNearby(item)}
                     />
                   ))}
                 </div>
@@ -1230,6 +1257,92 @@ export default function ListView({
       )}
 
       {/* Hoeveelheid-paneel (long-press) */}
+      {nearbyItem && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("lists.nearbySheetTitle", { label: nearbyItem.label })}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 px-3 pb-20 sm:items-center sm:pb-0"
+          onClick={() => setNearbyItem(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setNearbyItem(null);
+          }}
+        >
+          {nearbyItem && (
+            <div
+              className="max-h-[70vh] w-full max-w-sm overflow-y-auto overscroll-contain rounded-tile bg-white p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center gap-3">
+                {createElement(iconForItem(nearbyItem), {
+                  width: 30,
+                  height: 30,
+                  className: tintForCategory(nearbyItem.category).icon,
+                })}
+                <h3 className="text-lg font-bold">
+                  {t("lists.nearbySheetTitle", { label: nearbyItem.label })}
+                </h3>
+              </div>
+              {list.lat == null ? (
+                <p className="text-sm text-ink-700">{t("lists.nearbyNeedsLocation")}</p>
+              ) : nearbyResults === null ? (
+                <p className="text-sm text-ink-500">{t("common.loading")}</p>
+              ) : nearbyResults.length === 0 ? (
+                <p className="text-sm text-ink-700">{t("lists.noMatch")}</p>
+              ) : (
+                <ul className="flex flex-col gap-3">
+                  {nearbyResults.map((p) => (
+                    <li key={p.slug} className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/producent/${p.slug}`}
+                          className="min-w-0 flex-1 truncate font-medium hover:underline"
+                        >
+                          {p.name}
+                        </Link>
+                        {p.isMember && (
+                          <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
+                            {t("producers.memberBadge")}
+                          </span>
+                        )}
+                        {p.lat != null && (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex shrink-0 items-center gap-1 text-terra-700 hover:underline"
+                          >
+                            <RouteIcon width={13} height={13} /> {t("common.route")}
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-ink-500">
+                        {[
+                          p.city,
+                          `${p.distanceKm.toFixed(1)} km · ${t("common.travel", {
+                            min: travelInfo(p.distanceKm).minutes,
+                            mode: travelInfo(p.distanceKm).mode,
+                          })}`,
+                          hoursStatusText(p.openingHours),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button
+                onClick={() => setNearbyItem(null)}
+                className="mt-4 text-sm text-ink-500 underline"
+              >
+                {t("common.close")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {qtyItem && (
         <div
           role="dialog"
@@ -1326,6 +1439,7 @@ function AddTile({
   item,
   onAdd,
   onLongPress,
+  onNearby,
   added,
   qty,
   nearby = 0,
@@ -1333,6 +1447,7 @@ function AddTile({
   item: CatalogItem;
   onAdd: () => void;
   onLongPress?: () => void;
+  onNearby?: () => void;
   added?: boolean;
   qty?: string | null;
   nearby?: number;
@@ -1354,55 +1469,61 @@ function AddTile({
   }
 
   return (
-    <button
-      onClick={() => {
-        if (longPressed.current) {
-          longPressed.current = false;
-          return;
-        }
-        onAdd();
-      }}
-      onPointerDown={pressStart}
-      onPointerUp={pressEnd}
-      onPointerLeave={pressEnd}
-      onContextMenu={(e) => e.preventDefault()}
-      aria-pressed={added}
-      className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-[transform,colors] duration-100 active:scale-[.96] ${
-        added ? "bg-terra-600 text-white" : `${tint.tileBg} hover:ring-2 hover:ring-terra-300`
-      }`}
-    >
-      {createElement(iconForItem(item), {
-        width: 36,
-        height: 36,
-        className: added ? "text-white" : tint.icon,
-      })}
-      <span className={`line-clamp-2 w-full text-sm leading-tight ${added ? "text-white" : ""}`}>
-        {item.label}
-      </span>
-      {item.nix18 && (
-        <span
-          className={`absolute right-1.5 top-1.5 rounded-full px-1.5 text-[10px] font-bold ${
-            added ? "bg-white/20 text-white" : "bg-ink-900 text-white"
-          }`}
-        >
-          18+
+    <div className="relative">
+      <button
+        onClick={() => {
+          if (longPressed.current) {
+            longPressed.current = false;
+            return;
+          }
+          onAdd();
+        }}
+        onPointerDown={pressStart}
+        onPointerUp={pressEnd}
+        onPointerLeave={pressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        aria-pressed={added}
+        className={`relative flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-tile p-2 text-center transition-[transform,colors] duration-100 active:scale-[.96] ${
+          added ? "bg-terra-600 text-white" : `${tint.tileBg} hover:ring-2 hover:ring-terra-300`
+        }`}
+      >
+        {createElement(iconForItem(item), {
+          width: 36,
+          height: 36,
+          className: added ? "text-white" : tint.icon,
+        })}
+        <span className={`line-clamp-2 w-full text-sm leading-tight ${added ? "text-white" : ""}`}>
+          {item.label}
         </span>
-      )}
-      {added && qty && (
-        <span className="absolute left-1.5 top-1.5 rounded-full bg-white/25 px-1.5 py-0.5 text-[11px] font-bold text-white">
-          {/^\d+$/.test(qty) ? `${qty}\u00d7` : qty}
-        </span>
-      )}
+        {item.nix18 && (
+          <span
+            className={`absolute right-1.5 top-1.5 rounded-full px-1.5 text-[10px] font-bold ${
+              added ? "bg-white/20 text-white" : "bg-ink-900 text-white"
+            }`}
+          >
+            18+
+          </span>
+        )}
+        {added && qty && (
+          <span className="absolute left-1.5 top-1.5 rounded-full bg-white/25 px-1.5 py-0.5 text-[11px] font-bold text-white">
+            {/^\d+$/.test(qty) ? `${qty}\u00d7` : qty}
+          </span>
+        )}
+      </button>
+      {/* Eigen knop (geen geneste button): tik toont wie dit in de buurt verkoopt */}
       {nearby > 0 && (
-        <span
-          className={`absolute bottom-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+        <button
+          type="button"
+          onClick={onNearby}
+          aria-label={`${item.label}: ${t("lists.nearbyCount", { n: nearby })}`}
+          className={`absolute bottom-1 right-1 rounded-full px-2 py-1 text-[10px] font-semibold ${
             added ? "bg-white/25 text-white" : "bg-terra-500 text-white"
-          }`}
+          } ${onNearby ? "active:scale-95" : "pointer-events-none"}`}
         >
           {t("lists.nearbyCount", { n: nearby })}
-        </span>
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -1410,17 +1531,27 @@ function TileRow({
   title,
   items,
   onAdd,
+  onNearby,
+  nearbyOf,
 }: {
   title: string;
   items: CatalogItem[];
   onAdd: (item: CatalogItem) => void;
+  onNearby?: (item: CatalogItem) => void;
+  nearbyOf?: (item: CatalogItem) => number;
 }) {
   return (
     <div className="mb-4">
       <h3 className="mb-2 text-sm font-semibold text-ink-500">{title}</h3>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
         {items.map((item) => (
-          <AddTile key={item.key} item={item} onAdd={() => onAdd(item)} />
+          <AddTile
+            key={item.key}
+            item={item}
+            onAdd={() => onAdd(item)}
+            nearby={nearbyOf?.(item) ?? 0}
+            onNearby={onNearby ? () => onNearby(item) : undefined}
+          />
         ))}
       </div>
     </div>

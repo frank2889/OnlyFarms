@@ -13,7 +13,8 @@
     "nix18": "NIX18. Geen 18, geen alcohol",
     "travel": "±{min} min {mode}",
     "notFoundTitle": "Deze pagina bestaat niet",
-    "notFoundText": "Misschien is de link verouderd of verkeerd getypt. Vanaf de startpagina vind je alles terug."
+    "notFoundText": "Misschien is de link verouderd of verkeerd getypt. Vanaf de startpagina vind je alles terug.",
+    "close": "Sluiten"
   },
   "nav": {
     "list": "Lijst",
@@ -77,6 +78,8 @@
     "radius": "Straal",
     "nearestFallback": "Niets binnen {km} km. Dit zijn de dichtstbijzijnde:",
     "nearbyCount": "{n} in de buurt",
+    "nearbySheetTitle": "{label} in de buurt",
+    "nearbyNeedsLocation": "Stel bovenaan de lijst je locatie in, dan zien we wie dit bij jou in de buurt verkoopt.",
     "producersFound": "Producenten in de buurt",
     "priorityLabel": "Urgentie",
     "orderCategories": "Volgorde aanpassen",

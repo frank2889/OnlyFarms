@@ -8,12 +8,20 @@ import { uploadImage } from "@/lib/upload-client";
 import { addProducerPhotoAction, removeProducerPhotoAction } from "@/app/portaal/actions";
 import { PlusIcon } from "@/components/icons";
 
-export default function PhotoManager({ photos, max }: { photos: string[]; max: number }) {
+export default function PhotoManager({
+  photos,
+  pending = [],
+  max,
+}: {
+  photos: string[];
+  pending?: string[];
+  max: number;
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [saving, startTransition] = useTransition();
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -35,7 +43,7 @@ export default function PhotoManager({ photos, max }: { photos: string[]; max: n
   return (
     <div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {photos.map((url) => (
+        {[...photos, ...pending].map((url) => (
           <figure key={url} className="relative overflow-hidden rounded-tile border border-cream-200 bg-white">
             <Image
               src={url}
@@ -44,6 +52,11 @@ export default function PhotoManager({ photos, max }: { photos: string[]; max: n
               height={300}
               className="aspect-4/3 w-full object-cover"
             />
+            {pending.includes(url) && (
+              <span className="absolute bottom-2 left-2 rounded-full bg-cream-100 px-2.5 py-1 text-xs font-medium text-ink-700">
+                {t("portal.photoPending")}
+              </span>
+            )}
             <button
               type="button"
               onClick={() =>
@@ -58,16 +71,16 @@ export default function PhotoManager({ photos, max }: { photos: string[]; max: n
             </button>
           </figure>
         ))}
-        {photos.length < max && (
+        {photos.length + pending.length < max && (
           <button
             type="button"
-            disabled={busy || pending}
+            disabled={busy || saving}
             onClick={() => fileRef.current?.click()}
             className="flex aspect-4/3 flex-col items-center justify-center gap-2 rounded-tile border border-dashed border-cream-300 bg-white text-ink-500 hover:border-terra-400 disabled:opacity-50"
           >
             <PlusIcon width={22} height={22} />
             <span className="text-sm font-medium">
-              {busy || pending ? t("portal.uploading") : t("portal.addPhoto")}
+              {busy || saving ? t("portal.uploading") : t("portal.addPhoto")}
             </span>
           </button>
         )}
@@ -85,8 +98,11 @@ export default function PhotoManager({ photos, max }: { photos: string[]; max: n
       {error && (
         <p className="mt-3 rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">{error}</p>
       )}
-      {photos.length === 0 && !busy && (
+      {photos.length + pending.length === 0 && !busy && (
         <p className="mt-3 text-sm text-ink-500">{t("portal.photosEmpty")}</p>
+      )}
+      {pending.length > 0 && (
+        <p className="mt-3 text-sm text-ink-500">{t("portal.photoPendingHint")}</p>
       )}
     </div>
   );

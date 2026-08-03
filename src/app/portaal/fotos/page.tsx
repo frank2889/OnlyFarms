@@ -19,7 +19,7 @@ export default async function PortaalFotosPage() {
     <main className="mx-auto max-w-3xl px-4 pb-16">
       <h1 className="py-4 text-2xl font-bold">{t("portal.tabPhotos")}</h1>
       <p className="mb-4 text-sm text-ink-700">{t("portal.photosIntro")}</p>
-      <PhotoManager photos={producer.photos} max={8} />
+      <PhotoManager photos={producer.photos} pending={producer.photosPending} max={8} />
     </main>
   );
 }

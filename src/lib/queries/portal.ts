@@ -43,15 +43,19 @@ export async function createOffer(sellerId: number, input: OfferInput): Promise<
   return row.id;
 }
 
-/** Update is altijd gescopet op de eigenaar (sellerId in de where) */
+/**
+ * Update is altijd gescopet op de eigenaar (sellerId in de where).
+ * unpublish: inhoudelijke wijzigingen gaan terug de controle-wachtrij in.
+ */
 export async function updateOffer(
   offerId: number,
   sellerId: number,
-  input: OfferInput
+  input: OfferInput,
+  opts: { unpublish?: boolean } = {}
 ): Promise<void> {
   await db
     .update(offers)
-    .set({ ...input, updatedAt: new Date() })
+    .set({ ...input, ...(opts.unpublish ? { published: false } : {}), updatedAt: new Date() })
     .where(and(eq(offers.id, offerId), eq(offers.sellerId, sellerId)));
 }
 
@@ -59,7 +63,11 @@ export async function deleteOffer(offerId: number, sellerId: number): Promise<vo
   await db.delete(offers).where(and(eq(offers.id, offerId), eq(offers.sellerId, sellerId)));
 }
 
-/** Publiek aanbod voor de producentpagina (alleen beschikbaar) */
+/**
+ * Publiek aanbod voor de producentpagina: alleen beschikbaar, door het team
+ * goedgekeurd (published) en van een nog steeds goedgekeurde verkoper (een
+ * geschorste verkoper houdt zijn claim maar zijn aanbod verdwijnt).
+ */
 export async function publicOffersForSeller(sellerId: number) {
   return db
     .select({
@@ -71,7 +79,15 @@ export async function publicOffersForSeller(sellerId: number) {
       photoUrl: offers.photoUrl,
     })
     .from(offers)
-    .where(and(eq(offers.sellerId, sellerId), eq(offers.available, true)))
+    .innerJoin(sellers, eq(sellers.id, offers.sellerId))
+    .where(
+      and(
+        eq(offers.sellerId, sellerId),
+        eq(offers.available, true),
+        eq(offers.published, true),
+        eq(sellers.status, "goedgekeurd")
+      )
+    )
     .orderBy(asc(offers.title))
     .limit(60);
 }

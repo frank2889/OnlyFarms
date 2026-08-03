@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { listItems, lists } from "@/db/schema";
+import { boughtStats, listItems, lists } from "@/db/schema";
 import type { ListItem, ShoppingList } from "@/lib/types";
 
 export async function createList(name: string): Promise<ShoppingList> {
@@ -85,12 +85,62 @@ export async function addItem(
 export async function setItemChecked(
   listId: number,
   itemId: number,
-  checked: boolean
+  checked: boolean,
+  householdId: number | null = null
 ): Promise<void> {
-  await db
+  const [row] = await db
     .update(listItems)
     .set({ checked, checkedAt: checked ? sql`now()` : null })
-    .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
+    .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)))
+    .returning({ catalogKey: listItems.catalogKey });
+  // Koophistorie bijhouden voor het swipe-deck; nooit het afvinken laten falen
+  // op statistiek (kernpad). Undo binnen 5s telt eens te veel: acceptabel.
+  if (checked && row?.catalogKey) {
+    try {
+      await db
+        .insert(boughtStats)
+        .values({ listId, householdId, catalogKey: row.catalogKey })
+        .onConflictDoUpdate({
+          target: [boughtStats.listId, boughtStats.catalogKey],
+          set: { times: sql`${boughtStats.times} + 1`, lastAt: sql`now()`, householdId },
+        });
+    } catch {}
+  }
+  await touch(listId);
+}
+
+/** Koophistorie voor het swipe-deck: huishouden-breed waar mogelijk, anders per lijst */
+export async function boughtStatsFor(list: {
+  id: number;
+  householdId: number | null;
+}): Promise<{ key: string; times: number }[]> {
+  const rows = await db
+    .select({ key: boughtStats.catalogKey, times: boughtStats.times })
+    .from(boughtStats)
+    .where(
+      list.householdId
+        ? eq(boughtStats.householdId, list.householdId)
+        : eq(boughtStats.listId, list.id)
+    )
+    .orderBy(desc(boughtStats.times), desc(boughtStats.lastAt))
+    .limit(30);
+  // huishouden-scope kan hetzelfde item vanuit meerdere lijsten bevatten: sommeren
+  const merged = new Map<string, number>();
+  for (const r of rows) merged.set(r.key, (merged.get(r.key) ?? 0) + r.times);
+  return [...merged.entries()].map(([key, times]) => ({ key, times }));
+}
+
+/** Open item van de lijst halen op catalogKey (undo van een swipe-toevoeging) */
+export async function removeOpenItemByCatalogKey(listId: number, catalogKey: string): Promise<void> {
+  await db
+    .delete(listItems)
+    .where(
+      and(
+        eq(listItems.listId, listId),
+        eq(listItems.catalogKey, catalogKey),
+        eq(listItems.checked, false)
+      )
+    );
   await touch(listId);
 }
 
@@ -181,8 +231,18 @@ async function touch(listId: number): Promise<void> {
     .where(eq(lists.id, listId));
 }
 
-/** "Vaak gekocht": catalog-keys op frequentie (meest gekocht eerst) */
+/** "Eerder gekocht": catalog-keys op frequentie (meest gekocht eerst).
+ *  Leest uit de wisbestendige bought_stats; valt terug op de oude aggregatie
+ *  zolang een lijst nog geen historie heeft opgebouwd. */
 export async function boughtBefore(listId: number): Promise<string[]> {
+  const stats = await db
+    .select({ key: boughtStats.catalogKey })
+    .from(boughtStats)
+    .where(eq(boughtStats.listId, listId))
+    .orderBy(desc(boughtStats.times), desc(boughtStats.lastAt))
+    .limit(12);
+  if (stats.length) return stats.map((r) => r.key);
+
   const rows = await db
     .select({
       key: listItems.catalogKey,

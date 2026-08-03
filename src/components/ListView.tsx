@@ -161,6 +161,7 @@ export default function ListView({
   const [locOpen, setLocOpen] = useState(false);
   const [editItem, setEditItem] = useState<number | null>(null);
   const [qtyItem, setQtyItem] = useState<CatalogItem | null>(null);
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [qtyValue, setQtyValue] = useState("");
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -744,7 +745,7 @@ export default function ListView({
             <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={tapTile} />
           )}
           {rebuy.length > 0 && (
-            <TileRow title="Vorige keer gekocht" items={rebuy} onAdd={tapTile} />
+            <TileRow title={t("lists.boughtBefore")} items={rebuy} onAdd={tapTile} />
           )}
         </div>
       )}
@@ -770,11 +771,14 @@ export default function ListView({
           {orderedCategories.map((cat) => {
             const items = CATALOG.filter((i) => i.category === cat.key);
             if (!items.length) return null;
+            // Less is more: eerst 6 tegels per categorie, de rest achter "Toon alles"
+            const expanded = expandedCats.has(cat.key);
+            const shown = expanded ? items : items.slice(0, 6);
             return (
               <section key={cat.key} id={`cat-${cat.key}`} className="mb-5 scroll-mt-28">
                 <h3 className="mb-2 text-sm font-semibold text-ink-500">{cat.label}</h3>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {items.map((item) => (
+                  {shown.map((item) => (
                     <AddTile
                       key={item.key}
                       item={item}
@@ -786,6 +790,26 @@ export default function ListView({
                     />
                   ))}
                 </div>
+                {items.length > 6 && (
+                  <button
+                    onClick={() =>
+                      setExpandedCats((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(cat.key)) next.delete(cat.key);
+                        else next.add(cat.key);
+                        return next;
+                      })
+                    }
+                    className="mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-cream-200 bg-white text-sm font-medium text-ink-700 hover:border-terra-400"
+                  >
+                    {expanded ? t("lists.showLess") : t("lists.showAll", { n: items.length })}
+                    <ChevronDownIcon
+                      width={16}
+                      height={16}
+                      className={expanded ? "rotate-180" : ""}
+                    />
+                  </button>
+                )}
               </section>
             );
           })}
@@ -1177,7 +1201,7 @@ export default function ListView({
                     <TileRow title={t("lists.seasonNow")} items={suggestions} onAdd={tapTile} />
                   )}
                   {rebuy.length > 0 && (
-                    <TileRow title="Vaak gekocht" items={rebuy} onAdd={tapTile} />
+                    <TileRow title={t("lists.boughtBefore")} items={rebuy} onAdd={tapTile} />
                   )}
                   <p className="mt-2 text-center text-sm text-ink-500">
                     Typ hierboven wat je zoekt; Enter voegt het eerste resultaat toe.

@@ -3,7 +3,8 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ListIcon, StoreIcon, UserIcon } from "@/components/icons";
+import { t } from "@/lib/i18n";
+import { CardsIcon, ListIcon, StoreIcon, UserIcon } from "@/components/icons";
 
 function subscribeStorage(cb: () => void) {
   window.addEventListener("storage", cb);
@@ -42,9 +43,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const tabs = [
-    { href: listHref, label: "Lijst", Icon: ListIcon, active: pathname.startsWith("/lijst"), badge: badgeCount },
-    { href: "/producenten", label: "Ontdek", Icon: StoreIcon, active: pathname.startsWith("/produc") || pathname.startsWith("/provincie") },
-    { href: "/profiel", label: "Profiel", Icon: UserIcon, active: pathname.startsWith("/profiel") || pathname.startsWith("/inloggen") },
+    { key: "list", href: listHref, label: t("nav.list"), Icon: ListIcon, active: pathname.startsWith("/lijst") && !pathname.endsWith("/swipen"), badge: badgeCount },
+    { key: "swipe", href: activeListPath ? `${activeListPath}/swipen` : "/lijsten", label: t("nav.swipe"), Icon: CardsIcon, active: pathname.endsWith("/swipen") },
+    { key: "discover", href: "/producenten", label: t("nav.discover"), Icon: StoreIcon, active: pathname.startsWith("/produc") || pathname.startsWith("/provincie") },
+    { key: "profile", href: "/profiel", label: t("nav.profile"), Icon: UserIcon, active: pathname.startsWith("/profiel") || pathname.startsWith("/inloggen") },
   ];
 
   return (
@@ -52,24 +54,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="pb-20 sm:pb-0">{children}</div>
       <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-cream-200 bg-white/95 backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-md items-stretch justify-around">
-          {tabs.map(({ href, label, Icon, active, badge: count }) => (
+          {tabs.map(({ key, href, label, Icon, active, badge: count }) => (
             <Link
-              key={label}
+              key={key}
               href={href}
               onClick={(e) => {
                 // Al op je lijst? Dan togglet de tab de drawer in plaats van te navigeren
-                if (label === "Lijst" && activeListPath && pathname === activeListPath) {
+                if (key === "list" && activeListPath && pathname === activeListPath) {
                   e.preventDefault();
                   window.dispatchEvent(new Event("of:toggle-drawer"));
                 }
               }}
-              className={`relative flex min-w-20 flex-col items-center gap-0.5 px-4 pb-3 pt-2.5 ${
+              className={`relative flex min-w-16 flex-col items-center gap-0.5 px-3 pb-3 pt-2.5 ${
                 active ? "text-terra-600" : "text-ink-500"
               }`}
             >
               <Icon width={24} height={24} />
               <span className="text-xs font-medium">{label}</span>
-              {!!count && label === "Lijst" && (
+              {!!count && key === "list" && (
                 <span className="absolute right-3 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra-500 px-1 text-[11px] font-bold text-white">
                   {count}
                 </span>

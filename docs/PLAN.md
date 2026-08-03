@@ -17,7 +17,8 @@
 - Week echte-gebruikerstest (3-5 mensen incl. 65+) - belangrijkste volgende stap
 - Definitieve naam + domein; daarna Search Console + SEO-quick-wins (canonicals, og:image, dubbele titel-suffix, interne links producent->provincie)
 - Neon van us-east-1 naar EU-regio; voorwaarden via jurist
-- Admin-scherm (moderatie draait nu op de Neon-editor); eerste 25-50 leden werven ("founding members")
+- Eerste 25-50 leden werven ("founding members"); de beheeromgeving `/beheer` staat hiervoor klaar (aanmeldingen goedkeuren, meldingen, producentenbeheer, cijfers)
+- Producentenportaal `/portaal` (lid beheert eigen vermelding; claim-flow vereist eerst een besluit over transactionele mail)
 - Fase 3: marktstandplaatsen, slimme dekking, sjablonen, recepten-import, aanbiedingen (incl. locatiegebonden), deboervinder-migratie met 301's; daarna Expo-app
 - Offline-beperking v1: pagina herladen zonder verbinding verliest nog niet-gesyncte vinkjes
 
@@ -150,7 +151,7 @@ Gestart als herbouw van deboervinder.nl (kaart met 2.279 boerderijwinkels, live 
 1. Auth.js (magic link + Google); anonieme lijsten claimen; `list_members` (huishouden).
 2. Profiel: bezochte producenten (check-in), tekst-ervaringen (moderatiewachtrij met woordfilter-voorcheck), wishlist; foto's bij items/ervaringen via Vercel Blob.
 3. Leden-flow afmaken: aanmelden (bestaand) + **KVK Zoeken-API-validatie** (automatische check van nummer/naam), aanbod beheren gekoppeld aan catalogus, "geverifieerd lid"-badge; gids-vermelding claimen = gids-record wordt lid.
-4. Admin `/admin` (rol-gebaseerd, moderatie-arm): wachtrijen voor randgevallen, meldingen, ervaringen.
+4. Admin `/beheer`: GEDAAN (aug 2026). Rol-gebaseerd (`users.role` = "team", check per request via `requireAdminUser`), dashboard met kerncijfers en groei, wachtrijen voor meldingen (met afhandelnotitie), verkopersaanmeldingen (goedkeuren = koppelen aan gids-record of nieuw record aanmaken; Klaviyo-events `seller_approved`/`seller_rejected`/`seller_suspended`), ervaringen-moderatie, producentenbeheer (bewerken zet `last_verified_at`) en duplicaten-wachtrij. Vervolg: producentenportaal `/portaal` (fundament ligt er: `claimed_by_seller_id`/`claimed_by_email` worden bij goedkeuring gezet, het bewerkformulier kan met een veld-subset hergebruikt worden; blocker is transactionele mail voor claim-verificatie).
 
 ### Fase 3 — Slim & groei
 1. Slimme dekking: "dit lid dekt 5 van je 7 items" (set-cover over leden-matches).

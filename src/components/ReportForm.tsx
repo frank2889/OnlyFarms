@@ -8,6 +8,7 @@ export default function ReportForm({ producerId }: { producerId: number }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
 
   if (done) {
@@ -28,7 +29,7 @@ export default function ReportForm({ producerId }: { producerId: number }) {
         e.preventDefault();
         if (message.trim().length < 5) return;
         startTransition(async () => {
-          await reportProducerAction(producerId, message);
+          await reportProducerAction(producerId, message, email);
           setDone(true);
         });
       }}
@@ -40,6 +41,14 @@ export default function ReportForm({ producerId }: { producerId: number }) {
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
         placeholder="Wat klopt er niet meer? (bijv. gestopt, andere openingstijden)"
+        className="rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-sm"
+      />
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder={t("producers.reportEmailPlaceholder")}
+        title={t("producers.reportEmailHint")}
         className="rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-sm"
       />
       <div className="flex gap-2">

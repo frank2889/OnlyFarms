@@ -275,6 +275,9 @@ export const reports = pgTable("reports", {
   message: text("message").notNull(),
   reporterEmail: text("reporter_email"),
   resolved: boolean("resolved").notNull().default(false),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  adminNote: text("admin_note"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

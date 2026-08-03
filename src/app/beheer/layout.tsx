@@ -19,7 +19,7 @@ export default async function BeheerLayout({ children }: { children: React.React
   const admin = await requireAdminUser();
   if (!admin) {
     const userId = await currentUserId();
-    redirect(userId ? "/" : "/inloggen");
+    redirect(userId ? "/" : "/inloggen?terug=/beheer");
   }
   const badges = await queueCounts();
 

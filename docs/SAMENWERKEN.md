@@ -1,6 +1,6 @@
 # Samenwerken op GitHub: uitleg voor het hele team
 
-Deze gids is geschreven voor teamleden die geen developer zijn (Sally, Chimene). Je kunt hiermee zelf aanpassingen doen aan teksten en documenten, veilig, zonder dat er iets stuk kan gaan op de live site. Je hebt er alleen een browser voor nodig.
+Deze gids is geschreven voor teamleden die geen developer zijn (Sally, Chimene). Je kunt hiermee zelf aanpassingen doen aan teksten, documenten én design, veilig, zonder dat er iets stuk kan gaan op de live site. Voor het meeste heb je alleen een browser nodig.
 
 ## Hoe ons systeem werkt (1 minuut lezen)
 
@@ -58,6 +58,47 @@ Wil je meerdere bestanden tegelijk aanpassen of lokaal werken, gebruik dan de gr
 
 Belangrijk: haal vóór je begint altijd de nieuwste versie op ("Fetch origin" en zorg dat je vanaf een actuele `main` vertrekt). Dan voorkom je conflicten.
 
+## Design aanpassen
+
+Design is hier gewoon een bestand wijzigen, dus het proces is identiek: branch, PR, review, merge. Het verschil zit in wélke bestanden je aanpast en hoe je het resultaat bekijkt.
+
+### Waar het design woont
+
+| Wat | Waar | Toelichting |
+| --- | --- | --- |
+| Kleuren | `src/app/globals.css` | De enige plek met kleurcodes (hexwaarden). Drie families: terra (warm oranjebruin, hoofdkleur), ink (donker neutraal, tekst), cream (achtergrond). Elke familie heeft tinten van licht (50) naar donker (900). |
+| Seizoensaccenten | `src/lib/season.ts` | De site kleurt subtiel mee met het seizoen |
+| Vormgeving van schermen | `src/components/*.tsx` | Styling staat als woorden in `class="..."` (Tailwind, zie hieronder) |
+| Iconen | `src/components/icons.tsx` (lijn-stijl, interface) en `src/components/food-icons.tsx` (gevuld, producten) | Alles is eigen SVG |
+| Animaties | onderin `src/app/globals.css` | Zachte micro-animaties |
+
+Styling in componenten werkt met **Tailwind**: korte woorden in het `class`-attribuut. Een paar voorbeelden zodat je het kunt lezen: `p-4` is ruimte aan de binnenkant, `rounded-xl` is afgeronde hoeken, `text-lg` is grotere tekst, `bg-terra-500` is achtergrond in onze hoofdkleur, `font-semibold` is halfvet. Opzoeken wat een woord doet kan op tailwindcss.com. Kleuren verwijzen altijd naar onze eigen families (`terra`, `ink`, `cream`); nooit losse kleurcodes in een component zetten.
+
+### Je designwijziging bekijken
+
+Er zijn twee manieren:
+
+1. **Zonder iets te installeren (prima voor kleine aanpassingen)**: wijzig het bestand via de browser en open een PR zoals bij route 1. De Vercel-bot bouwt automatisch een preview van de hele site met jouw wijziging erin. Niet goed? Pas het bestand op je branch opnieuw aan; elke commit geeft een nieuwe preview. De feedback duurt wel een paar minuten per rondje.
+2. **Lokaal werken (voor echt design-werk)**: dan zie je elke wijziging direct in je browser. Eenmalige setup, vraag Frank om even mee te kijken:
+   - GitHub Desktop (repo clonen, zie route 2) en een editor zoals VS Code (gratis, code.visualstudio.com).
+   - Node 22 installeren (nodejs.org), dan in de projectmap `npm install`.
+   - Het bestand `.env.local` van Frank krijgen (staat bewust niet op GitHub).
+   - `npm run dev` starten en `http://localhost:3000` openen: elke opgeslagen wijziging verschijnt direct, zonder herladen.
+   - Klaar met een klus? Committen en PR openen via GitHub Desktop, zoals bij route 2.
+
+Tip voor allebei: bekijk het resultaat altijd óók op telefoonformaat. In Chrome: rechtermuisklik, "Inspect", dan het telefoon-icoontje linksboven (kies bijvoorbeeld iPhone 12 Pro). Mobiel is bij ons de norm, desktop de bonus.
+
+### Design-huisregels (samenvatting van [../AGENTS.md](../AGENTS.md))
+
+1. **Bring is de lat**: bij twijfel over hoe iets moet werken of voelen, doe wat de Bring-app doet.
+2. **Maximaal 3 kleurfamilies** (terra/ink/cream); nieuwe hexcodes alleen in `globals.css`, nergens anders.
+3. **Geen emoji's**, alleen eigen SVG-iconen in de bestaande stijl.
+4. **Geen dark mode** (bewuste keuze, licht en warm).
+5. **Toegankelijk voor oudere gebruikers**: grote tikvlakken, leesbare labels, goed contrast.
+6. **Geen em-dashes** in teksten die gebruikers zien.
+
+Grote design-ideeën (nieuwe schermen, andere flows) eerst even overleggen in het team voordat je gaat bouwen; kleuren, afstanden, teksten en iconen kun je gewoon zelf via een PR voorstellen.
+
 ## Zelf een review doen
 
 Ook goedkeuren is teamwerk, en je kunt er niets mee stukmaken:
@@ -84,13 +125,14 @@ Je kunt je eigen PR niet goedkeuren; er is altijd een tweede paar ogen nodig. Da
 - **Toch iets verkeerds gemerged?** Op de PR-pagina staat na het mergen een knop "Revert": die maakt automatisch een nieuwe PR die alles terugdraait.
 - Onthoud: in git gaat nooit iets echt verloren. Elke versie van elk bestand blijft bewaard.
 
-## Waar vind ik wat (voor tekstwerk)
+## Waar vind ik wat (snel overzicht)
 
 | Wat | Waar |
 | --- | --- |
 | Alle teksten van de site | `src/messages/nl.json` (JSON: aanhalingstekens en komma's luisteren nauw) |
+| Design: kleuren, componenten, iconen | zie het hoofdstuk "Design aanpassen" hierboven |
 | Documentatie en plannen | `docs/`, met [PLAN.md](PLAN.md) als productplan |
 | Teamuitleg en setup | [../README.md](../README.md) |
 | Klaviyo-koppeling | `src/lib/klaviyo.ts` (aanpassen in overleg met Frank) |
 
-Wijzigingen aan code (alles onder `src/` behalve `nl.json`) doe je bij voorkeur samen met Frank of via Claude, maar het proces is precies hetzelfde: branch, PR, review, merge.
+Teksten en design kun je dus zelf voorstellen via een PR. Voor de logica erachter (database, zoekfuncties, server-code) geldt: eerst overleggen met Frank of Claude laten meebouwen, maar ook dan is het proces precies hetzelfde: branch, PR, review, merge.

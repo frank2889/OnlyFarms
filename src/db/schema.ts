@@ -196,7 +196,9 @@ export const boughtStats = pgTable(
 
 // Voorkeurssignaal per swipe (rechts = leuk, links = sla ik over): voedt de
 // bèta-smaakmodus van het swipe-deck. Los van bought_stats, dat is "wat kocht
-// je echt"; dit is "wat wil je wel/niet nog eens zien".
+// je echt"; dit is "wat wil je wel/niet nog eens zien". Smaak is persoonlijk:
+// ingelogd hoort een signaal bij de gebruiker (gezinsleden verschillen),
+// anoniem bij de lijst (user_id NULL). Cascade op users: profiel = persoonsdata.
 export const swipeSignals = pgTable(
   "swipe_signals",
   {
@@ -207,14 +209,19 @@ export const swipeSignals = pgTable(
     householdId: integer("household_id").references(() => households.id, {
       onDelete: "set null",
     }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
     catalogKey: text("catalog_key").notNull(),
     likes: integer("likes").notNull().default(0),
     skips: integer("skips").notNull().default(0),
     lastAt: timestamp("last_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    unique("swipe_signals_list_id_catalog_key_unique").on(t.listId, t.catalogKey),
+    // NULLS NOT DISTINCT: anoniem (user NULL) telt als waarde, dus ook daar één rij per lijst+item
+    unique("swipe_signals_list_id_catalog_key_user_id_unique")
+      .on(t.listId, t.catalogKey, t.userId)
+      .nullsNotDistinct(),
     index("swipe_signals_household_idx").on(t.householdId),
+    index("swipe_signals_user_idx").on(t.userId),
   ]
 );
 

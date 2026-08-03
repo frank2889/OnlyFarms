@@ -85,6 +85,25 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_indexes where indexname='swipe_signals_household_idx'",
     "CREATE INDEX swipe_signals_household_idx ON swipe_signals (household_id)",
   ],
+  // Smaak is persoonlijk: signaal per gebruiker (ingelogd) of per lijst (anoniem).
+  // Tabel was leeg bij deze herstructurering, dus geen datamigratie nodig.
+  [
+    "select 1 from information_schema.columns where table_name='swipe_signals' and column_name='user_id'",
+    "ALTER TABLE swipe_signals ADD COLUMN user_id integer CONSTRAINT swipe_signals_user_id_users_id_fk REFERENCES users(id) ON DELETE CASCADE",
+  ],
+  [
+    "select 1 where not exists (select 1 from pg_constraint where conname='swipe_signals_list_id_catalog_key_unique')",
+    "ALTER TABLE swipe_signals DROP CONSTRAINT swipe_signals_list_id_catalog_key_unique",
+  ],
+  // NULLS NOT DISTINCT (PG15+): anonieme rijen (user_id NULL) blijven ook uniek per lijst+item
+  [
+    "select 1 from pg_constraint where conname='swipe_signals_list_id_catalog_key_user_id_unique'",
+    "ALTER TABLE swipe_signals ADD CONSTRAINT swipe_signals_list_id_catalog_key_user_id_unique UNIQUE NULLS NOT DISTINCT (list_id, catalog_key, user_id)",
+  ],
+  [
+    "select 1 from pg_indexes where indexname='swipe_signals_user_idx'",
+    "CREATE INDEX swipe_signals_user_idx ON swipe_signals (user_id)",
+  ],
 ];
 
 async function main() {

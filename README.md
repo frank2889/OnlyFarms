@@ -9,8 +9,11 @@ Volledig productplan: [docs/PLAN.md](docs/PLAN.md). Begon als herbouw van deboer
 ## Kernconcepten
 
 - **Offline & app**: installeerbaar als PWA; de lijst opent offline (service worker) en wijzigingen zonder verbinding syncen zodra je weer online bent (let op: pagina herladen terwijl je offline bent verliest nog niet-gesyncte vinkjes — bekende v1-beperking).
-- **Lijsten** (`/lijsten`, `/lijst/[token]`): meerdere lijsten, anoniem, delen via geheime link, samen afvinken (realtime via Pusher, anders polling), "onlangs gekocht", seizoenssuggesties. Lijst-links worden niet geïndexeerd (robots).
-- **Matching**: per lijst-item tonen we producenten in de buurt (Haversine in SQL; straal instelbaar, fallback dichtstbijzijnde 5). **Gids vs. leden**: geïmporteerde vermeldingen zijn "gids"; alleen aangesloten leden (`producers.is_member`) staan bovenaan — gids eronder met claim-teaser.
+- **Cart-drawer-model**: de lijstpagina is een "winkel" (tegelwand centraal); je lijst is een drawer die je opent met de Lijst-tab. Toevoegen via de vaste balk onderin, die een zoek-overlay opent met het veld bovenaan (toetsenbord zit nooit in de weg). Tik = toevoegen, nog een tik = eentje extra (teller), vasthouden = aantal kiezen of verwijderen. Afvinken toont eerst een vinkje, dan schuift het item naar gekocht. Lijsten zijn te hernoemen en verwijderen via het lijstmenu.
+- **Lijsten** (`/lijsten`, `/lijst/[token]`): meerdere lijsten, anoniem, delen via geheime link, samen afvinken (realtime via Pusher, anders polling), "vaak gekocht" (frequentie), seizoenssuggesties, urgentie per item, eigen categorie-volgorde per lijst. Lijst-links worden niet geïndexeerd (robots).
+- **Matching in twee lagen**: per item eerst producenten die het specifieke product aantoonbaar verkopen, daaronder categorie-suggesties, en de supermarkt-terugval onderaan; elke rij toont inline de beste tip. Tegels tonen "N in de buurt"-badges. Gids vs. leden: alleen aangesloten leden (`producers.is_member`) krijgen het leden-badge.
+- **Openingstijden als status**: parser (`src/lib/opening-hours.ts`) begrijpt alle notaties uit de data (NL/EN-afkortingen, dag-lijsten, Dagelijks) en toont "Nu open, tot 17:00" / "Opent morgen om 09:00" in Europe/Amsterdam.
+- **Weekmarkten**: 275 markten uit OpenStreetMap (ODbL, met bronvermelding) in een aparte `markets`-tabel; Ontdek toont de dichtstbijzijnde met marktdagen, status en route.
 - **Producenten**: alle KVK-producenten van eet/drinkwaar (`producers.kind`: boerderijwinkel, brouwerij, bakkerij…). SEO-pagina's: `/producent/[slug]` (JSON-LD), `/producenten` (zoeken op locatie + categorie), `/provincie/[slug]`, sitemap.
 - **Huisstijl**: max 3 kleurfamilies (`terra`/`ink`/`cream`) als tokens in `globals.css` — enige plek met hexwaarden. Seizoensthema via `src/lib/season.ts`. **Geen emoji's; alleen SVG-iconen** (`src/components/icons.tsx`). Naam is werktitel → alles via `src/lib/brand.ts`. Teksten via `src/messages/nl.json` (i18n-klaar).
 - **Platformrol**: geen betalingen, geen partij bij de verkoop (Marktplaats-model). Aanmelden als verkoper: `/verkopen` (KVK verplicht). Alcohol-items dragen een NIX18-markering.
@@ -55,6 +58,8 @@ npm run dev / build / lint
 npm run db:generate / db:push      # schema-wijzigingen
 npm run import                     # eenmalige seed uit oude sheet
 npx tsx scripts/data-quality.ts    # producten afleiden, geocoden, dedupe-rapport
+npx tsx scripts/import-markets.ts  # weekmarkten uit OpenStreetMap verversen
+npx tsx scripts/google-sync.ts     # openingstijden via Google Places (vereist API-key; zie script)
 ```
 
 ## Belangrijkste mappen

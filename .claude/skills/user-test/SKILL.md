@@ -28,6 +28,9 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 } }); /
 - **Screenshots áltijd bekijken** (Read op de PNG) — de helft van de bevindingen zie je alleen visueel (afgekapte labels, overflow, contrast).
 - **Overflow-check**: `page.evaluate(() => document.body.scrollWidth > window.innerWidth)` moet false zijn.
 
+- **Drawer**: de Lijst-tab togglet de drawer op de lijstpagina (`nav >> text=Lijst`); deeplink `#lijst` opent hem; body-overflow is "hidden" zolang hij open is (goede check). Items zitten in `[role="dialog"][aria-label="Je lijst"]`.
+- **Zoek-overlay**: `button:has-text("Zoek een product")` onderin opent de overlay; het echte veld zit dan bovenaan; rijen aanklikken via een selector gescopet op `div.fixed.inset-0`.
+
 ## Testaccounts
 
 Drie testaccounts (Frank/Chimene/Sally), elk een eigen gezin — credentials staan NIET in de repo (publiek); vraag Frank of kijk in de sessiegeschiedenis. Log in via `/inloggen` met `input[type="email"]` / `input[type="password"]`.

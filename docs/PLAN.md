@@ -9,6 +9,8 @@
 - **UX-sprint (Bring-niveau)**: optimistic UI (~40 ms reactie), offline-modus (service worker + acties wachten op reconnect), bottom-nav met badge, lijst-switcher, sticky zoeken met categorie-chips, Enter-quick-add, undo-snackbar, hoeveelheid via long-press + presets, wis-gekocht, categorie-groepering (loopvolgorde winkel), onboarding-kaart, PWA-manifest + app-iconen, gerangschikt accent-ongevoelig zoeken met synoniemen, a11y-basis (dialogs, contrast, grote tikvlakken).
 - **Data**: 2.279 producenten geseed; ~89% met productdata (afgeleid uit omschrijvingen + steekproef); dubbele adressen gerapporteerd; 3 Belgische records bewust zonder coordinaten.
 
+**Aanvulling 3 aug 2026 (UX-sprint 2 + lokaal-verdieping, live)**: cart-drawer-model (lijst als winkelwagen, Lijst-tab togglet de drawer), zoek-overlay met veld bovenaan (toetsenbord-proof), tik = +1 met teller en vasthouden = aantal/verwijderen, zichtbaar vink-moment, lijsten hernoemen/verwijderen, matching in twee lagen (zeker > categorie-suggestie > supermarkt onderaan) met inline tip per rij, "N in de buurt"-badges op tegels, producenten-zoeken in de zoekbalk, urgentie + eigen categorie-volgorde + vaak-gekocht, 785 producenten verrijkt met specifieke tokens, openingstijden als nu-status (parser voor alle notaties), 275 weekmarkten uit OSM op Ontdek, hier-halen vanaf producentpagina's, Google Places-sync script (wacht op API-key), em-dash-regel doorgevoerd.
+
 **Openstaand**:
 
 - Pusher-keys aanmaken (gratis account, 4 env-vars) - realtime i.p.v. 10s-polling

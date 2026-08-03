@@ -26,7 +26,9 @@ Live: https://onlyfarms-ten.vercel.app · Repo: github.com/frank2889/OnlyFarms (
 
 - Next.js App Router + Tailwind v4 + Drizzle/Neon Postgres + Vercel. Auth.js (credentials/scrypt) met **gezinnen (family accounts)**: `households` + `household_members`; lijsten hangen aan eigenaar én gezin. Anonieme lijsten werken via geheime token-link (`/lijst/[token]`, uitgesloten in robots).
 - **Gids vs. leden**: `producers.is_member` scheidt de 2.279 geïmporteerde gids-records van aangesloten leden; alleen leden bovenaan in matching, gids eronder met claim-teaser.
-- Matching: Haversine in SQL (`src/lib/queries/producers.ts`), catalog-`matchTokens` → `producers.products`-tokens; items met lege `matchTokens` (categorie Supermarkt) worden bewust níét gematcht.
+- Matching: Haversine in SQL (`src/lib/queries/producers.ts`), **twee lagen**: specifiek item-token (zeker) boven categorie-token (suggestie), supermarkt-terugval onderaan; items met lege `matchTokens` (categorie Supermarkt) worden bewust niet gematcht. Tegel-badges via `nearbyCountsByToken`.
+- Openingstijden: `src/lib/opening-hours.ts` parset alle data-notaties (NL/EN-dagafkortingen, dag-lijsten "Tu,Sa", groepen "Mo-We, Fr", Dagelijks) naar een nu-status in Europe/Amsterdam; `daysSummary` geeft marktdagen ("di & za").
+- Weekmarkten: aparte `markets`-tabel uit OpenStreetMap (`scripts/import-markets.ts`, ODbL: bronvermelding verplicht, aparte dataset houden); Overpass is soms overbelast, het script accepteert een lokaal JSON-bestand als argument.
 - Realtime: Pusher (env-guarded, `src/lib/realtime.ts`) met 10s-polling-fallback. Klaviyo-events env-guarded in `src/lib/klaviyo.ts`.
 - PWA: `src/app/manifest.ts` + `public/sw.js` (statisch cache-first, navigaties network-first met offline-fallback).
 - Server actions zijn dunne wrappers om `src/lib/queries/*` (framework-onafhankelijk houden voor de latere Expo-app).
@@ -46,9 +48,10 @@ Live: https://onlyfarms-ten.vercel.app · Repo: github.com/frank2889/OnlyFarms (
 - **ESM-hoisting in scripts**: imports draaien vóór je env-loader — `.env.local` laden en dán pas `@/db` **dynamisch** importeren (patroon: `scripts/import-sheet.ts`).
 - **React-lintregels van deze repo**: geen component-assignment in render (`react-hooks/static-components`) → gebruik `createElement(iconFor(...), props)`; geen `setState` in effects (`react-hooks/set-state-in-effect`) → `useSyncExternalStore` voor localStorage/online-status; `Date.now()` in render (`react-hooks/purity`) alleen met bewuste disable-regel.
 - **Geolocation op desktop is IP-gebaseerd** (kilometers ernaast): toon altijd het reverse-geocodede punt zodat de gebruiker het kan corrigeren.
+- **Drizzle unique-constraintnamen**: drizzle-kit push verwacht `*_unique`; handgeschreven SQL geeft `*_key` → push wil dan interactief bevestigen (en faalt zonder TTY). Bij SQL-migraties constraints meteen `tabel_kolom_unique` noemen of hernoemen.
 - **Google Places TOS**: `place_id` mag permanent opgeslagen; alle andere Places-data maximaal 30 dagen cachen; weergave buiten een Google-kaart vereist "powered by Google"-vermelding. Sync via `scripts/google-sync.ts` (env-guarded, maandelijks); nooit Google Maps scrapen zonder API.
 - **`useOptimistic` leeft alleen binnen een pending transition**: offline-acties blijven pending via `await ensureOnline()` binnen dezelfde transition (zie ListView) — buiten een transition reset de optimistic state direct.
 
 ## Openstaand (stand zomer 2026)
 
-Zie [docs/PLAN.md](docs/PLAN.md) § Status. Kort: Pusher-keys aanmaken (realtime), echte-gebruikerstest week, definitieve naam + domein, Neon van us-east-1 naar EU, voorwaarden via jurist, admin-scherm, marktstandplaatsen (fase 3), deboervinder-migratie met 301's, Expo-app (later).
+Zie [docs/PLAN.md](docs/PLAN.md) § Status. Kort: Pusher-keys (realtime), Google Places-key (urensync), echte-gebruikerstestweek, definitieve naam + domein, Neon van us-east-1 naar EU, voorwaarden via jurist, admin-scherm, marktstandplaatsen koppelen aan leden + /markten-pagina, deboervinder-migratie met 301's, Expo-app (later).

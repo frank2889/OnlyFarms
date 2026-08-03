@@ -314,6 +314,10 @@
     "offerEdit": "Bewerken",
     "offerUnavailable": "Niet beschikbaar",
     "offerPending": "Wacht op controle",
+    "demandTitle": "Vraag in jouw buurt",
+    "demandIntro": "Wat mensen binnen 10 km op hun boodschappenlijst hebben staan en jij ook verkoopt. Geanonimiseerd: je ziet alleen aantallen, nooit wie.",
+    "demandLine": "op {n} lijstjes",
+    "demandEmpty": "Nog te weinig data in jouw buurt. Zodra genoeg mensen hier lijstjes maken, zie je wat er gevraagd wordt.",
     "photoPending": "Wacht op controle",
     "photoPendingHint": "Nieuwe foto's worden eerst door het team bekeken voordat ze op je publieke pagina staan.",
     "noCategory": "Geen categorie"

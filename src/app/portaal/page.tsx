@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
+import { demandNearProducer } from "@/lib/queries/demand";
 import { offersForSeller } from "@/lib/queries/portal";
 import { t } from "@/lib/i18n";
 import { StoreIcon } from "@/components/icons";
@@ -21,6 +22,7 @@ export default async function PortaalPage() {
     linked ? producerByIdAdmin(linked.id) : Promise.resolve(null),
     seller.status === "goedgekeurd" ? offersForSeller(seller.id) : Promise.resolve([]),
   ]);
+  const demand = producer ? await demandNearProducer(producer) : [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -113,6 +115,31 @@ export default async function PortaalPage() {
           )}
         </section>
       )}
+
+      {/* Vraag in de buurt: geaggregeerd en geanonimiseerd (drempel 3 lijsten) */}
+      {seller.status === "goedgekeurd" &&
+        producer &&
+        producer.lat != null &&
+        producer.products.length > 0 && (
+          <section className="mt-4 rounded-tile border border-cream-200 bg-white p-4">
+            <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-500">
+              {t("portal.demandTitle")}
+            </h2>
+            <p className="mb-3 text-sm text-ink-500">{t("portal.demandIntro")}</p>
+            {demand.length === 0 ? (
+              <p className="text-sm text-ink-700">{t("portal.demandEmpty")}</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {demand.map((d) => (
+                  <li key={d.label} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-medium">{d.label}</span>
+                    <span className="text-ink-500">{t("portal.demandLine", { n: d.lists })}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
     </main>
   );
 }

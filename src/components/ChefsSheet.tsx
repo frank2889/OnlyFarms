@@ -118,6 +118,14 @@ export default function ChefsSheet({
                           {t("chefs.aboutItem", { label: m.itemLabel })}
                         </span>
                       )}
+                      {m.producerName && (
+                        <Link
+                          href={`/producent/${m.producerSlug}`}
+                          className="mb-1 inline-block rounded-full bg-white px-2 py-0.5 text-xs font-medium text-terra-700 underline"
+                        >
+                          {t("chefs.aboutItem", { label: m.producerName })}
+                        </Link>
+                      )}
                       <p className="whitespace-pre-wrap wrap-break-word text-sm">{m.body}</p>
                     </div>
                   </li>

@@ -11,7 +11,9 @@
     "backHome": "terug naar home",
     "loading": "Laden…",
     "nix18": "NIX18. Geen 18, geen alcohol",
-    "travel": "±{min} min {mode}"
+    "travel": "±{min} min {mode}",
+    "notFoundTitle": "Deze pagina bestaat niet",
+    "notFoundText": "Misschien is de link verouderd of verkeerd getypt. Vanaf de startpagina vind je alles terug."
   },
   "nav": {
     "list": "Lijst",

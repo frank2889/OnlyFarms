@@ -20,6 +20,7 @@ import { travelInfo } from "@/lib/travel";
 import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import {
   CalendarIcon,
+  CardsIcon,
   CheckIcon,
   ChevronDownIcon,
   ListIcon,
@@ -751,7 +752,16 @@ export default function ListView({
       )}
 
       {/* Toevoegen: sticky categorie-springer + tegelwand; het zoekveld staat vast onderaan */}
-      <h2 className="mt-8 mb-2 text-lg font-semibold">{t("lists.addItems")}</h2>
+      <div className="mt-8 mb-2 flex items-baseline justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t("lists.addItems")}</h2>
+        {/* Desktop heeft geen bottom-nav; dit is daar de ingang naar het swipe-deck */}
+        <Link
+          href={`/lijst/${list.token}/swipen`}
+          className="hidden items-center gap-1.5 text-sm font-medium text-terra-700 underline sm:inline-flex"
+        >
+          <CardsIcon width={16} height={16} /> {t("swipe.title")}
+        </Link>
+      </div>
       <div className="sticky top-0 z-20 -mx-4 bg-cream-50/95 px-4 pb-1 pt-2 backdrop-blur">
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {orderedCategories.map((c) => (

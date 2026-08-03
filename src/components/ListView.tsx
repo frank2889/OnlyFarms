@@ -359,22 +359,12 @@ export default function ListView({
       addCatalogItem(item);
       return;
     }
-    // Nog een keer tikken = eentje extra
+    // Bring-toggle: nog een keer tikken haalt het er weer af.
+    // Aantallen gaan via vasthouden (qty-paneel).
     navigator.vibrate?.(10);
-    const q = (existing.qty ?? "").trim();
-    let next: string;
-    if (q === "") next = "2";
-    else if (/^\d+$/.test(q)) next = String(Number(q) + 1);
-    else {
-      // niet-numeriek aantal ("500 g"): laat de gebruiker kiezen
-      setQtyValue(q);
-      setQtyItem(item);
-      return;
-    }
-    act(() => updateItemAction(list.token, existing.id, { qty: next }), {
-      type: "setQty",
+    act(() => removeItemAction(list.token, existing.id), {
+      type: "remove",
       id: existing.id,
-      qty: next,
     });
   }
 
@@ -657,8 +647,8 @@ export default function ListView({
         <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
           <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
           <ul className="mb-2 flex flex-col gap-1">
-            <li>· Tik op een tegel om iets toe te voegen; tik nog een keer voor eentje extra.</li>
-            <li>· Houd een tegel vast om een aantal te kiezen of iets te verwijderen.</li>
+            <li>· Tik op een tegel om iets toe te voegen; tik nog een keer om het er weer af te halen.</li>
+            <li>· Houd een tegel vast om een aantal te kiezen (bijv. 2 dozen of 500 gram).</li>
             <li>· Deel de lijst met je gezin en vink samen af; alles synct vanzelf.</li>
           </ul>
           <button
@@ -1225,7 +1215,7 @@ export default function ListView({
 
       {/* Undo-snackbar */}
       {undo && (
-        <div className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-[60] z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
+        <div className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-60 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
           <span className="truncate">{undo.label}</span>
           <button
             onClick={() => {
@@ -1245,14 +1235,14 @@ export default function ListView({
           role="dialog"
           aria-modal="true"
           aria-label={`Hoeveelheid voor ${qtyItem.label}`}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 px-3 pb-20 sm:items-center sm:pb-0"
           onClick={() => setQtyItem(null)}
           onKeyDown={(e) => {
             if (e.key === "Escape") setQtyItem(null);
           }}
         >
           <div
-            className="w-full max-w-sm rounded-t-tile bg-white p-5 sm:rounded-tile"
+            className="w-full max-w-sm rounded-tile bg-white p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center gap-3">

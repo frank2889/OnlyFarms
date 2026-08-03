@@ -35,6 +35,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   } catch {}
 
+  // Beheer (en straks het producentenportaal) heeft een eigen shell; de
+  // consumenten-nav en onderpadding horen daar niet. Na de hooks, vóór de UI.
+  if (pathname.startsWith("/beheer") || pathname.startsWith("/portaal")) {
+    return <>{children}</>;
+  }
+
   const tabs = [
     { href: listHref, label: "Lijst", Icon: ListIcon, active: pathname.startsWith("/lijst"), badge: badgeCount },
     { href: "/producenten", label: "Ontdek", Icon: StoreIcon, active: pathname.startsWith("/produc") || pathname.startsWith("/provincie") },

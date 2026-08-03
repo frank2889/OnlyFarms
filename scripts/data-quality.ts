@@ -175,6 +175,20 @@ async function main() {
     console.log(`  ${d.pc} ${d.addr}: ids ${d.ids.join(", ")} (${d.names.join(" | ")})`);
   }
 
+  // 4. Naamduplicaten rapporteren (zelfde naam+plaats, mogelijk ander adres —
+  // dekt filiaalketens of dubbele invoer met een adresfout; los van stap 3,
+  // die alleen op adres kijkt)
+  const nameDups = await pool.query(
+    `select lower(name) nm, lower(coalesce(city,'')) city,
+            array_agg(id order by id) ids, array_agg(coalesce(address,'(geen adres)') order by id) addresses
+     from producers where status <> 'gestopt'
+     group by 1, 2 having count(*) > 1 order by 1`
+  );
+  console.log(`\n4) Naamduplicaten (zelfde naam+plaats): ${nameDups.rowCount} (handmatig beoordelen, niets verwijderd)`);
+  for (const d of nameDups.rows) {
+    console.log(`  "${d.nm}" (${d.city}): ids ${d.ids.join(", ")} (${d.addresses.join(" | ")})`);
+  }
+
   const stats = await pool.query(
     `select count(*) filter (where cardinality(products) > 0) met_producten,
             count(*) filter (where lat is not null) met_coords, count(*) totaal

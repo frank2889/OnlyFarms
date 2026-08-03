@@ -28,13 +28,14 @@
 - **GitHub Actions is geblokkeerd door een billing-probleem op het account van frank2889** ("account locked due to a billing issue"): de verplichte CI-check kan niet draaien, dus PR's van Chimene/Sally kunnen niet gemerged worden en de eigenaar moet steeds bypassen. Oplossen via github.com > Settings > Billing and plans (Actions is gratis voor publieke repo's, dus na herstel kost het niets).
 - PR #1 (docs/SAMENWERKEN.md, de samenwerkgids voor niet-developers) staat bewust open als review-oefening voor Sally of Chimene; Sally moet ook nog haar repo-uitnodiging accepteren (GitHub: wissalakmadi).
 
-- Pusher-keys aanmaken (gratis account, 4 env-vars) - realtime i.p.v. 10s-polling
-- Week echte-gebruikerstest (3-5 mensen incl. 65+) - belangrijkste volgende stap
+- **Pusher-keys aanmaken** (gratis account, 4 env-vars in Vercel) - realtime i.p.v. 10s-polling
+- **Google Places-key aanmaken** (`GOOGLE_MAPS_API_KEY`) - vult in één keer openingstijden, telefoon, website en gestopt-status aan (`scripts/google-sync.ts --match` eenmalig, `--refresh` maandelijks); ~$40-80/maand bij volledige dekking, vereist "powered by Google"-vermelding
+- **Week echte-gebruikerstest** (3-5 mensen incl. 65+) - belangrijkste volgende stap; ook de swipe-tab en tegel-toggle zelf op een telefoon voelen
 - Definitieve naam + domein; daarna Search Console + SEO-quick-wins (canonicals, og:image, dubbele titel-suffix, interne links producent->provincie)
 - Neon van us-east-1 naar EU-regio; voorwaarden via jurist
 - Eerste 25-50 leden werven ("founding members"); de beheeromgeving `/beheer` staat hiervoor klaar (aanmeldingen goedkeuren, meldingen, producentenbeheer, cijfers)
 - Zelf-claim-flow voor het portaal (verkoper koppelt zichzelf met mailverificatie; vereist eerst een besluit over transactionele mail). Portaal v1 met team-koppeling is live.
-- Datakwaliteit: openingstijden-parserfix (~20 records), `kind` afleiden uit naam/omschrijving (brouwerij/bakkerij/imkerij/wijngaard), duplicaten opruimen via het beheer, naamduplicaten-check aan data-quality.ts toevoegen (zie DATAKWALITEIT.md)
+- **Duplicaten opruimen** (37 adres- + 13 naamduplicaten, via `/beheer/producenten/duplicaten`; vereist een blik per geval, zie DATAKWALITEIT.md)
 - Fase 3: marktstandplaatsen, slimme dekking, sjablonen, recepten-import, aanbiedingen (incl. locatiegebonden), deboervinder-migratie met 301's; daarna Expo-app
 - Offline-beperking v1: pagina herladen zonder verbinding verliest nog niet-gesyncte vinkjes
 

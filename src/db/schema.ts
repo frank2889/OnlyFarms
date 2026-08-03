@@ -58,6 +58,9 @@ export const producers = pgTable(
     status: producerStatus("status").notNull().default("onbevestigd"),
     source: text("source").notNull().default("sheet-import"),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+    // Google Places-koppeling: place_id mag permanent, tijden max 30 dagen cachen (TOS)
+    googlePlaceId: text("google_place_id"),
+    hoursSyncedAt: timestamp("hours_synced_at", { withTimezone: true }),
     claimedByEmail: text("claimed_by_email"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

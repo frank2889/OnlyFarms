@@ -46,6 +46,7 @@ Live: https://onlyfarms-ten.vercel.app · Repo: github.com/frank2889/OnlyFarms (
 - **ESM-hoisting in scripts**: imports draaien vóór je env-loader — `.env.local` laden en dán pas `@/db` **dynamisch** importeren (patroon: `scripts/import-sheet.ts`).
 - **React-lintregels van deze repo**: geen component-assignment in render (`react-hooks/static-components`) → gebruik `createElement(iconFor(...), props)`; geen `setState` in effects (`react-hooks/set-state-in-effect`) → `useSyncExternalStore` voor localStorage/online-status; `Date.now()` in render (`react-hooks/purity`) alleen met bewuste disable-regel.
 - **Geolocation op desktop is IP-gebaseerd** (kilometers ernaast): toon altijd het reverse-geocodede punt zodat de gebruiker het kan corrigeren.
+- **Google Places TOS**: `place_id` mag permanent opgeslagen; alle andere Places-data maximaal 30 dagen cachen; weergave buiten een Google-kaart vereist "powered by Google"-vermelding. Sync via `scripts/google-sync.ts` (env-guarded, maandelijks); nooit Google Maps scrapen zonder API.
 - **`useOptimistic` leeft alleen binnen een pending transition**: offline-acties blijven pending via `await ensureOnline()` binnen dezelfde transition (zie ListView) — buiten een transition reset de optimistic state direct.
 
 ## Openstaand (stand zomer 2026)

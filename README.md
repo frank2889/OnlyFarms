@@ -18,7 +18,7 @@ Volledig productplan: [docs/PLAN.md](docs/PLAN.md). Begon als herbouw van deboer
 - **Huisstijl**: max 3 kleurfamilies (`terra`/`ink`/`cream`) als tokens in `globals.css` — enige plek met hexwaarden. Seizoensthema via `src/lib/season.ts`. **Geen emoji's; alleen SVG-iconen** (`src/components/icons.tsx`). Naam is werktitel → alles via `src/lib/brand.ts`. Teksten via `src/messages/nl.json` (i18n-klaar).
 - **Platformrol**: geen betalingen, geen partij bij de verkoop (Marktplaats-model). Aanmelden als verkoper: `/verkopen` (KVK verplicht). Alcohol-items dragen een NIX18-markering.
 - **Beheer**: `/beheer` is het teambeheer (alleen accounts met rol "team"): dashboard met kerncijfers, meldingen afhandelen, verkopersaanmeldingen goedkeuren of afwijzen (goedkeuren koppelt aan een gids-vermelding of maakt er een aan), producenten bewerken (zet "laatst bevestigd"), duplicaten-wachtrij en ervaringen-moderatie. Niet geïndexeerd; werkt ook op telefoon.
-- **Portaal**: `/portaal` is het zelfbeheer voor aangesloten verkopers met een gekoppeld gebruikersaccount (koppeling door het team, of automatisch bij goedkeuring): eigen aanmeldstatus plus vermelding bewerken (telefoon, website, omschrijving, openingstijden, product-tokens). Eén account per persoon; petten bepalen de toegang.
+- **Portaal**: `/portaal` is het bedrijfsprofiel voor aangesloten verkopers met een gekoppeld gebruikersaccount (koppeling door het team, of automatisch bij goedkeuring): aanmeldstatus, gegevens bewerken (telefoon, website, omschrijving, openingstijden, product-tokens), foto's uploaden (Vercel Blob, max 8, eerste = hoofdfoto) en producten beheren (titel, prijsindicatie, foto, beschikbaar; prikbord-model, geen betalingen). De publieke producentpagina toont de galerij en het aanbod. Eén account per persoon; petten bepalen de toegang.
 
 ## Setup (team)
 
@@ -40,6 +40,7 @@ De database (Neon, via Vercel) bevat al 2.279 producenten. Alleen bij een verse 
 | `SHEET_ID` | nee | alleen voor de eenmalige seed |
 | `PUSHER_APP_ID`, `NEXT_PUBLIC_PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_CLUSTER` | nee | realtime lijsten; zonder keys valt de UI terug op polling |
 | `KLAVIYO_PRIVATE_KEY` | nee | server-side events voor Sally's flows; zonder key wordt niets verstuurd |
+| `BLOB_READ_WRITE_TOKEN` | nee | foto-uploads (Vercel Blob); zonder token geeft /api/upload een nette fout |
 
 ## Samenwerken (branch-workflow)
 

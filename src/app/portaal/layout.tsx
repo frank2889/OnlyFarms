@@ -6,6 +6,7 @@ import { requireSellerUser } from "@/lib/authz";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { SproutIcon } from "@/components/icons";
+import PortalTabs from "@/components/PortalTabs";
 
 export const metadata: Metadata = {
   title: `${t("portal.title")} | ${BRAND.name}`,
@@ -63,6 +64,11 @@ export default async function PortaalLayout({ children }: { children: React.Reac
             </Link>
           </nav>
         </div>
+        {ctx.seller.status === "goedgekeurd" && (
+          <div className="mx-auto max-w-3xl px-4">
+            <PortalTabs />
+          </div>
+        )}
       </header>
       {children}
     </div>

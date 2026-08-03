@@ -37,6 +37,15 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_constraint where conname='sellers_user_id_unique'",
     "ALTER TABLE sellers ADD CONSTRAINT sellers_user_id_unique UNIQUE (user_id)",
   ],
+  // Profiel-uitbreiding portaal: foto's op de vermelding, foto per product
+  [
+    "select 1 from information_schema.columns where table_name='producers' and column_name='photos'",
+    "ALTER TABLE producers ADD COLUMN photos text[] NOT NULL DEFAULT '{}'",
+  ],
+  [
+    "select 1 from information_schema.columns where table_name='offers' and column_name='photo_url'",
+    "ALTER TABLE offers ADD COLUMN photo_url text",
+  ],
 ];
 
 async function main() {

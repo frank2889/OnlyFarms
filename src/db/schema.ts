@@ -50,6 +50,8 @@ export const producers = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     products: text("products").array().notNull().default([]),
+    // Foto's (Vercel Blob-URL's); de eerste is de hoofdfoto
+    photos: text("photos").array().notNull().default([]),
     openingHours: text("opening_hours"),
     phone: text("phone"),
     website: text("website"),
@@ -225,6 +227,7 @@ export const offers = pgTable("offers", {
   description: text("description"),
   // Indicatie als tekst ("€3 per doos") — het platform verwerkt geen betalingen
   priceIndication: text("price_indication"),
+  photoUrl: text("photo_url"),
   available: boolean("available").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

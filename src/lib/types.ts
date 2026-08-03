@@ -11,6 +11,8 @@ export type Producer = {
   lat: number | null;
   lng: number | null;
   products: string[];
+  photos: string[];
+  claimedBySellerId: number | null;
   openingHours: string | null;
   phone: string | null;
   website: string | null;

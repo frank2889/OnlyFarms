@@ -16,6 +16,8 @@ const baseColumns = {
   lat: producers.lat,
   lng: producers.lng,
   products: producers.products,
+  photos: producers.photos,
+  claimedBySellerId: producers.claimedBySellerId,
   openingHours: producers.openingHours,
   phone: producers.phone,
   website: producers.website,

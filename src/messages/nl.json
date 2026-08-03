@@ -82,7 +82,9 @@
     "inProvince": "Producenten in {province}",
     "getHere": "{product} hier halen",
     "addedToList": "Op je lijst gezet, met deze winkel erbij",
-    "yourList": "Je lijst"
+    "yourList": "Je lijst",
+    "offersTitle": "Aanbod",
+    "offersNote": "Prijzen zijn een indicatie van de verkoper. {brand} verwerkt geen betalingen."
   },
   "sell": {
     "title": "Verkopen via {brand}",
@@ -238,6 +240,33 @@
     "editHint": "Adres of naam wijzigen? Dat doet het team voor je, zodat de kaartpositie blijft kloppen. Meld het via een berichtje.",
     "statusReasonLabel": "Toelichting",
     "profileLink": "Naar je verkopersportaal",
-    "profileTitle": "Jouw bedrijf"
+    "profileTitle": "Jouw bedrijf",
+    "tabOverview": "Overzicht",
+    "tabDetails": "Gegevens",
+    "tabPhotos": "Foto's",
+    "tabProducts": "Producten",
+    "profilePhotos": "{n} foto's",
+    "profileProducts": "{n} producten",
+    "viewPublic": "Zo zien bezoekers je pagina",
+    "photosIntro": "De eerste foto is je hoofdfoto op de site. Maximaal 8 foto's (JPG, PNG of WebP, tot 8 MB).",
+    "addPhoto": "Foto toevoegen",
+    "uploading": "Bezig met uploaden…",
+    "removePhoto": "Verwijderen",
+    "photosEmpty": "Nog geen foto's. Een goede hoofdfoto maakt je pagina persoonlijk en herkenbaar.",
+    "productsIntro": "Dit aanbod staat op je publieke pagina. De prijs is een indicatie: bestellen en afrekenen gebeurt bij jou, niet via het platform.",
+    "newProduct": "Nieuw product",
+    "productsEmpty": "Nog geen producten. Zet je aanbod erop: dat is wat bezoekers willen zien.",
+    "offerTitle": "Naam van het product",
+    "offerCategory": "Categorie",
+    "offerPrice": "Prijsindicatie",
+    "offerPricePlaceholder": "Bijv. 3,50 euro per doos",
+    "offerDescription": "Omschrijving",
+    "offerAvailable": "Nu beschikbaar",
+    "offerPhoto": "Foto",
+    "offerSave": "Opslaan",
+    "offerDelete": "Verwijderen",
+    "offerEdit": "Bewerken",
+    "offerUnavailable": "Niet beschikbaar",
+    "noCategory": "Geen categorie"
   }
 }

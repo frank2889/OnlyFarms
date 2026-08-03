@@ -13,6 +13,27 @@
     "nix18": "NIX18. Geen 18, geen alcohol",
     "travel": "±{min} min {mode}"
   },
+  "nav": {
+    "list": "Lijst",
+    "swipe": "Swipen",
+    "discover": "Ontdek",
+    "profile": "Profiel"
+  },
+  "swipe": {
+    "title": "Snel aanvullen",
+    "hint": "Naar rechts is toevoegen, naar links is overslaan. De knoppen doen hetzelfde.",
+    "add": "Toevoegen",
+    "skip": "Overslaan",
+    "undo": "Ongedaan maken",
+    "addedCount": "{n} toegevoegd",
+    "historyLine": "Al {n} keer gekocht",
+    "doneTitle": "Je bent erdoorheen",
+    "doneText": "{n} items op je lijst gezet.",
+    "viewList": "Bekijk je lijst",
+    "again": "Overgeslagen items opnieuw",
+    "empty": "Alles wat we konden voorstellen staat al op je lijst.",
+    "backToList": "Terug naar je lijst"
+  },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",
     "heroText": "Maak samen je lijst zoals je gewend bent. Wij laten per item zien welke boer, bakker of brouwer bij jou in de buurt het verkoopt.",
@@ -25,7 +46,6 @@
     "how2Text": "Bij elk item zie je welke lokale producenten het in de buurt verkopen, met afstand en openingstijden.",
     "how3Title": "Haal en vink af",
     "how3Text": "Route via je eigen navigatie-app, samen afvinken terwijl je haalt. Verser dan dit wordt het niet.",
-    "categoriesTitle": "Wat zoek je?",
     "footerRole": "{brand} brengt kopers en lokale producenten bij elkaar en is geen partij bij de verkoop."
   },
   "lists": {
@@ -42,6 +62,9 @@
     "quantityPlaceholder": "Aantal (bijv. 2 dozen)",
     "notePlaceholder": "Notitie (bijv. De grote bruine)",
     "recentlyBought": "Onlangs gekocht",
+    "boughtBefore": "Eerder gekocht",
+    "showAll": "Toon alles ({n})",
+    "showLess": "Toon minder",
     "seasonNow": "Nu in seizoen",
     "itemsOpen": "{count} te halen",
     "whereToBuy": "Waar koop je dit?",

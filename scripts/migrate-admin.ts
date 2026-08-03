@@ -46,6 +46,25 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='offers' and column_name='photo_url'",
     "ALTER TABLE offers ADD COLUMN photo_url text",
   ],
+  // Swipe-deck: accumulerende koophistorie (wis-bestendig, per lijst/huishouden)
+  [
+    "select 1 from information_schema.tables where table_name='bought_stats'",
+    `CREATE TABLE bought_stats (
+      id serial PRIMARY KEY,
+      list_id integer NOT NULL,
+      household_id integer,
+      catalog_key text NOT NULL,
+      times integer NOT NULL DEFAULT 1,
+      last_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT bought_stats_list_id_lists_id_fk FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+      CONSTRAINT bought_stats_household_id_households_id_fk FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE SET NULL,
+      CONSTRAINT bought_stats_list_id_catalog_key_unique UNIQUE (list_id, catalog_key)
+    )`,
+  ],
+  [
+    "select 1 from pg_indexes where indexname='bought_stats_household_idx'",
+    "CREATE INDEX bought_stats_household_idx ON bought_stats (household_id)",
+  ],
 ];
 
 async function main() {

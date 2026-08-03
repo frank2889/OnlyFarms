@@ -11,6 +11,7 @@ import {
   createList,
   getListByToken,
   removeItem,
+  removeOpenItemByCatalogKey,
   setItemChecked,
   clearBought,
   deleteList,
@@ -76,7 +77,14 @@ export async function toggleItemAction(
   checked: boolean
 ): Promise<void> {
   const list = await requireList(token);
-  await setItemChecked(list.id, itemId, checked);
+  await setItemChecked(list.id, itemId, checked, list.householdId ?? null);
+  await bump(token);
+}
+
+/** Undo van een swipe-toevoeging: open item op catalogKey weer verwijderen */
+export async function removeCatalogItemAction(token: string, catalogKey: string): Promise<void> {
+  const list = await requireList(token);
+  await removeOpenItemByCatalogKey(list.id, catalogKey);
   await bump(token);
 }
 

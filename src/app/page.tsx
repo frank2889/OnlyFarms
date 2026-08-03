@@ -2,10 +2,8 @@ import Link from "next/link";
 import { currentUserId } from "@/auth";
 import { listsForUser, userById } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
-import { CATEGORIES } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { currentSeason } from "@/lib/season";
-import { iconForCategory } from "@/components/catalog-icons";
 import { SproutIcon, StoreIcon } from "@/components/icons";
 import HomeListPanel from "@/components/HomeListPanel";
 
@@ -26,7 +24,7 @@ export default async function Home() {
           {BRAND.name}
         </span>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/verkopen" className="hidden text-terra-700 underline sm:inline">
+          <Link href="/verkopen" className="text-terra-700 underline">
             Verkopen
           </Link>
           <Link href={user ? "/profiel" : "/inloggen"} className="text-terra-700 underline">
@@ -73,28 +71,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-cream-100 px-6 py-16">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold">{t("home.categoriesTitle")}</h2>
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {CATEGORIES.filter((c) => c.key !== "overig").map((c) => {
-              const Icon = iconForCategory(c.key);
-              return (
-                <Link
-                  key={c.key}
-                  href={`/producenten?product=${c.key}`}
-                  className="flex items-center gap-3 rounded-tile border border-cream-200 bg-white p-4 hover:border-terra-400"
-                >
-                  <Icon width={24} height={24} className="text-terra-500" />
-                  <span className="font-medium">{c.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <footer className="px-6 py-10 text-center text-sm text-ink-500">
+      <footer className="border-t border-cream-200 px-6 py-10 text-center text-sm text-ink-500">
         {t("home.footerRole", { brand: BRAND.name })}
       </footer>
     </main>

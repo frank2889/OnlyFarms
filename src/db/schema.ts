@@ -172,6 +172,28 @@ export const listItems = pgTable(
   (t) => [index("list_items_list_idx").on(t.listId, t.checked)]
 );
 
+// Accumulerende koophistorie voor slimme suggesties (swipe-deck, "eerder gekocht").
+// Bewust los van list_items: "wis gekochte items" is destructief, dit niet.
+export const boughtStats = pgTable(
+  "bought_stats",
+  {
+    id: serial("id").primaryKey(),
+    listId: integer("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    householdId: integer("household_id").references(() => households.id, {
+      onDelete: "set null",
+    }),
+    catalogKey: text("catalog_key").notNull(),
+    times: integer("times").notNull().default(1),
+    lastAt: timestamp("last_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("bought_stats_list_id_catalog_key_unique").on(t.listId, t.catalogKey),
+    index("bought_stats_household_idx").on(t.householdId),
+  ]
+);
+
 // Aangesloten verkopers: bedrijven (KVK verplicht) die via het platform
 // producten aanbieden. Het platform is alleen prikbord — geen betalingen,
 // geen logistiek; de verkoper is als voedselondernemer zelf verantwoordelijk.

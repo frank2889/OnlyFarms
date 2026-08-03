@@ -295,3 +295,20 @@ export function ChevronDownIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function XIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </Svg>
+  );
+}
+
+export function CardsIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="7.5" y="4" width="12" height="16" rx="2" transform="rotate(6 13.5 12)" />
+      <path d="M8.5 6.5 5.9 7.2a2 2 0 0 0-1.4 2.4l2.6 9.7" />
+    </Svg>
+  );
+}

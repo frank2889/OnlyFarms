@@ -202,6 +202,25 @@ export const CATALOG: CatalogItem[] = [
   { key: "luiers", label: "Luiers", category: "supermarkt", matchTokens: [] },
 ];
 
+/** Gecureerde basisboodschappen: vult het swipe-deck voor gebruikers zonder historie */
+export const BASICS: string[] = [
+  "melk",
+  "eieren",
+  "brood",
+  "kaas",
+  "boter",
+  "yoghurt",
+  "appels",
+  "aardappelen",
+  "ui",
+  "tomaten",
+  "sla",
+  "gehakt",
+  "kip",
+  "sap",
+  "jam",
+];
+
 export function catalogItem(key: string): CatalogItem | undefined {
   return CATALOG.find((i) => i.key === key);
 }

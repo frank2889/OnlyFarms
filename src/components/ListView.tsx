@@ -1164,6 +1164,20 @@ export default function ListView({
         </div>
       </div>
 
+      {/* Desktop heeft geen tabbalk: eigen knop om de lijst (drawer) te openen */}
+      <button
+        onClick={() => setDrawerOpen((v) => !v)}
+        className="fixed bottom-20 right-8 z-40 hidden items-center gap-2 rounded-full bg-terra-500 px-5 py-3 font-medium text-white shadow-lg hover:bg-terra-600 sm:inline-flex"
+      >
+        <ListIcon width={18} height={18} />
+        {t("lists.openDrawer")}
+        {snapshot.open.length > 0 && (
+          <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/25 px-1.5 text-sm font-bold">
+            {snapshot.open.length}
+          </span>
+        )}
+      </button>
+
       {/* Toevoeg-trigger onderaan; typen gebeurt in de overlay met het veld bovenaan */}
       <div className="fixed inset-x-0 bottom-16 z-40 border-t border-cream-200 bg-white/95 px-4 py-2 backdrop-blur sm:bottom-0">
         <button
@@ -1175,9 +1189,18 @@ export default function ListView({
         </button>
       </div>
 
-      {/* Zoek-overlay: het veld staat bovenaan, dus het toetsenbord zit nooit in de weg */}
+      {/* Zoek-overlay: op mobiel full-screen met het veld bovenaan (toetsenbord
+          zit nooit in de weg); op desktop een gecentreerd paneel met backdrop,
+          anders "springt" de zoekbalk van onder naar boven over een leeg scherm */}
       {searchOpen && (
-        <div className="fixed inset-0 z-[70] flex flex-col bg-cream-50">
+        <div
+          className="fixed inset-0 z-[70] flex flex-col bg-cream-50 sm:items-center sm:justify-center sm:bg-ink-900/40 sm:p-6"
+          onClick={closeSearch}
+        >
+          <div
+            className="flex min-h-0 flex-1 flex-col sm:max-h-[75vh] sm:w-full sm:max-w-2xl sm:flex-none sm:overflow-hidden sm:rounded-tile sm:bg-cream-50 sm:shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
           <div className="border-b border-cream-200 bg-white px-4 py-2">
             <form
               onSubmit={quickAdd}
@@ -1308,6 +1331,7 @@ export default function ListView({
                 </>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}

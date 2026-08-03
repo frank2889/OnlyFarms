@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { currentUserId } from "@/auth";
 import { listsForUser, userById } from "@/lib/queries/accounts";
+import { sellerForUser } from "@/lib/queries/portal";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { currentSeason } from "@/lib/season";
@@ -12,9 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const season = currentSeason();
   const userId = await currentUserId();
-  const [user, serverLists] = userId
-    ? await Promise.all([userById(userId), listsForUser(userId)])
-    : [null, []];
+  const [user, serverLists, seller] = userId
+    ? await Promise.all([userById(userId), listsForUser(userId), sellerForUser(userId)])
+    : [null, [], null];
 
   return (
     <main>
@@ -24,9 +25,16 @@ export default async function Home() {
           {BRAND.name}
         </span>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/verkopen" className="text-terra-700 underline">
-            Verkopen
-          </Link>
+          {seller ? (
+            // Al verkoper met portaal-toegang: geen wervende link meer nodig
+            <Link href="/portaal" className="text-terra-700 underline">
+              {t("portal.title")}
+            </Link>
+          ) : (
+            <Link href="/verkopen" className="text-terra-700 underline">
+              Verkopen
+            </Link>
+          )}
           <Link href={user ? "/profiel" : "/inloggen"} className="text-terra-700 underline">
             {user ? user.name : "Inloggen"}
           </Link>

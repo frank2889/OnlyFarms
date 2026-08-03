@@ -106,6 +106,7 @@
     "nearbyCount": "{n} in de buurt",
     "nearbySheetTitle": "{label} in de buurt",
     "nearbyNeedsLocation": "Stel bovenaan de lijst je locatie in, dan zien we wie dit bij jou in de buurt verkoopt.",
+    "openDrawer": "Je lijst",
     "nearbyAlertLabel": "Melding als je vlakbij een verkooppunt bent:",
     "nearbyAlertOff": "Uit",
     "nearbyAlertGeoError": "Locatie niet beschikbaar.",

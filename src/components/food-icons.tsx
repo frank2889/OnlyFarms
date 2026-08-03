@@ -1358,6 +1358,18 @@ export function FoodZuurkool(p: IconProps) {
   );
 }
 
+export function FoodGehakt(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 15c0-1.1.9-1.9 2.1-2.1-.4-1 .1-2.1 1.2-2.5-.3-1.4.8-2.7 2.4-2.7.5-1.2 1.8-2 3.2-1.8 1.4-1 3.3-.6 4.2.7 1.5.1 2.7 1.3 2.7 2.7 1.2.3 2.1 1.4 2.1 2.7 0 1.5-1.4 2.8-3.2 2.8H7.1C5.4 15.8 4 14.8 4 13.5Z" />
+      <circle cx="9" cy="12" r="0.9" fill={DARK} />
+      <circle cx="13.2" cy="10" r="0.9" fill={DARK} />
+      <circle cx="16" cy="13" r="0.9" fill={DARK} />
+      <circle cx="11" cy="14.5" r="0.9" fill={DARK} />
+    </Svg>
+  );
+}
+
 export function FoodHazelnoot(p: IconProps) {
   return (
     <Svg {...p}>

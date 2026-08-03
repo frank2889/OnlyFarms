@@ -74,7 +74,16 @@ export function parseHours(text: string): Interval[] {
     const seg = segment.trim();
     if (!seg) continue;
 
-    if (/(dagelijks|daily|24\/7)\s*(geopend|open)?$/.test(seg)) {
+    // "Dagelijks (automaat)", "Zelfbedieningskoelkast (dagelijks)", "Dagelijks
+    // automaat": een dagelijks-vermelding zonder eigen tijdvak is de hele dag
+    // open. Alleen als het segment ZELF geen tijdvak bevat (ook geen
+    // dubbelepunt-loze variant als "14-18"): anders wint het echte tijdvak
+    // hieronder, of blijft het bewust ongeparsed bij samengestelde schema's
+    // ("Winkel: 14-18 | Melktap: dagelijks 9-20") in plaats van het risico te
+    // lopen dat als "de hele dag open" te tonen.
+    const hasTimeRange =
+      new RegExp(`${TIME}\\s*[-–]\\s*${TIME}`).test(seg) || /\d{1,2}\s*[-–]\s*\d{1,2}/.test(seg);
+    if (!hasTimeRange && /\b(dagelijks|daily|24\/7)\b/.test(seg)) {
       for (let d = 0; d < 7; d++) intervals.push({ day: d, start: 0, end: 24 * 60 });
       continue;
     }

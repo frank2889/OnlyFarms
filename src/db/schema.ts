@@ -227,6 +227,29 @@ export const swipeSignals = pgTable(
   ]
 );
 
+// Chat per boodschappenlijst, tussen echte mensen (geen AI): schrijven kan
+// alleen met een account, lezen voor iedereen met de lijst-link (zelfde
+// vertrouwensmodel als de lijst zelf). Een bericht kan aan een item hangen
+// ("waarom heb je deze melk nodig"); item_label blijft staan als het item
+// verdwijnt, zodat het gesprek leesbaar blijft.
+export const listMessages = pgTable(
+  "list_messages",
+  {
+    id: serial("id").primaryKey(),
+    listId: integer("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    itemId: integer("item_id").references(() => listItems.id, { onDelete: "set null" }),
+    itemLabel: text("item_label"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("list_messages_list_idx").on(t.listId, t.createdAt)]
+);
+
 // Aangesloten verkopers: bedrijven (KVK verplicht) die via het platform
 // producten aanbieden. Het platform is alleen prikbord — geen betalingen,
 // geen logistiek; de verkoper is als voedselondernemer zelf verantwoordelijk.

@@ -118,6 +118,26 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='producers' and column_name='photos_pending'",
     "ALTER TABLE producers ADD COLUMN photos_pending text[] NOT NULL DEFAULT '{}'",
   ],
+  // "Chefs": chat per lijst tussen echte mensen; berichten kunnen aan een item hangen
+  [
+    "select 1 from information_schema.tables where table_name='list_messages'",
+    `CREATE TABLE list_messages (
+      id serial PRIMARY KEY,
+      list_id integer NOT NULL,
+      user_id integer NOT NULL,
+      item_id integer,
+      item_label text,
+      body text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT list_messages_list_id_lists_id_fk FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+      CONSTRAINT list_messages_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT list_messages_item_id_list_items_id_fk FOREIGN KEY (item_id) REFERENCES list_items(id) ON DELETE SET NULL
+    )`,
+  ],
+  [
+    "select 1 from pg_indexes where indexname='list_messages_list_idx'",
+    "CREATE INDEX list_messages_list_idx ON list_messages (list_id, created_at)",
+  ],
 ];
 
 async function main() {

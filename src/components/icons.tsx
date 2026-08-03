@@ -304,6 +304,16 @@ export function XIcon(p: IconProps) {
   );
 }
 
+export function ChefHatIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M7 13.5a4 4 0 0 1-1-7.87 5 5 0 0 1 9.9-.63A4 4 0 0 1 17 13.5" />
+      <path d="M7 13v6h10v-6" />
+      <path d="M7 16.5h10" />
+    </Svg>
+  );
+}
+
 export function BellIcon(p: IconProps) {
   return (
     <Svg {...p}>

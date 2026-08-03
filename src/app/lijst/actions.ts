@@ -6,11 +6,13 @@ import { claimList, householdForUser, membersOfHousehold, userById } from "@/lib
 import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 import { recordSwipeSignal } from "@/lib/queries/swipe";
+import { sendListMessage } from "@/lib/queries/chat";
 
 import {
   addItem,
   createList,
   getListByToken,
+  getListItems,
   removeItem,
   removeOpenItemByCatalogKey,
   setItemChecked,
@@ -127,6 +129,37 @@ export async function removeCatalogItemAction(token: string, catalogKey: string)
   const list = await requireList(token);
   await removeOpenItemByCatalogKey(list.id, catalogKey);
   await bump(token);
+}
+
+/**
+ * "Chefs": bericht sturen in de lijst-chat. Alleen met een account (de naam
+ * komt uit je account); optioneel gekoppeld aan een item van deze lijst
+ * ("waarom heb je deze melk nodig"). Lezen kan iedereen met de lijst-link.
+ */
+export async function sendChatMessageAction(
+  token: string,
+  body: string,
+  itemId?: number | null
+): Promise<{ ok: boolean; error?: string }> {
+  const list = await requireList(token);
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "login" };
+  const clean = body.trim().slice(0, 500);
+  if (!clean) return { ok: false, error: "leeg" };
+  let item: { id: number; label: string } | null = null;
+  if (itemId) {
+    const items = await getListItemsForChat(list.id);
+    const match = items.find((i) => i.id === itemId);
+    if (match) item = { id: match.id, label: match.label };
+  }
+  await sendListMessage(list.id, userId, clean, item);
+  await bump(token);
+  return { ok: true };
+}
+
+async function getListItemsForChat(listId: number): Promise<{ id: number; label: string }[]> {
+  const { open, bought } = await getListItems(listId);
+  return [...open, ...bought].map((i) => ({ id: i.id, label: i.label }));
 }
 
 /** Voorkeurssignaal van een swipe (rechts/links): voedt de bèta-smaakmodus, geen list-refresh nodig */

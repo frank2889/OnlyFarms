@@ -13,11 +13,14 @@ import {
   removeItem,
   setItemChecked,
   clearBought,
+  setCategoryOrder,
   setListLocation,
   setListRadius,
   updateItem,
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
+import { searchProducersByName } from "@/lib/queries/producers";
+import type { Producer } from "@/lib/types";
 
 async function requireList(token: string) {
   const list = await getListByToken(token);
@@ -71,6 +74,7 @@ export async function updateItemAction(
     store?: string;
     producerSlug?: string | null;
     assignee?: string;
+    priority?: string;
     dueAt?: string | null;
   }
 ): Promise<void> {
@@ -105,6 +109,9 @@ export async function updateItemAction(
     } else {
       storeSuggestedBy = null;
     }
+  }
+  if (patch.priority !== undefined && !VALID_PRIORITIES.has(patch.priority)) {
+    delete patch.priority;
   }
   await updateItem(list.id, itemId, {
     ...patch,
@@ -154,6 +161,24 @@ export async function setLocationByCoordsAction(
   const label = await reverseGeocode(lat, lng);
   await setListLocation(list.id, { postcode: label ?? "Mijn locatie", lat, lng });
   await bump(token);
+}
+
+const VALID_PRIORITIES = new Set(["dringend", "normaal", "kan-wachten"]);
+
+export async function setCategoryOrderAction(token: string, order: string[]): Promise<void> {
+  const list = await requireList(token);
+  await setCategoryOrder(list.id, order.slice(0, 20));
+  await bump(token);
+}
+
+/** Producenten op naam zoeken vanaf de lijst-locatie (gecombineerde zoekbalk) */
+export async function searchProducersAction(
+  token: string,
+  query: string
+): Promise<Producer[]> {
+  const list = await requireList(token);
+  if (!list.lat || !list.lng || query.trim().length < 3) return [];
+  return searchProducersByName(query, list.lat, list.lng, 4);
 }
 
 export async function setRadiusAction(token: string, radiusKm: number): Promise<void> {

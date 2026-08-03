@@ -117,6 +117,8 @@ export const lists = pgTable("lists", {
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
   radiusKm: integer("radius_km").notNull().default(10),
+  // eigen loopvolgorde van categorieen per lijst (Bring-klacht: vaste volgorde)
+  categoryOrder: text("category_order").array(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -144,6 +146,8 @@ export const listItems = pgTable(
     assignee: text("assignee"),
     // gevalideerd gezinslid (alleen bij lijsten met een huishouden)
     assigneeUserId: integer("assignee_user_id").references(() => users.id),
+    // dringend | normaal | kan-wachten (Bring-urgentie)
+    priority: text("priority").notNull().default("normaal"),
     dueAt: timestamp("due_at", { withTimezone: true }),
     checked: boolean("checked").notNull().default(false),
     checkedAt: timestamp("checked_at", { withTimezone: true }),

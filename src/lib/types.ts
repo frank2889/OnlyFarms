@@ -35,6 +35,7 @@ export type ListItem = {
   storeSuggestedBy: string | null;
   assignee: string | null;
   assigneeUserId: number | null;
+  priority: string;
   dueAt: Date | null;
   checked: boolean;
   checkedAt: Date | null;
@@ -52,6 +53,7 @@ export type ShoppingList = {
   lat: number | null;
   lng: number | null;
   radiusKm: number;
+  categoryOrder: string[] | null;
 };
 
 export type ItemMatch = {

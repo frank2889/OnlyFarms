@@ -50,7 +50,11 @@
     "noMatch": "Nog geen producent gevonden voor dit item.",
     "reportProducer": "Ken jij er een? Meld een producent",
     "radius": "Straal",
-    "nearestFallback": "Niets binnen {km} km — dit zijn de dichtstbijzijnde:"
+    "nearestFallback": "Niets binnen {km} km — dit zijn de dichtstbijzijnde:",
+    "nearbyCount": "{n} in de buurt",
+    "producersFound": "Producenten in de buurt",
+    "priorityLabel": "Urgentie",
+    "orderCategories": "Volgorde aanpassen"
   },
   "producers": {
     "title": "Lokale producenten",

@@ -37,12 +37,15 @@ import {
   addItemAction,
   clearBoughtAction,
   removeItemAction,
+  searchProducersAction,
+  setCategoryOrderAction,
   setLocationByCoordsAction,
   setLocationByQueryAction,
   setRadiusAction,
   toggleItemAction,
   updateItemAction,
 } from "@/app/lijst/actions";
+import type { Producer } from "@/lib/types";
 
 type Props = {
   list: ShoppingList;
@@ -54,6 +57,7 @@ type Props = {
   memberNames?: string[];
   hasHousehold?: boolean;
   viewerIsMember?: boolean;
+  nearbyCounts?: Record<string, number>;
 };
 
 type Snapshot = { open: ListItem[]; bought: ListItem[] };
@@ -95,6 +99,8 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
   }
 }
 
+const PRIORITY_RANK: Record<string, number> = { dringend: 0, normaal: 1, "kan-wachten": 2 };
+
 function routeUrl(lat: number | null, lng: number | null): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
@@ -131,6 +137,7 @@ export default function ListView({
   memberNames = [],
   hasHousehold = false,
   viewerIsMember = false,
+  nearbyCounts = {},
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -165,6 +172,12 @@ export default function ListView({
     () => "ssr"
   );
   const [introDismissed, setIntroDismissed] = useState(false);
+  const [producerHits, setProducerHits] = useState<Producer[]>([]);
+  const [catOrder, setCatOrder] = useState<string[]>(() =>
+    list.categoryOrder?.length ? list.categoryOrder : CATEGORIES.map((c) => c.key as string)
+  );
+  const [orderMode, setOrderMode] = useState(false);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showIntro = introFlag === "" && !introDismissed;
 
   // Lijst registreren op dit apparaat + andere lijsten voor de switcher
@@ -245,6 +258,7 @@ export default function ListView({
       storeSuggestedBy: null,
       assignee: null,
       assigneeUserId: null,
+      priority: "normaal",
       dueAt: null,
       checked: false,
       checkedAt: null,
@@ -284,6 +298,11 @@ export default function ListView({
       type: "add",
       item: makeTempItem({ label }),
     });
+  }
+
+  function countNearby(item: CatalogItem): number {
+    if (!item.matchTokens.length) return 0;
+    return Math.max(0, ...item.matchTokens.map((token) => nearbyCounts[token] ?? 0));
   }
 
   function toggleTile(item: CatalogItem) {
@@ -367,7 +386,10 @@ export default function ListView({
 
   const searchResults = useMemo(() => searchCatalog(query).slice(0, 7), [query]);
   const groupedOpen = useMemo(() => {
-    const order = new Map(CATEGORIES.map((c, i) => [c.key as string, i]));
+    const orderIndex = (key: string) => {
+      const i = catOrder.indexOf(key);
+      return i === -1 ? 98 : i;
+    };
     const byKey = new Map<string, ListItem[]>();
     for (const item of snapshot.open) {
       const cat = item.catalogKey ? catalogItem(item.catalogKey) : undefined;
@@ -376,13 +398,34 @@ export default function ListView({
       byKey.get(key)!.push(item);
     }
     return [...byKey.entries()]
-      .sort((a, b) => (order.get(a[0]) ?? 99) - (order.get(b[0]) ?? 99))
+      .sort((a, b) => orderIndex(a[0]) - orderIndex(b[0]))
       .map(([key, items]) => ({
         key,
         label: key === "_los" ? "Zelf toegevoegd" : CATEGORIES.find((c) => c.key === key)?.label ?? key,
-        items,
+        items: [...items].sort(
+          (a, b) => (PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1)
+        ),
       }));
-  }, [snapshot.open]);
+  }, [snapshot.open, catOrder]);
+
+  const orderedCategories = useMemo(() => {
+    const orderIndex = (key: string) => {
+      const i = catOrder.indexOf(key);
+      return i === -1 ? 98 : i;
+    };
+    return [...CATEGORIES].sort((a, b) => orderIndex(a.key) - orderIndex(b.key));
+  }, [catOrder]);
+
+  function moveCategory(key: string, dir: -1 | 1) {
+    const idx = catOrder.indexOf(key);
+    if (idx === -1) return;
+    const target = idx + dir;
+    if (target < 0 || target >= catOrder.length) return;
+    const next = [...catOrder];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setCatOrder(next);
+    act(() => setCategoryOrderAction(list.token, next));
+  }
   const openKeys = new Set(snapshot.open.map((i) => i.catalogKey));
   const suggestions = seasonal.filter((s) => !openKeys.has(s.key)).slice(0, 6);
   const rebuy = boughtBeforeKeys
@@ -534,15 +577,43 @@ export default function ListView({
       )}
 
       {/* Open items */}
-      <h2 className="mb-2 text-sm font-semibold text-ink-500">
-        {t("lists.itemsOpen", { count: snapshot.open.length })}
-      </h2>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-ink-500">
+          {t("lists.itemsOpen", { count: snapshot.open.length })}
+        </h2>
+        {groupedOpen.length > 1 && (
+          <button
+            onClick={() => setOrderMode((v) => !v)}
+            className="text-xs text-ink-500 underline hover:text-terra-700"
+          >
+            {orderMode ? "Klaar" : t("lists.orderCategories")}
+          </button>
+        )}
+      </div>
       <ul className="flex flex-col gap-2">
         {groupedOpen.map((group) => (
           <Fragment key={group.key}>
             {groupedOpen.length > 1 && (
-              <li className="mt-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+              <li className="mt-1.5 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
                 {group.label}
+                {orderMode && group.key !== "_los" && (
+                  <span className="flex gap-1">
+                    <button
+                      onClick={() => moveCategory(group.key, -1)}
+                      className="rounded-full bg-cream-100 px-2 py-0.5 hover:bg-cream-200"
+                      aria-label={`${group.label} omhoog`}
+                    >
+                      omhoog
+                    </button>
+                    <button
+                      onClick={() => moveCategory(group.key, 1)}
+                      className="rounded-full bg-cream-100 px-2 py-0.5 hover:bg-cream-200"
+                      aria-label={`${group.label} omlaag`}
+                    >
+                      omlaag
+                    </button>
+                  </span>
+                )}
               </li>
             )}
             {group.items.map((item) => {
@@ -711,7 +782,18 @@ export default function ListView({
           <SearchIcon width={16} height={16} className="shrink-0 text-ink-300" />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setQuery(value);
+              if (searchDebounce.current) clearTimeout(searchDebounce.current);
+              if (value.trim().length >= 3 && list.lat != null) {
+                searchDebounce.current = setTimeout(async () => {
+                  setProducerHits(await searchProducersAction(list.token, value));
+                }, 300);
+              } else {
+                setProducerHits([]);
+              }
+            }}
             placeholder={t("lists.searchCatalog")}
             className="w-full bg-transparent outline-none"
           />
@@ -723,7 +805,7 @@ export default function ListView({
         </form>
         {!query && (
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-            {CATEGORIES.map((c) => (
+            {orderedCategories.map((c) => (
               <a
                 key={c.key}
                 href={`#cat-${c.key}`}
@@ -743,6 +825,7 @@ export default function ListView({
               key={item.key}
               item={item}
               added={openKeys.has(item.key)}
+              nearby={countNearby(item)}
               onAdd={() => {
                 toggleTile(item);
                 setQuery("");
@@ -760,10 +843,32 @@ export default function ListView({
             <PlusIcon width={22} height={22} className="text-terra-500" />
             <span className="line-clamp-2">{t("lists.freeTextAdd", { label: query })}</span>
           </button>
+          {producerHits.length > 0 && (
+            <div className="col-span-full mt-1 rounded-tile border border-cream-200 bg-white p-3">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                {t("lists.producersFound")}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {producerHits.map((p) => (
+                  <li key={p.id} className="text-sm">
+                    <a href={`/producent/${p.slug}`} className="font-medium hover:underline">
+                      {p.name}
+                    </a>
+                    <span className="text-ink-500">
+                      {" "}
+                      {p.city ? `· ${p.city}` : ""}
+                      {p.distanceKm !== undefined &&
+                        ` · ${t("common.distanceKm", { km: p.distanceKm.toFixed(1) })} · ${t("common.travel", { min: travelInfo(p.distanceKm).minutes, mode: travelInfo(p.distanceKm).mode })}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       ) : (
         <div className="mt-3">
-          {CATEGORIES.map((cat) => {
+          {orderedCategories.map((cat) => {
             const items = CATALOG.filter((i) => i.category === cat.key);
             if (!items.length) return null;
             return (
@@ -775,6 +880,7 @@ export default function ListView({
                       key={item.key}
                       item={item}
                       added={openKeys.has(item.key)}
+                      nearby={countNearby(item)}
                       onAdd={() => toggleTile(item)}
                       onLongPress={() => setQtyItem(item)}
                     />
@@ -883,11 +989,13 @@ function AddTile({
   onAdd,
   onLongPress,
   added,
+  nearby = 0,
 }: {
   item: CatalogItem;
   onAdd: () => void;
   onLongPress?: () => void;
   added?: boolean;
+  nearby?: number;
 }) {
   const tint = tintForCategory(item.category);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -938,6 +1046,15 @@ function AddTile({
           }`}
         >
           18+
+        </span>
+      )}
+      {nearby > 0 && (
+        <span
+          className={`absolute bottom-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+            added ? "bg-white/25 text-white" : "bg-terra-500 text-white"
+          }`}
+        >
+          {t("lists.nearbyCount", { n: nearby })}
         </span>
       )}
     </button>
@@ -1058,7 +1175,7 @@ function ProducerRows({
 }
 
 function ItemBadges({ item }: { item: ListItem }) {
-  if (!item.store && !item.assignee && !item.dueAt) return null;
+  if (!item.store && !item.assignee && !item.dueAt && item.priority === "normaal") return null;
   const due = item.dueAt ? new Date(item.dueAt) : null;
   // eslint-disable-next-line react-hooks/purity -- klokvergelijking voor "te laat"-badge is hier bewust
   const overdue = due ? due.getTime() < Date.now() - 86_400_000 : false;
@@ -1077,6 +1194,16 @@ function ItemBadges({ item }: { item: ListItem }) {
           {item.storeSuggestedBy && (
             <span className="text-ink-500">· tip van {item.storeSuggestedBy}</span>
           )}
+        </span>
+      )}
+      {item.priority === "dringend" && (
+        <span className="rounded-full bg-terra-700 px-2 py-0.5 text-xs font-semibold text-white">
+          Dringend
+        </span>
+      )}
+      {item.priority === "kan-wachten" && (
+        <span className="rounded-full bg-cream-200 px-2 py-0.5 text-xs text-ink-700">
+          Kan wachten
         </span>
       )}
       {item.assignee && (
@@ -1115,6 +1242,7 @@ function ItemEditor({
     store?: string;
     producerSlug?: string | null;
     assignee?: string;
+    priority?: string;
     dueAt?: string | null;
   }) => void;
 }) {
@@ -1125,6 +1253,7 @@ function ItemEditor({
   const [dueAt, setDueAt] = useState(
     item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 10) : ""
   );
+  const [priority, setPriority] = useState(item.priority ?? "normaal");
 
   const field = "w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-1.5 text-sm";
   // Gezinslijst: toewijzen alleen door gezinsleden, en alleen aan gezinsleden
@@ -1188,6 +1317,27 @@ function ItemEditor({
           Uiterlijk
           <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className={field} />
         </label>
+        <div className="flex flex-col gap-1 text-xs font-medium text-ink-500">
+          {t("lists.priorityLabel")}
+          <div className="flex flex-wrap gap-1">
+            {[
+              ["dringend", "Dringend"],
+              ["normaal", "Normaal"],
+              ["kan-wachten", "Kan wachten"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setPriority(value)}
+                className={`rounded-full px-3 py-1.5 ${
+                  priority === value ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div>
         <button
@@ -1199,6 +1349,7 @@ function ItemEditor({
               // handmatig gewijzigde winkel verbreekt de producent-koppeling
               producerSlug: store === (item.store ?? "") ? undefined : null,
               ...(assigneeLocked ? {} : { assignee }),
+              priority,
               dueAt: dueAt || null,
             })
           }

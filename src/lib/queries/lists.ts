@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listItems, lists } from "@/db/schema";
 import type { ListItem, ShoppingList } from "@/lib/types";
@@ -88,6 +88,7 @@ export async function updateItem(
     storeSuggestedBy?: string | null;
     assignee?: string;
     assigneeUserId?: number | null;
+    priority?: string;
     dueAt?: Date | null;
   }
 ): Promise<void> {
@@ -101,6 +102,7 @@ export async function updateItem(
       ...(patch.storeSuggestedBy !== undefined ? { storeSuggestedBy: patch.storeSuggestedBy } : {}),
       ...(patch.assignee !== undefined ? { assignee: patch.assignee.trim() || null } : {}),
       ...(patch.assigneeUserId !== undefined ? { assigneeUserId: patch.assigneeUserId } : {}),
+      ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
       ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
     })
     .where(and(eq(listItems.id, itemId), eq(listItems.listId, listId)));
@@ -158,13 +160,25 @@ async function touch(listId: number): Promise<void> {
     .where(eq(lists.id, listId));
 }
 
-/** "Vorige keer gekocht": catalog-keys die ooit op deze lijst zijn afgevinkt */
+/** "Vaak gekocht": catalog-keys op frequentie (meest gekocht eerst) */
 export async function boughtBefore(listId: number): Promise<string[]> {
   const rows = await db
-    .select({ key: listItems.catalogKey })
+    .select({
+      key: listItems.catalogKey,
+      n: sql<number>`count(*)`,
+      last: sql<Date>`max(${listItems.checkedAt})`,
+    })
     .from(listItems)
     .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)))
-    .orderBy(desc(listItems.checkedAt))
+    .groupBy(listItems.catalogKey)
+    .orderBy(sql`count(*) desc`, sql`max(${listItems.checkedAt}) desc`)
     .limit(12);
   return rows.map((r) => r.key).filter((k): k is string => !!k);
+}
+
+export async function setCategoryOrder(listId: number, order: string[]): Promise<void> {
+  await db
+    .update(lists)
+    .set({ categoryOrder: order, updatedAt: sql`now()` })
+    .where(eq(lists.id, listId));
 }

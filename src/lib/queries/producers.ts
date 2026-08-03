@@ -89,6 +89,56 @@ export async function nearbyProducers(
   return { producers: nearest as Producer[], usedFallback: true };
 }
 
+/** Aantal producenten binnen de straal per producten-token — voor de "N in de buurt"-badges */
+export async function nearbyCountsByToken(
+  lat: number,
+  lng: number,
+  radiusKm: number
+): Promise<Record<string, number>> {
+  const dist = distanceKm(lat, lng);
+  const rows = await db.execute(sql`
+    select token, count(*)::int as n
+    from (
+      select unnest(${producers.products}) as token
+      from ${producers}
+      where ${producers.status} <> 'gestopt'
+        and ${producers.lat} is not null and ${producers.lng} is not null
+        and ${dist} <= ${radiusKm}
+    ) t
+    group by token
+  `);
+  const counts: Record<string, number> = {};
+  for (const row of rows.rows as { token: string; n: number }[]) {
+    counts[row.token] = row.n;
+  }
+  return counts;
+}
+
+/** Producenten op naam zoeken, dichtstbij eerst — voor de gecombineerde zoekbalk */
+export async function searchProducersByName(
+  query: string,
+  lat: number,
+  lng: number,
+  limit = 4
+): Promise<Producer[]> {
+  const q = `%${query.trim()}%`;
+  const dist = distanceKm(lat, lng);
+  const rows = await db
+    .select({ ...baseColumns, distanceKm: dist })
+    .from(producers)
+    .where(
+      and(
+        ne(producers.status, "gestopt"),
+        isNotNull(producers.lat),
+        isNotNull(producers.lng),
+        sql`${producers.name} ilike ${q}`
+      )
+    )
+    .orderBy(dist)
+    .limit(limit);
+  return rows as Producer[];
+}
+
 export async function producerBySlug(slug: string): Promise<Producer | null> {
   const [row] = await db
     .select(baseColumns)

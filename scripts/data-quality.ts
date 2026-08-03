@@ -34,6 +34,46 @@ const KEYWORDS: [pattern: RegExp, token: string][] = [
   [/\bvis\b|forel|paling|rokerij|zalm/i, "vis"],
 ];
 
+// Specifieke item-tokens (gekoppeld aan catalog-keys) voor item-niveau matching
+const SPECIFIC: [pattern: RegExp, token: string][] = [
+  [/asperge/i, "asperges"],
+  [/aardbei/i, "aardbeien"],
+  [/kersen|kersenboomgaard/i, "kersen"],
+  [/frambo/i, "frambozen"],
+  [/blauwe bes|blauwebessen|bosbes/i, "blauwebessen"],
+  [/pruim/i, "pruimen"],
+  [/druiven|wijngaard/i, "druiven"],
+  [/pompoen/i, "pompoen"],
+  [/tomaat|tomaten/i, "tomaten"],
+  [/courgette/i, "courgette"],
+  [/boerenkool/i, "boerenkool"],
+  [/spruit/i, "spruiten"],
+  [/witlof/i, "witlof"],
+  [/prei\b/i, "prei"],
+  [/broccoli/i, "broccoli"],
+  [/bloemkool/i, "bloemkool"],
+  [/rode biet|bieten/i, "bieten"],
+  [/sperzieboon|snijboon/i, "sperziebonen"],
+  [/paddenstoel|champignon|oesterzwam|shiitake/i, "paddenstoelen"],
+  [/kruiden(?!thee)/i, "kruiden"],
+  [/geitenkaas|geiten/i, "geitenkaas"],
+  [/forel/i, "vis"],
+  [/paling/i, "vis"],
+  [/schapenkaas|schapen/i, "kaas"],
+  [/yoghurt/i, "melk"],
+  [/boerderij-?ijs|schepijs|roomijs/i, "ijs"],
+  [/appelsap/i, "sap"],
+  [/cider/i, "bier"],
+  [/walnoot|walnoten/i, "noten"],
+  [/hazelno/i, "noten"],
+  [/kastanje/i, "noten"],
+  [/zuurkool/i, "groente"],
+  [/uien\b|\bui\b/i, "groente"],
+  [/knoflook/i, "groente"],
+  [/spinazie/i, "groente"],
+  [/ma[iï]s/i, "groente"],
+];
+
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -64,6 +104,32 @@ async function main() {
   console.log(`\n1) Afgeleid: ${derived} van ${empty.rowCount} records zonder producten${dryRun ? " (dry-run)" : ""}`);
   console.log("Steekproef (controleer deze 25 handmatig):");
   for (const s of sample) console.log("  " + s);
+
+  // 1b. Specifieke tokens toevoegen bij ALLE producenten met een omschrijving (append, nooit overschrijven)
+  const all = await pool.query(
+    `select id, name, description, products from producers where description is not null`
+  );
+  let enriched = 0;
+  const enrichSample: string[] = [];
+  for (const row of all.rows) {
+    const extra = new Set<string>();
+    for (const [pattern, token] of SPECIFIC) {
+      if (pattern.test(row.description) && !row.products.includes(token)) extra.add(token);
+    }
+    if (!extra.size) continue;
+    enriched++;
+    if (enrichSample.length < 25)
+      enrichSample.push(`#${row.id} ${row.name}: +${[...extra].join(", ")}`);
+    if (!dryRun) {
+      await pool.query(
+        `update producers set products = products || $1, updated_at = now() where id = $2`,
+        [[...extra], row.id]
+      );
+    }
+  }
+  console.log(`\n1b) Verrijkt met specifieke tokens: ${enriched} producenten${dryRun ? " (dry-run)" : ""}`);
+  console.log("Steekproef:");
+  for (const s of enrichSample) console.log("  " + s);
 
   // 2. Ontbrekende coördinaten geocoderen via PDOK
   // Alleen NL-postcodes: PDOK kent alleen Nederland en matcht buitenlandse

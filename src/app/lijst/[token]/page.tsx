@@ -6,7 +6,7 @@ import { catalogItem, itemsInSeason } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
 import { boughtBefore, getListByToken, getListItems } from "@/lib/queries/lists";
-import { nearbyProducers } from "@/lib/queries/producers";
+import { nearbyCountsByToken, nearbyProducers } from "@/lib/queries/producers";
 import type { ItemMatch } from "@/lib/types";
 import ListView from "@/components/ListView";
 import ClaimListButton from "@/components/ClaimListButton";
@@ -54,6 +54,12 @@ export default async function ListPage({
 
   const seasonal = itemsInSeason(new Date().getMonth() + 1);
 
+  // "N in de buurt"-badges op de catalogustegels
+  const nearbyCounts =
+    list.lat != null && list.lng != null
+      ? await nearbyCountsByToken(list.lat, list.lng, list.radiusKm)
+      : {};
+
   // "Wie haalt het" = gevalideerde leden van het gezin waar deze lijst bij hoort
   const userId = await currentUserId();
   const members = list.householdId ? await membersOfHousehold(list.householdId) : [];
@@ -86,6 +92,7 @@ export default async function ListPage({
         memberNames={memberNames}
         hasHousehold={!!list.householdId}
         viewerIsMember={viewerIsMember}
+        nearbyCounts={nearbyCounts}
       />
     </main>
   );

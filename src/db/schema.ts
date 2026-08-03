@@ -1,5 +1,6 @@
 import {
   boolean,
+  unique,
   doublePrecision,
   index,
   integer,
@@ -98,15 +99,21 @@ export const households = pgTable("households", {
     .defaultNow(),
 });
 
-export const householdMembers = pgTable("household_members", {
-  id: serial("id").primaryKey(),
-  householdId: integer("household_id")
-    .notNull()
-    .references(() => households.id, { onDelete: "cascade" }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-});
+export const householdMembers = pgTable(
+  "household_members",
+  {
+    id: serial("id").primaryKey(),
+    householdId: integer("household_id")
+      .notNull()
+      .references(() => households.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    unique("household_members_household_id_user_id_key").on(t.householdId, t.userId),
+  ]
+);
 
 // Boodschappenlijsten (Bring-model): anoniem via geheime token-link, of
 // gekoppeld aan een account/huishouden zodat het hele gezin ze ziet.

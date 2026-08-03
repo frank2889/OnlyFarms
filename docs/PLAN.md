@@ -21,6 +21,8 @@
 
 **Aanvulling 3 aug 2026, deel 6 (interactie-bijstelling)**: tegels zijn weer een echte **Bring-toggle** (tik = op de lijst, nog een tik = er weer af; aantallen via vasthouden). Daarmee vervalt "tweede tik = +1" (eerdere suggestie van Chimene); verwijderen zat te verstopt achter vasthouden, en regel 1 (doe wat Bring doet) geeft de doorslag. Introkaart-tekst aangepast. Alle onderste panelen (aantal-paneel, drawer, zoekbalk, snackbar) eindigen nu gegarandeerd boven de tabbalk.
 
+**Datakwaliteit-audit (3 aug 2026)**: volledige meting van de productiedatabase, zie [docs/DATAKWALITEIT.md](DATAKWALITEIT.md). Kernpunten: geo/product-dekking is sterk (99,6% coördinaten, 91% producten), maar er is maar **1 record ooit geverifieerd** (`last_verified_at`) en **alle 2.280 producenten staan op `kind = "boerderijwinkel"`** (nooit afgeleid uit naam/omschrijving, dus brouwerijen/bakkerijen/imkerijen zijn niet herkenbaar ondanks de bredere scope). Openingstijden parsen voor 87,7%; een klein parser-gat (20 records, "Dagelijks (...)"-variant) is een snelle fix. 37 bekende adres-duplicaten (nu oplosbaar via `/beheer/producenten/duplicaten`) plus 13 nieuw gevonden naamduplicaten. Contactgegevens (telefoon 5%, website 13%) wachten op de Google Places-sync.
+
 **Openstaand**:
 
 - **GitHub Actions is geblokkeerd door een billing-probleem op het account van frank2889** ("account locked due to a billing issue"): de verplichte CI-check kan niet draaien, dus PR's van Chimene/Sally kunnen niet gemerged worden en de eigenaar moet steeds bypassen. Oplossen via github.com > Settings > Billing and plans (Actions is gratis voor publieke repo's, dus na herstel kost het niets).
@@ -32,6 +34,7 @@
 - Neon van us-east-1 naar EU-regio; voorwaarden via jurist
 - Eerste 25-50 leden werven ("founding members"); de beheeromgeving `/beheer` staat hiervoor klaar (aanmeldingen goedkeuren, meldingen, producentenbeheer, cijfers)
 - Zelf-claim-flow voor het portaal (verkoper koppelt zichzelf met mailverificatie; vereist eerst een besluit over transactionele mail). Portaal v1 met team-koppeling is live.
+- Datakwaliteit: openingstijden-parserfix (~20 records), `kind` afleiden uit naam/omschrijving (brouwerij/bakkerij/imkerij/wijngaard), duplicaten opruimen via het beheer, naamduplicaten-check aan data-quality.ts toevoegen (zie DATAKWALITEIT.md)
 - Fase 3: marktstandplaatsen, slimme dekking, sjablonen, recepten-import, aanbiedingen (incl. locatiegebonden), deboervinder-migratie met 301's; daarna Expo-app
 - Offline-beperking v1: pagina herladen zonder verbinding verliest nog niet-gesyncte vinkjes
 

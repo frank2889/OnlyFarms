@@ -6,6 +6,7 @@ import { catalogItem, itemsInSeason } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
 import { boughtBefore, getListByToken, getListItems } from "@/lib/queries/lists";
+import { messagesForList } from "@/lib/queries/chat";
 import { nearbyCountsByToken, nearbyProducers } from "@/lib/queries/producers";
 import type { ItemMatch } from "@/lib/types";
 import ListView from "@/components/ListView";
@@ -80,6 +81,7 @@ export default async function ListPage({
 
   // "Wie haalt het" = gevalideerde leden van het gezin waar deze lijst bij hoort
   const userId = await currentUserId();
+  const chatMessages = await messagesForList(list.id);
   const members = list.householdId ? await membersOfHousehold(list.householdId) : [];
   const memberNames = members.map((m) => m.name);
   const viewerIsMember = userId != null && members.some((m) => m.id === userId);
@@ -111,6 +113,8 @@ export default async function ListPage({
         hasHousehold={!!list.householdId}
         viewerIsMember={viewerIsMember}
         nearbyCounts={nearbyCounts}
+        chatMessages={chatMessages}
+        viewerUserId={userId ?? null}
       />
     </main>
   );

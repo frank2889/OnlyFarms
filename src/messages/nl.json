@@ -41,6 +41,22 @@
     "beta": "Bèta",
     "modeTasteHint": "Bèta: dit onthoudt van je swipes wat je lekker vindt en laat de hele catalogus voorbijkomen. Ingelogd bouw je je eigen smaakprofiel op, los van je gezinsleden."
   },
+  "chefs": {
+    "title": "Cheffs",
+    "empty": "Nog geen berichten. Vraag hier je huisgenoten iets over de lijst, dan hoeft dat niet meer via een losse app.",
+    "placeholder": "Vraag iets aan je cheffs...",
+    "send": "Sturen",
+    "aboutItem": "Over: {label}",
+    "loginPrompt": "Log in om mee te praten",
+    "open": "Cheffs openen",
+    "askItem": "Vraag een cheff over dit item",
+    "presetHint": "Kies je vraag over {label}:",
+    "preset1": "Waarom hebben we dit nodig?",
+    "preset2": "Weet je het zeker bij deze winkel? Ik ben er nu.",
+    "preset3": "Zal ik het bij een andere winkel halen?",
+    "preset4": "Hoeveel heb je er nodig?",
+    "preset5": "Deze is er niet. Is iets anders ook goed?"
+  },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",
     "heroText": "Maak samen je lijst zoals je gewend bent. Wij laten per item zien welke boer, bakker of brouwer bij jou in de buurt het verkoopt.",

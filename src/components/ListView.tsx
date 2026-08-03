@@ -22,6 +22,7 @@ import {
   CalendarIcon,
   CardsIcon,
   CheckIcon,
+  ChefHatIcon,
   ChevronDownIcon,
   ListIcon,
   MapPinIcon,
@@ -53,6 +54,8 @@ import {
 import { hoursStatusText } from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
 import NearbyWatch from "@/components/NearbyWatch";
+import ChefsSheet from "@/components/ChefsSheet";
+import type { ChatMessage } from "@/lib/queries/chat";
 
 type Props = {
   list: ShoppingList;
@@ -65,6 +68,8 @@ type Props = {
   hasHousehold?: boolean;
   viewerIsMember?: boolean;
   nearbyCounts?: Record<string, number>;
+  chatMessages?: ChatMessage[];
+  viewerUserId?: number | null;
 };
 
 type Snapshot = { open: ListItem[]; bought: ListItem[] };
@@ -123,6 +128,16 @@ function subscribeStorage(cb: () => void) {
   return () => window.removeEventListener("storage", cb);
 }
 
+// Cheffs: zelfde-tab-writes vuren geen 'storage'-event, dus eigen event erbij
+function subscribeChefsSeen(cb: () => void) {
+  window.addEventListener("storage", cb);
+  window.addEventListener("of:chefs-seen", cb);
+  return () => {
+    window.removeEventListener("storage", cb);
+    window.removeEventListener("of:chefs-seen", cb);
+  };
+}
+
 function subscribeOnline(cb: () => void) {
   window.addEventListener("online", cb);
   window.addEventListener("offline", cb);
@@ -151,6 +166,8 @@ export default function ListView({
   hasHousehold = false,
   viewerIsMember = false,
   nearbyCounts = {},
+  chatMessages = [],
+  viewerUserId = null,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -170,6 +187,9 @@ export default function ListView({
   // "N in de buurt"-badge aangetikt: paneel met de producenten voor dat item
   const [nearbyItem, setNearbyItem] = useState<CatalogItem | null>(null);
   const [nearbyResults, setNearbyResults] = useState<NearbyLite[] | null>(null);
+  // Cheffs: de lijst-chat; anchor = het item waar een vraag over gaat
+  const [chefsOpen, setChefsOpen] = useState(false);
+  const [chefsAnchor, setChefsAnchor] = useState<{ id: number; label: string } | null>(null);
 
   function openNearby(item: CatalogItem) {
     setNearbyItem(item);
@@ -195,6 +215,35 @@ export default function ListView({
     () => navigator.onLine,
     () => true
   );
+  // Cheffs: ongelezen = berichten van anderen, nieuwer dan wat je al zag
+  const chefsSeenKey = `of_chefs_seen:${list.token}`;
+  const chefsSeenRaw = useSyncExternalStore(
+    subscribeChefsSeen,
+    () => localStorage.getItem(chefsSeenKey) ?? "0",
+    () => "0"
+  );
+  const chefsSeenId = Number(chefsSeenRaw) || 0;
+  const chefsUnread = chatMessages.filter(
+    (m) => m.id > chefsSeenId && m.userId !== viewerUserId
+  ).length;
+
+  function markChefsSeen() {
+    const maxId = chatMessages.reduce((max, m) => Math.max(max, m.id), 0);
+    localStorage.setItem(chefsSeenKey, String(maxId));
+    window.dispatchEvent(new Event("of:chefs-seen"));
+  }
+
+  function openChefs(anchor: { id: number; label: string } | null = null) {
+    markChefsSeen();
+    setChefsAnchor(anchor);
+    setChefsOpen(true);
+  }
+
+  function closeChefs() {
+    markChefsSeen();
+    setChefsOpen(false);
+    setChefsAnchor(null);
+  }
   const introFlag = useSyncExternalStore(
     subscribeStorage,
     () => localStorage.getItem("of_intro") ?? "",
@@ -884,6 +933,18 @@ export default function ListView({
                 <ChevronDownIcon width={18} height={18} />
               </button>
               <button
+                onClick={() => openChefs()}
+                aria-label={t("chefs.open")}
+                className="relative rounded-full bg-cream-200 p-2 text-ink-700 hover:bg-cream-300"
+              >
+                <ChefHatIcon width={18} height={18} />
+                {chefsUnread > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra-500 px-1 text-[11px] font-bold text-white">
+                    {chefsUnread}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={share}
                 className="inline-flex shrink-0 items-center gap-2 rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
               >
@@ -995,6 +1056,13 @@ export default function ListView({
                 {cat?.nix18 && (
                   <span className="rounded-full bg-ink-900 px-2 py-0.5 text-xs text-white">18+</span>
                 )}
+                <button
+                  onClick={() => openChefs({ id: item.id, label: item.label })}
+                  className="p-1 text-ink-500 hover:text-terra-600"
+                  aria-label={t("chefs.askItem")}
+                >
+                  <ChefHatIcon width={16} height={16} />
+                </button>
                 <button
                   onClick={() => setEditItem(editItem === item.id ? null : item.id)}
                   className="p-1 text-ink-500 hover:text-terra-600"
@@ -1258,6 +1326,18 @@ export default function ListView({
             Ongedaan maken
           </button>
         </div>
+      )}
+
+      {/* Cheffs: de lijst-chat */}
+      {chefsOpen && (
+        <ChefsSheet
+          token={list.token}
+          messages={chatMessages}
+          viewerUserId={viewerUserId}
+          anchor={chefsAnchor}
+          onClearAnchor={() => setChefsAnchor(null)}
+          onClose={closeChefs}
+        />
       )}
 
       {/* Hoeveelheid-paneel (long-press) */}

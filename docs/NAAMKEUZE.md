@@ -1,6 +1,8 @@
-# Naamkeuze: onderzoek en shortlist (beslissing open)
+# Naamkeuze: onderzoek en shortlist (naam nog niet definitief)
 
-Onderzoek uitgevoerd op 3 augustus 2026. Beschikbaarheid gecheckt via RDAP, het officiële registerprotocol (Verisign voor .com, SIDN voor .nl). Let op: dit is een **momentopname**; vrije namen kunnen elk moment worden geregistreerd. Er is nog **geen keuze gemaakt**; "OnlyFarms" blijft werktitel tot het team beslist.
+**Stand (3 aug 2026): "Raccolo" is de werktitel/huidige favoriet**, doorgevoerd in `src/lib/brand.ts` zodat het team ermee kan proefdraaien (pay-off: "Jouw lijst. Lokale oogst."). Er is ook al een merkblad (kleuren, typografie, icoon, lockups) opgesteld — die visuele richting is apart bevestigd en losgekoppeld van de naamkeuze zelf (zie AGENTS.md regel 3 voor het kleurenpalet). De naam is echter **nog geen definitief besluit**: nog te doen zijn domeinregistratie (`BRAND.domain` wijst nog naar de Vercel-URL), merkcheck bij BOIP, en het hardop uitspreken met z'n drieën.
+
+Onderzoek uitgevoerd op 3 augustus 2026. Beschikbaarheid gecheckt via RDAP, het officiële registerprotocol (Verisign voor .com, SIDN voor .nl). Let op: dit was een **momentopname**; vrije namen kunnen elk moment worden geregistreerd, dus bij twijfel de domeinen snel vastleggen.
 
 ## Criteria (uit de gesprekken)
 

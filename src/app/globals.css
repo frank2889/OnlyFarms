@@ -1,32 +1,41 @@
 @import "tailwindcss";
 
 /*
- * Huisstijl: maximaal 3 kleurfamilies — terra (hoofd), ink (donker neutraal),
- * cream (achtergrond). Dit is de ENIGE plek met hexwaarden; componenten en
- * illustraties putten uit deze tokens. Bewust geen dark mode.
+ * Huisstijl (bijgewerkt 3 aug 2026 op basis van het merkblad): maximaal 3
+ * kleurfamilies — terra (hoofdkleur, nu groen i.p.v. het vorige oranje-terra),
+ * ink (donker neutraal, nu groen-getint), cream (achtergrond). De token-NAMEN
+ * blijven ongewijzigd (geen find-replace door de hele app nodig; elke
+ * bg-terra-500/text-ink-700/etc. erft de nieuwe kleur automatisch). Dit is de
+ * ENIGE plek met hexwaarden; componenten en illustraties (food-icons.tsx)
+ * putten uit deze tokens. Bewust geen dark mode. --color-accent is de smalle
+ * terracotta-accentkleur uit het merkblad (bijv. voor het vinkje in het
+ * logo-icoon), bewust GEEN eigen 50-900-familie: dat zou de 3-kleuren-regel
+ * doorbreken.
  */
 @theme {
-  --color-terra-50: #fbf1ec;
-  --color-terra-100: #f6dfd3;
-  --color-terra-200: #efc3ad;
-  --color-terra-300: #e5a181;
-  --color-terra-400: #d97b54;
-  --color-terra-500: #c4552c;
-  --color-terra-600: #a64621;
-  --color-terra-700: #85381b;
-  --color-terra-800: #652a15;
-  --color-terra-900: #471e0f;
+  --color-terra-50: #f3f5ee;
+  --color-terra-100: #e4e9d6;
+  --color-terra-200: #cbd6b3;
+  --color-terra-300: #afc095;
+  --color-terra-400: #9aaa82;
+  --color-terra-500: #6e8656;
+  --color-terra-600: #587047;
+  --color-terra-700: #4c6a3b;
+  --color-terra-800: #3b5530;
+  --color-terra-900: #2e3b22;
 
-  --color-ink-100: #e7e1db;
-  --color-ink-300: #b7aba0;
-  --color-ink-500: #7a6c60;
-  --color-ink-700: #4a3e35;
-  --color-ink-900: #2a211b;
+  --color-ink-100: #dcdfd2;
+  --color-ink-300: #a3aa98;
+  --color-ink-500: #6b7560;
+  --color-ink-700: #45503a;
+  --color-ink-900: #26301d;
 
-  --color-cream-50: #fbf7f0;
-  --color-cream-100: #f4ebdd;
-  --color-cream-200: #e9dcc6;
-  --color-cream-300: #dccbae;
+  --color-cream-50: #fbf8f1;
+  --color-cream-100: #f1e7cc;
+  --color-cream-200: #e9d5ac;
+  --color-cream-300: #e3bd8d;
+
+  --color-accent: #c97553;
 
   --color-background: var(--color-cream-50);
   --color-foreground: var(--color-ink-900);

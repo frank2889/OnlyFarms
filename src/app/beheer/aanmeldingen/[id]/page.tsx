@@ -10,10 +10,13 @@ import { t } from "@/lib/i18n";
 import { SELLER_STATUS_LABELS, sellerStatusBadgeClass } from "../labels";
 import {
   approveSellerAction,
+  linkSellerUserAction,
   rejectSellerAction,
   suspendSellerAction,
   takeInReviewAction,
+  unlinkSellerUserAction,
 } from "../actions";
+import { userById } from "@/lib/queries/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +36,10 @@ export default async function AdminSellerDetailPage({
   const seller = await sellerById(Number(id));
   if (!seller) notFound();
 
-  const [linked, results] = await Promise.all([
+  const [linked, results, portalUser] = await Promise.all([
     producerForSeller(seller.id),
     q?.trim() ? adminSearchProducers(q) : Promise.resolve([]),
+    seller.userId ? userById(seller.userId) : Promise.resolve(null),
   ]);
   const open = seller.status === "aangemeld" || seller.status === "in_beoordeling";
 
@@ -127,6 +131,54 @@ export default async function AdminSellerDetailPage({
           </Link>
         </p>
       )}
+
+      <section className="mb-4 rounded-tile border border-cream-200 bg-white p-4">
+        <h2 className="mb-1 font-semibold">{t("admin.portalAccess")}</h2>
+        <p className="mb-3 text-sm text-ink-500">{t("admin.portalExplain")}</p>
+        {portalUser ? (
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="font-medium">
+              {t("admin.portalLinked", { email: portalUser.email })}
+            </span>
+            <form action={unlinkSellerUserAction.bind(null, seller.id)}>
+              <button type="submit" className="text-ink-500 underline">
+                {t("admin.portalUnlink")}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <>
+            {fout === "gebruiker" && (
+              <p className="mb-2 rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">
+                {t("admin.portalNoUser")}
+              </p>
+            )}
+            {fout === "al-gekoppeld" && (
+              <p className="mb-2 rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">
+                {t("admin.portalAlreadyLinked")}
+              </p>
+            )}
+            <form
+              action={linkSellerUserAction.bind(null, seller.id)}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <input
+                name="email"
+                type="email"
+                placeholder={t("admin.portalLinkPlaceholder")}
+                defaultValue={seller.email}
+                className="min-w-0 flex-1 rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="rounded-full border border-cream-300 bg-white px-4 py-2 text-sm font-medium hover:border-terra-400"
+              >
+                {t("admin.portalLink")}
+              </button>
+            </form>
+          </>
+        )}
+      </section>
 
       {seller.status === "aangemeld" && (
         <form action={takeInReviewAction.bind(null, seller.id)} className="mb-4">

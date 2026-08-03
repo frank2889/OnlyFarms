@@ -13,6 +13,8 @@
 
 **Aanvulling 3 aug 2026, deel 2 (beheeromgeving, live)**: `/beheer` gebouwd, gemerged en op productie geverifieerd met Playwright (26/26 checks: gates, wachtrijen, bewerken, mobiel). Zie § Fase 2.4 voor de inhoud. Inloggen brengt je via `?terug=` automatisch terug naar waar je heen wilde, dus `/beheer` is de enige URL die het team hoeft te onthouden. Accountfilosofie vastgelegd: **één account per persoon, petten bepalen de toegang** (gebruiker, team, straks verkoper via `sellers.user_id`); een boer is immers zelf ook klant. Team en leden krijgen bewust gescheiden omgevingen (/beheer en straks /portaal): harde veiligheidsgrens, per doelgroep één URL; eventueel later één slimme voordeur (/mijn) die op rol doorstuurt. Ter demonstratie van de verkopersflow is "Demoboerderij van Frank" aangemeld en goedgekeurd (seller 4, producent demoboerderij-van-frank, lid, nog zonder adres/producten dus buiten de matching; opruimen = status gestopt).
 
+**Aanvulling 3 aug 2026, deel 3 (producentenportaal v1, live)**: `/portaal` gebouwd en getest (16/16 Playwright-checks). Een aan een gebruikersaccount gekoppelde verkoper ziet er zijn aanmeldstatus en beheert zijn eigen vermelding met een bewuste subset van het beheer-formulier: telefoon, website, omschrijving, openingstijden en product-tokens (naam, adres en status blijven bij het team; opslaan zet "laatst bevestigd"). Koppeling verkoper-account (`sellers.user_id`, uniek): door het team in het beheer (sectie "Portaal-toegang" op de aanmelding) of automatisch bij goedkeuring als het e-mailadres al een account heeft. Zelf claimen met mailverificatie blijft de latere stap (vereist transactionele mail). Ingelogd zonder gekoppelde verkoper krijgt een uitlegpagina met link naar /verkopen; /portaal staat in robots-disallow; profiel toont een portaal-link voor gekoppelde verkopers.
+
 **Openstaand**:
 
 - **GitHub Actions is geblokkeerd door een billing-probleem op het account van frank2889** ("account locked due to a billing issue"): de verplichte CI-check kan niet draaien, dus PR's van Chimene/Sally kunnen niet gemerged worden en de eigenaar moet steeds bypassen. Oplossen via github.com > Settings > Billing and plans (Actions is gratis voor publieke repo's, dus na herstel kost het niets).
@@ -23,7 +25,7 @@
 - Definitieve naam + domein; daarna Search Console + SEO-quick-wins (canonicals, og:image, dubbele titel-suffix, interne links producent->provincie)
 - Neon van us-east-1 naar EU-regio; voorwaarden via jurist
 - Eerste 25-50 leden werven ("founding members"); de beheeromgeving `/beheer` staat hiervoor klaar (aanmeldingen goedkeuren, meldingen, producentenbeheer, cijfers)
-- Producentenportaal `/portaal` (lid beheert eigen vermelding; claim-flow vereist eerst een besluit over transactionele mail)
+- Zelf-claim-flow voor het portaal (verkoper koppelt zichzelf met mailverificatie; vereist eerst een besluit over transactionele mail). Portaal v1 met team-koppeling is live.
 - Fase 3: marktstandplaatsen, slimme dekking, sjablonen, recepten-import, aanbiedingen (incl. locatiegebonden), deboervinder-migratie met 301's; daarna Expo-app
 - Offline-beperking v1: pagina herladen zonder verbinding verliest nog niet-gesyncte vinkjes
 

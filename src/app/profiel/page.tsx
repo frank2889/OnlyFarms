@@ -2,8 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUserId } from "@/auth";
 import { BRAND } from "@/lib/brand";
+import { t } from "@/lib/i18n";
 import { householdForUser, listsForUser, userById } from "@/lib/queries/accounts";
-import { ListIcon, SproutIcon, UserIcon } from "@/components/icons";
+import { sellerForUser } from "@/lib/queries/portal";
+import { ListIcon, SproutIcon, StoreIcon, UserIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import PasswordForm, { CopyInviteLink } from "@/components/PasswordForm";
 
@@ -13,10 +15,11 @@ export default async function ProfilePage() {
   const userId = await currentUserId();
   if (!userId) redirect("/inloggen");
 
-  const [user, household, myLists] = await Promise.all([
+  const [user, household, myLists, seller] = await Promise.all([
     userById(userId),
     householdForUser(userId),
     listsForUser(userId),
+    sellerForUser(userId),
   ]);
   if (!user) redirect("/inloggen");
 
@@ -64,6 +67,18 @@ export default async function ProfilePage() {
               of deel de code <code className="rounded bg-cream-100 px-1.5 py-0.5">{household.inviteCode}</code>
             </span>
           </div>
+        </section>
+      )}
+
+      {seller && (
+        <section className="mb-6 rounded-tile border border-cream-200 bg-white p-4">
+          <h2 className="mb-1 font-semibold">{t("portal.profileTitle")}: {seller.name}</h2>
+          <Link
+            href="/portaal"
+            className="inline-flex items-center gap-2 text-sm text-terra-700 underline"
+          >
+            <StoreIcon width={16} height={16} /> {t("portal.profileLink")}
+          </Link>
         </section>
       )}
 

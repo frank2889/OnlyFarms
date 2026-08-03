@@ -47,14 +47,22 @@ const STATUS_OPTIONS = [
 const field = "w-full rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm";
 const label = "mb-1 block text-sm font-medium";
 
+type SaveAction = (
+  producerId: number,
+  input: ProducerFormInput
+) => Promise<{ ok: true } | { ok: false; error: string }>;
+
 type Props = {
   producerId: number;
   initial: ProducerFormInput;
-  /** Subset voor het latere producentenportaal; beheer gebruikt alles */
+  /** Subset voor het producentenportaal; beheer gebruikt alles */
   editableFields?: ProducerFormField[];
+  /** Portaal geeft zijn eigen (owner-gecheckte) action mee; default is de beheer-action */
+  action?: SaveAction;
 };
 
-export default function AdminProducerForm({ producerId, initial, editableFields }: Props) {
+export default function AdminProducerForm({ producerId, initial, editableFields, action }: Props) {
+  const save: SaveAction = action ?? updateProducerAction;
   const fields = new Set(editableFields ?? ALL_FIELDS);
   const [form, setForm] = useState<ProducerFormInput>(initial);
   const [tokenInput, setTokenInput] = useState("");
@@ -85,7 +93,7 @@ export default function AdminProducerForm({ producerId, initial, editableFields 
         e.preventDefault();
         setError(null);
         startTransition(async () => {
-          const result = await updateProducerAction(producerId, form);
+          const result = await save(producerId, form);
           if (result.ok) setSaved(true);
           else setError(result.error);
         });

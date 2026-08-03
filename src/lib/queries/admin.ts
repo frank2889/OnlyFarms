@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { producers, reports, sellerReviews, sellers } from "@/db/schema";
+import { offers, producers, reports, sellerReviews, sellers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 
 // Alle beheer-queries bij elkaar. De aanroepende server actions checken
@@ -286,6 +286,7 @@ export type ProducerPatch = Partial<{
   openingHours: string | null;
   products: string[];
   photos: string[];
+  photosPending: string[];
 }>;
 
 /**
@@ -357,4 +358,81 @@ export async function publishReview(id: number): Promise<void> {
 
 export async function deleteReview(id: number): Promise<void> {
   await db.delete(sellerReviews).where(eq(sellerReviews.id, id));
+}
+
+/* ---------- Aanbod-screening (offers en foto's van verkopers) ---------- */
+
+export async function listUnpublishedOffers() {
+  return db
+    .select({
+      id: offers.id,
+      title: offers.title,
+      category: offers.category,
+      description: offers.description,
+      priceIndication: offers.priceIndication,
+      photoUrl: offers.photoUrl,
+      createdAt: offers.createdAt,
+      sellerName: sellers.name,
+      sellerCity: sellers.city,
+    })
+    .from(offers)
+    .innerJoin(sellers, eq(sellers.id, offers.sellerId))
+    .where(eq(offers.published, false))
+    .orderBy(desc(offers.createdAt))
+    .limit(200);
+}
+
+export async function publishOffer(id: number): Promise<void> {
+  await db.update(offers).set({ published: true }).where(eq(offers.id, id));
+}
+
+/** Verwijderen door het team; geeft de foto-URL terug voor blob-opruiming */
+export async function deleteOfferAdmin(id: number): Promise<string | null> {
+  const [row] = await db.delete(offers).where(eq(offers.id, id)).returning({ photoUrl: offers.photoUrl });
+  return row?.photoUrl ?? null;
+}
+
+export async function listPendingPhotos() {
+  return db
+    .select({
+      id: producers.id,
+      name: producers.name,
+      slug: producers.slug,
+      city: producers.city,
+      photos: producers.photos,
+      photosPending: producers.photosPending,
+    })
+    .from(producers)
+    .where(sql`cardinality(${producers.photosPending}) > 0`)
+    .limit(100);
+}
+
+/** Goedkeuren = verplaatsen naar de publieke galerij (max blijft de zorg van het portaal) */
+export async function approveProducerPhoto(producerId: number, url: string): Promise<void> {
+  const [row] = await db
+    .select({ photos: producers.photos, photosPending: producers.photosPending })
+    .from(producers)
+    .where(eq(producers.id, producerId));
+  if (!row || !row.photosPending.includes(url)) return;
+  await db
+    .update(producers)
+    .set({
+      photos: row.photos.includes(url) ? row.photos : [...row.photos, url],
+      photosPending: row.photosPending.filter((p) => p !== url),
+      updatedAt: new Date(),
+    })
+    .where(eq(producers.id, producerId));
+}
+
+/** Afwijzen = alleen uit de wachtrij halen; de blob ruimt de caller op */
+export async function rejectProducerPhoto(producerId: number, url: string): Promise<void> {
+  const [row] = await db
+    .select({ photosPending: producers.photosPending })
+    .from(producers)
+    .where(eq(producers.id, producerId));
+  if (!row) return;
+  await db
+    .update(producers)
+    .set({ photosPending: row.photosPending.filter((p) => p !== url), updatedAt: new Date() })
+    .where(eq(producers.id, producerId));
 }

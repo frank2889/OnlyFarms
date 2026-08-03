@@ -62,6 +62,11 @@ export default async function PortaalProductenPage() {
                     {t("portal.offerUnavailable")}
                   </span>
                 )}
+                {!offer.published && (
+                  <span className="ml-1 mt-0.5 inline-block rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
+                    {t("portal.offerPending")}
+                  </span>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1.5 text-sm">
                 <Link

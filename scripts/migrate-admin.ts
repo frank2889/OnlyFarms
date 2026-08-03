@@ -104,6 +104,20 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_indexes where indexname='swipe_signals_user_idx'",
     "CREATE INDEX swipe_signals_user_idx ON swipe_signals (user_id)",
   ],
+  // Screening: bestaand aanbod blijft live (DEFAULT true bij toevoegen),
+  // daarna default naar false zodat nieuw aanbod op controle wacht
+  [
+    "select 1 from information_schema.columns where table_name='offers' and column_name='published'",
+    "ALTER TABLE offers ADD COLUMN published boolean NOT NULL DEFAULT true",
+  ],
+  [
+    "select 1 from information_schema.columns where table_name='offers' and column_name='published' and column_default='false'",
+    "ALTER TABLE offers ALTER COLUMN published SET DEFAULT false",
+  ],
+  [
+    "select 1 from information_schema.columns where table_name='producers' and column_name='photos_pending'",
+    "ALTER TABLE producers ADD COLUMN photos_pending text[] NOT NULL DEFAULT '{}'",
+  ],
 ];
 
 async function main() {

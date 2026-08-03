@@ -9,6 +9,7 @@ export type QueueCounts = {
   openReports: number;
   pendingSellers: number;
   pendingReviews: number;
+  pendingOffers: number;
 };
 
 export async function queueCounts(): Promise<QueueCounts> {
@@ -16,13 +17,16 @@ export async function queueCounts(): Promise<QueueCounts> {
     select
       (select count(*) from reports where resolved = false) as open_reports,
       (select count(*) from sellers where status in ('aangemeld', 'in_beoordeling')) as pending_sellers,
-      (select count(*) from seller_reviews where published = false) as pending_reviews
+      (select count(*) from seller_reviews where published = false) as pending_reviews,
+      (select count(*) from offers where published = false)
+        + (select coalesce(sum(cardinality(photos_pending)), 0) from producers) as pending_offers
   `);
   const row = result.rows[0] as Record<string, unknown>;
   return {
     openReports: Number(row.open_reports),
     pendingSellers: Number(row.pending_sellers),
     pendingReviews: Number(row.pending_reviews),
+    pendingOffers: Number(row.pending_offers),
   };
 }
 

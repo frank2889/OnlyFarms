@@ -36,12 +36,14 @@ export async function addProducerPhotoAction(url: string): Promise<Result> {
   const own = await requireOwnProducer();
   if (!own) return { ok: false, error: "Geen toegang." };
   if (!isOwnBlobUrl(url)) return { ok: false, error: "Ongeldige foto." };
-  if (own.producer.photos.length >= MAX_PHOTOS)
+  const { photos, photosPending } = own.producer;
+  if (photos.length + photosPending.length >= MAX_PHOTOS)
     return { ok: false, error: `Maximaal ${MAX_PHOTOS} foto's.` };
-  if (own.producer.photos.includes(url)) return { ok: true };
-  await updateProducerAdmin(own.producer.id, { photos: [...own.producer.photos, url] });
+  if (photos.includes(url) || photosPending.includes(url)) return { ok: true };
+  // Screening: nieuwe foto's wachten op teamcontrole vóór ze publiek gaan
+  await updateProducerAdmin(own.producer.id, { photosPending: [...photosPending, url] });
   revalidatePath("/portaal");
-  revalidatePath("/producent");
+  revalidatePath("/beheer", "layout");
   return { ok: true };
 }
 
@@ -50,6 +52,7 @@ export async function removeProducerPhotoAction(url: string): Promise<Result> {
   if (!own) return { ok: false, error: "Geen toegang." };
   await updateProducerAdmin(own.producer.id, {
     photos: own.producer.photos.filter((p) => p !== url),
+    photosPending: own.producer.photosPending.filter((p) => p !== url),
   });
   if (isOwnBlobUrl(url)) {
     try {
@@ -59,7 +62,8 @@ export async function removeProducerPhotoAction(url: string): Promise<Result> {
     }
   }
   revalidatePath("/portaal");
-  revalidatePath("/producent");
+  revalidatePath("/producent/[slug]", "page");
+  revalidatePath("/beheer", "layout");
   return { ok: true };
 }
 
@@ -90,11 +94,20 @@ export async function saveOfferAction(
   if (typeof clean === "string") return { ok: false, error: clean };
 
   if (offerId === null) {
+    // published default false: nieuw aanbod wacht op teamcontrole
     await createOffer(ctx.seller.id, clean);
   } else {
     const existing = await offerByIdForSeller(offerId, ctx.seller.id);
     if (!existing) return { ok: false, error: "Product niet gevonden." };
-    await updateOffer(offerId, ctx.seller.id, clean);
+    // Inhoudelijke wijziging = terug de controle-wachtrij in; alleen de
+    // beschikbaar-toggle omzetten raakt de publicatiestatus niet.
+    const contentChanged =
+      existing.title !== clean.title ||
+      existing.category !== clean.category ||
+      existing.description !== clean.description ||
+      existing.priceIndication !== clean.priceIndication ||
+      existing.photoUrl !== clean.photoUrl;
+    await updateOffer(offerId, ctx.seller.id, clean, { unpublish: contentChanged });
     // oude foto opruimen als hij vervangen of verwijderd is
     if (existing.photoUrl && existing.photoUrl !== clean.photoUrl && isOwnBlobUrl(existing.photoUrl)) {
       try {
@@ -103,7 +116,8 @@ export async function saveOfferAction(
     }
   }
   revalidatePath("/portaal");
-  revalidatePath("/producent");
+  revalidatePath("/producent/[slug]", "page");
+  revalidatePath("/beheer", "layout");
   return { ok: true };
 }
 
@@ -119,7 +133,7 @@ export async function deleteOfferAction(offerId: number): Promise<void> {
     } catch {}
   }
   revalidatePath("/portaal");
-  revalidatePath("/producent");
+  revalidatePath("/producent/[slug]", "page");
 }
 
 /**
@@ -152,6 +166,6 @@ export async function updateOwnProducerAction(
   };
   await updateProducerAdmin(producerId, patch);
   revalidatePath("/portaal");
-  revalidatePath("/producent");
+  revalidatePath("/producent/[slug]", "page");
   return { ok: true };
 }

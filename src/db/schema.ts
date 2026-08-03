@@ -52,6 +52,8 @@ export const producers = pgTable(
     products: text("products").array().notNull().default([]),
     // Foto's (Vercel Blob-URL's); de eerste is de hoofdfoto
     photos: text("photos").array().notNull().default([]),
+    // Door de verkoper geüpload, wacht op teamcontrole vóór publicatie
+    photosPending: text("photos_pending").array().notNull().default([]),
     openingHours: text("opening_hours"),
     phone: text("phone"),
     website: text("website"),
@@ -282,6 +284,8 @@ export const offers = pgTable("offers", {
   priceIndication: text("price_indication"),
   photoUrl: text("photo_url"),
   available: boolean("available").notNull().default(true),
+  // Screening: nieuw of inhoudelijk gewijzigd aanbod wacht op teamcontrole
+  published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

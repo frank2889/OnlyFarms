@@ -10,6 +10,7 @@ export type QueueBadges = {
   openReports: number;
   pendingSellers: number;
   pendingReviews: number;
+  pendingOffers: number;
 };
 
 // Beheer-topbar: bewust een ander smoelwerk (donker) dan de consumentenkant,
@@ -22,6 +23,7 @@ export default function AdminNav({ badges }: { badges: QueueBadges }) {
     { href: "/beheer/meldingen", label: t("admin.navReports"), count: badges.openReports },
     { href: "/beheer/aanmeldingen", label: t("admin.navSellers"), count: badges.pendingSellers },
     { href: "/beheer/producenten", label: t("admin.navProducers"), count: 0 },
+    { href: "/beheer/aanbod", label: t("admin.navOffers"), count: badges.pendingOffers },
     { href: "/beheer/ervaringen", label: t("admin.navReviews"), count: badges.pendingReviews },
   ];
 

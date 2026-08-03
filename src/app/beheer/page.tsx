@@ -39,6 +39,7 @@ export default async function AdminDashboardPage() {
         <StatTile value={queues.openReports} label={t("admin.statOpenReports")} href="/beheer/meldingen" />
         <StatTile value={queues.pendingSellers} label={t("admin.statPendingSellers")} href="/beheer/aanmeldingen" />
         <StatTile value={queues.pendingReviews} label={t("admin.statPendingReviews")} href="/beheer/ervaringen" />
+        <StatTile value={queues.pendingOffers} label={t("admin.statPendingOffers")} href="/beheer/aanbod" />
       </div>
 
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">

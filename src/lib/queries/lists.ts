@@ -163,6 +163,10 @@ export async function setListRadius(listId: number, radiusKm: number): Promise<v
     .where(eq(lists.id, listId));
 }
 
+export async function deleteList(listId: number): Promise<void> {
+  await db.delete(lists).where(eq(lists.id, listId));
+}
+
 export async function renameList(listId: number, name: string): Promise<void> {
   await db
     .update(lists)

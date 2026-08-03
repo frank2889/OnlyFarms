@@ -13,6 +13,8 @@ import {
   removeItem,
   setItemChecked,
   clearBought,
+  deleteList,
+  renameList,
   setCategoryOrder,
   setListLocation,
   setListRadius,
@@ -192,6 +194,18 @@ export async function searchProducersAction(
   const list = await requireList(token);
   if (!list.lat || !list.lng || query.trim().length < 3) return [];
   return searchProducersByName(query, list.lat, list.lng, 4);
+}
+
+export async function renameListAction(token: string, name: string): Promise<void> {
+  const list = await requireList(token);
+  await renameList(list.id, name.trim() || list.name);
+  await bump(token);
+}
+
+export async function deleteListAction(token: string): Promise<void> {
+  const list = await requireList(token);
+  await deleteList(list.id);
+  await notifyListUpdated(token);
 }
 
 export async function setRadiusAction(token: string, radiusKm: number): Promise<void> {

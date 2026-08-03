@@ -36,6 +36,8 @@ import {
 import {
   addItemAction,
   clearBoughtAction,
+  deleteListAction,
+  renameListAction,
   removeItemAction,
   searchProducersAction,
   setCategoryOrderAction,
@@ -155,6 +157,9 @@ export default function ListView({
   const [qtyItem, setQtyItem] = useState<CatalogItem | null>(null);
   const [qtyValue, setQtyValue] = useState("");
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(list.name);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [myLists, setMyLists] = useState<{ token: string; name: string }[]>([]);
   const [undo, setUndo] = useState<{ label: string; action: () => void } | null>(null);
   const [justChecked, setJustChecked] = useState<number | null>(null);
@@ -529,10 +534,96 @@ export default function ListView({
               >
                 <PlusIcon width={16} height={16} /> {t("lists.newList")}
               </Link>
+              <div className="my-1 border-t border-cream-100" />
+              <button
+                onClick={() => {
+                  setRenameValue(list.name);
+                  setRenameOpen(true);
+                  setSwitcherOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
+              >
+                <PencilIcon width={15} height={15} className="text-ink-500" /> Naam wijzigen
+              </button>
+              <button
+                onClick={() => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                    setTimeout(() => setConfirmDelete(false), 4000);
+                    return;
+                  }
+                  const token = list.token;
+                  try {
+                    const stored: { token: string }[] = JSON.parse(
+                      localStorage.getItem("of_lists") ?? "[]"
+                    );
+                    localStorage.setItem(
+                      "of_lists",
+                      JSON.stringify(stored.filter((l) => l.token !== token))
+                    );
+                    localStorage.setItem("of_badge", "0");
+                  } catch {}
+                  startTransition(async () => {
+                    await deleteListAction(token);
+                    router.push("/lijsten");
+                  });
+                }}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 ${
+                  confirmDelete
+                    ? "bg-terra-700 font-medium text-white"
+                    : "text-terra-800 hover:bg-cream-50"
+                }`}
+              >
+                <TrashIcon width={15} height={15} />
+                {confirmDelete ? "Zeker weten? Tik nog een keer" : "Lijst verwijderen"}
+              </button>
             </div>
           )}
         </div>
       </div>
+      {renameOpen && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            act(() => renameListAction(list.token, renameValue));
+            try {
+              const stored: { token: string; name: string }[] = JSON.parse(
+                localStorage.getItem("of_lists") ?? "[]"
+              );
+              localStorage.setItem(
+                "of_lists",
+                JSON.stringify(
+                  stored.map((l) =>
+                    l.token === list.token ? { ...l, name: renameValue.trim() || l.name } : l
+                  )
+                )
+              );
+            } catch {}
+            setRenameOpen(false);
+          }}
+          className="mb-3 flex gap-2"
+        >
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            className="min-w-0 flex-1 rounded-full border border-cream-300 bg-white px-4 py-2"
+          />
+          <button
+            type="submit"
+            className="rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
+          >
+            Opslaan
+          </button>
+          <button
+            type="button"
+            onClick={() => setRenameOpen(false)}
+            className="text-sm text-ink-500 underline"
+          >
+            Annuleren
+          </button>
+        </form>
+      )}
       {shareMsg && (
         <p className="mb-3 rounded-tile bg-terra-50 px-4 py-2 text-sm text-terra-700">
           {t("lists.shareCopied")}
@@ -540,16 +631,16 @@ export default function ListView({
       )}
       {!online && (
         <div className="mb-3 animate-rise rounded-tile bg-ink-900 px-4 py-2.5 text-sm text-white">
-          Offline. je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
+          Offline. Je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
         </div>
       )}
       {showIntro && (
         <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
           <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
           <ul className="mb-2 flex flex-col gap-1">
-            <li>· Tik op een tegel om iets toe te voegen. nog een tik haalt het eraf.</li>
+            <li>· Tik op een tegel om iets toe te voegen; nog een tik haalt het eraf.</li>
             <li>· Houd een tegel even vast om een aantal te kiezen.</li>
-            <li>· Deel de lijst met je gezin en vink samen af. alles synct vanzelf.</li>
+            <li>· Deel de lijst met je gezin en vink samen af; alles synct vanzelf.</li>
           </ul>
           <button
             onClick={() => {
@@ -622,7 +713,7 @@ export default function ListView({
           </div>
           {locError && (
             <p className="mt-2 text-sm text-terra-700">
-              Locatie bepalen lukte niet. probeer een postcode.
+              Locatie bepalen lukte niet. Probeer een postcode.
             </p>
           )}
         </div>
@@ -884,7 +975,7 @@ export default function ListView({
         {snapshot.open.length === 0 && (
           <li className="rounded-tile border border-dashed border-cream-300 p-5 text-center">
             <p className="mb-3 text-ink-500">
-              Je lijst is leeg. probeer eens iets van het seizoen:
+              Je lijst is leeg. Probeer iets uit het seizoen:
             </p>
             <div className="grid grid-cols-4 gap-2">
               {seasonal.slice(0, 4).map((item) => (

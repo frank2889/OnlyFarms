@@ -1,6 +1,6 @@
 # Lokale-producenten-platform (werktitel "OnlyFarms")
 
-## STATUS (bijgewerkt 2 aug 2026) — wat is er al?
+## STATUS (bijgewerkt 3 aug 2026) — wat is er al?
 
 **Gebouwd en live** (onlyfarms-ten.vercel.app):
 
@@ -11,7 +11,12 @@
 
 **Aanvulling 3 aug 2026 (UX-sprint 2 + lokaal-verdieping, live)**: cart-drawer-model (lijst als winkelwagen, Lijst-tab togglet de drawer), zoek-overlay met veld bovenaan (toetsenbord-proof), tik = +1 met teller en vasthouden = aantal/verwijderen, zichtbaar vink-moment, lijsten hernoemen/verwijderen, matching in twee lagen (zeker > categorie-suggestie > supermarkt onderaan) met inline tip per rij, "N in de buurt"-badges op tegels, producenten-zoeken in de zoekbalk, urgentie + eigen categorie-volgorde + vaak-gekocht, 785 producenten verrijkt met specifieke tokens, openingstijden als nu-status (parser voor alle notaties), 275 weekmarkten uit OSM op Ontdek, hier-halen vanaf producentpagina's, Google Places-sync script (wacht op API-key), em-dash-regel doorgevoerd.
 
+**Aanvulling 3 aug 2026, deel 2 (beheeromgeving, live)**: `/beheer` gebouwd, gemerged en op productie geverifieerd met Playwright (26/26 checks: gates, wachtrijen, bewerken, mobiel). Zie § Fase 2.4 voor de inhoud. Inloggen brengt je via `?terug=` automatisch terug naar waar je heen wilde, dus `/beheer` is de enige URL die het team hoeft te onthouden. Accountfilosofie vastgelegd: **één account per persoon, petten bepalen de toegang** (gebruiker, team, straks verkoper via `sellers.user_id`); een boer is immers zelf ook klant. Team en leden krijgen bewust gescheiden omgevingen (/beheer en straks /portaal): harde veiligheidsgrens, per doelgroep één URL; eventueel later één slimme voordeur (/mijn) die op rol doorstuurt. Ter demonstratie van de verkopersflow is "Demoboerderij van Frank" aangemeld en goedgekeurd (seller 4, producent demoboerderij-van-frank, lid, nog zonder adres/producten dus buiten de matching; opruimen = status gestopt).
+
 **Openstaand**:
+
+- **GitHub Actions is geblokkeerd door een billing-probleem op het account van frank2889** ("account locked due to a billing issue"): de verplichte CI-check kan niet draaien, dus PR's van Chimene/Sally kunnen niet gemerged worden en de eigenaar moet steeds bypassen. Oplossen via github.com > Settings > Billing and plans (Actions is gratis voor publieke repo's, dus na herstel kost het niets).
+- PR #1 (docs/SAMENWERKEN.md, de samenwerkgids voor niet-developers) staat bewust open als review-oefening voor Sally of Chimene; Sally moet ook nog haar repo-uitnodiging accepteren (GitHub: wissalakmadi).
 
 - Pusher-keys aanmaken (gratis account, 4 env-vars) - realtime i.p.v. 10s-polling
 - Week echte-gebruikerstest (3-5 mensen incl. 65+) - belangrijkste volgende stap

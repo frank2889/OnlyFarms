@@ -1369,6 +1369,98 @@ export function FoodHazelnoot(p: IconProps) {
   );
 }
 
+export function FoodWalnoot(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3c4.2 0 7.2 3.3 7.2 7.8 0 5.3-3.3 9.8-7.2 10.2-3.9-.4-7.2-4.9-7.2-10.2C4.8 6.3 7.8 3 12 3Z" />
+      <path d="M12 5v15.5" stroke={CREAM} strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M7.5 9c1.3 1 2.6 1 3.7 0M7.3 13c1.5 1.1 3 1.1 4.2 0M7.7 17c1.3 1 2.5 1 3.5 0" stroke={DARK} strokeWidth="1" fill="none" strokeLinecap="round" />
+      <path d="M16.5 9c-1.3 1-2.6 1-3.7 0M16.7 13c-1.5 1.1-3 1.1-4.2 0M16.3 17c-1.3 1-2.5 1-3.5 0" stroke={DARK} strokeWidth="1" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodAmandel(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 2.5c2.8 2 5.5 5.7 5.5 10 0 5.2-2.6 9-5.5 9s-5.5-3.8-5.5-9c0-4.3 2.7-8 5.5-10Z" />
+      <path d="M12 5c1.8 1.8 3.3 4.3 3.3 7.3 0 3.6-1.6 6.6-3.3 8-1.7-1.4-3.3-4.4-3.3-8C8.7 9.3 10.2 6.8 12 5Z" fill={DARK} />
+    </Svg>
+  );
+}
+
+export function FoodCashewnoot(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 4c-2.3 1.6-3.5 4.3-3.5 7 0 4 2.6 7.3 6 8.5 3-.4 5-2.7 5-5.3 0-1.8-1-3.2-2.5-3.7 1.6-.9 2.6-2.5 2.6-4.4 0-2.5-2-4.4-4.5-4.4-1.2 0-2.3.5-3.1 1.3Z" />
+      <path d="M9 6.3c-1.4 1.3-2.2 3.1-2.2 5 0 2.8 1.7 5.1 4.1 6 1.7-.4 2.9-1.8 2.9-3.5 0-1.1-.6-2-1.6-2.5 1.1-.6 1.8-1.7 1.8-3 0-1.8-1.5-3.2-3.2-3.2-.7 0-1.3.2-1.8.6Z" fill={DARK} />
+    </Svg>
+  );
+}
+
+export function FoodPinda(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 2.2c2.7 0 4.6 1.9 4.6 4.1 0 1.3-.7 2.4-1.8 3.1 2.3.5 3.9 2.3 3.9 4.5 0 3.2-2.9 5.9-6.7 5.9s-6.7-2.7-6.7-5.9c0-2.2 1.6-4 3.9-4.5-1.1-.7-1.8-1.8-1.8-3.1 0-2.2 1.9-4.1 4.6-4.1Z" />
+      <path d="M9.3 9c.9.6 1.8.6 2.7 0M9.3 15c.9.6 1.8.6 2.7 0" stroke={DARK} strokeWidth="1" fill="none" strokeLinecap="round" />
+      <path d="M14.7 9c-.9.6-1.8.6-2.7 0M14.7 15c-.9.6-1.8.6-2.7 0" stroke={DARK} strokeWidth="1" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodZonnebloempit(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 2c1.6 2.5 2.6 6.5 2.6 10 0 4.5-1.2 8.5-2.6 10-1.4-1.5-2.6-5.5-2.6-10 0-3.5 1-7.5 2.6-10Z" />
+      <path d="M10.3 8h3.4M10 12h4M10.3 16h3.4" stroke={DARK} strokeWidth="1" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function FoodPompoenpit(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3c3 2.3 5 6.4 5 10 0 4.4-2.2 8-5 8s-5-3.6-5-8c0-3.6 2-7.7 5-10Z" />
+      <path d="M12 5.3c2.3 2 3.8 5.2 3.8 8.2 0 3.5-1.7 6.4-3.8 7-2.1-.6-3.8-3.5-3.8-7 0-3 1.5-6.2 3.8-8.2Z" fill={DARK} />
+    </Svg>
+  );
+}
+
+export function FoodLijnzaad(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M8 5c2 1 3 3.3 3 5.7 0 2.7-1.4 4.8-3 5.3-1.6-.5-3-2.6-3-5.3C5 8.3 6 6 8 5Z" />
+      <path d="M16.5 4c2 1 3 3.3 3 5.7 0 2.7-1.4 4.8-3 5.3-1.6-.5-3-2.6-3-5.3 0-2.4 1-4.7 3-5.7Z" fill={DARK} />
+      <path d="M12.2 11.5c2 1 3 3.3 3 5.7 0 2.7-1.4 4.8-3 5.3-1.6-.5-3-2.6-3-5.3 0-2.4 1-4.7 3-5.7Z" />
+    </Svg>
+  );
+}
+
+export function FoodChiazaad(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="8" cy="8" r="2.3" />
+      <circle cx="14.5" cy="6.5" r="2" fill={DARK} />
+      <circle cx="17" cy="12.5" r="2.3" />
+      <circle cx="7" cy="14.5" r="2" fill={DARK} />
+      <circle cx="12" cy="17" r="2.3" />
+      <circle cx="15.5" cy="18.5" r="1.7" fill={DARK} />
+    </Svg>
+  );
+}
+
+export function FoodSesamzaad(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <ellipse cx="8" cy="8" rx="3" ry="1.6" transform="rotate(-20 8 8)" />
+      <ellipse cx="15" cy="7" rx="2.8" ry="1.5" transform="rotate(15 15 7)" fill={DARK} />
+      <ellipse cx="17" cy="14" rx="3" ry="1.6" transform="rotate(-30 17 14)" />
+      <ellipse cx="9" cy="15" rx="2.8" ry="1.5" transform="rotate(25 9 15)" fill={DARK} />
+      <ellipse cx="12.5" cy="19.5" rx="2.8" ry="1.5" transform="rotate(-10 12.5 19.5)" />
+    </Svg>
+  );
+}
+
 /* ---------- Supermarkt (geen producent-matching) ---------- */
 
 export function FoodPasta(p: IconProps) {

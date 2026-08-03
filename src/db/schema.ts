@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   unique,
   doublePrecision,
@@ -251,6 +252,19 @@ export const sellerReviews = pgTable(
   },
   (t) => [index("seller_reviews_seller_idx").on(t.sellerId, t.published)]
 );
+
+// Weekmarkten (bron: OpenStreetMap, ODbL; aparte dataset met bronvermelding)
+export const markets = pgTable("markets", {
+  id: serial("id").primaryKey(),
+  osmId: bigint("osm_id", { mode: "number" }).notNull().unique(),
+  name: text("name").notNull(),
+  city: text("city"),
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
+  daysText: text("days_text"),
+  source: text("source").notNull().default("osm"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // Meldingen van bezoekers ("klopt dit niet meer?") — de goedkoopste bron van actualiteit
 export const reports = pgTable("reports", {

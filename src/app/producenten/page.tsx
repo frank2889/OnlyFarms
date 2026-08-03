@@ -8,8 +8,8 @@ import { geocode } from "@/lib/geocode";
 import { t } from "@/lib/i18n";
 import { slugify } from "@/lib/slug";
 import { travelInfo } from "@/lib/travel";
-import { hoursStatusText } from "@/lib/opening-hours";
-import { allProvinces, nearbyProducers } from "@/lib/queries/producers";
+import { daysSummary, hoursStatusText } from "@/lib/opening-hours";
+import { allProvinces, nearbyMarkets, nearbyProducers } from "@/lib/queries/producers";
 import { iconForCategory } from "@/components/catalog-icons";
 import { RouteIcon, SproutIcon } from "@/components/icons";
 import LocationSearch from "@/components/LocationSearch";
@@ -64,6 +64,7 @@ export default async function ProducersPage({
   const results = coords
     ? await nearbyProducers({ ...coords, radiusKm: radius, tokens, limit: 50 })
     : null;
+  const marketsNearby = coords ? await nearbyMarkets(coords.lat, coords.lng, 3) : [];
   const provinces = coords ? [] : await allProvinces();
 
   return (
@@ -111,6 +112,47 @@ export default async function ProducersPage({
           );
         })}
       </div>
+
+      {marketsNearby.length > 0 && (
+        <section className="mb-5 rounded-tile border border-terra-200 bg-terra-50 p-4">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-terra-800">
+            Weekmarkten in de buurt
+          </h2>
+          <ul className="flex flex-col gap-2.5">
+            {marketsNearby.map((m) => (
+              <li key={m.id} className="text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {m.name}
+                    {m.city ? ` \u00b7 ${m.city}` : ""}
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex shrink-0 items-center gap-1 text-terra-700 hover:underline"
+                  >
+                    <RouteIcon width={13} height={13} /> {t("common.route")}
+                  </a>
+                </div>
+                <p className="text-ink-700">
+                  {[
+                    m.daysText ? `markt op ${daysSummary(m.daysText) ?? m.daysText}` : null,
+                    hoursStatusText(m.daysText),
+                    `${m.distanceKm.toFixed(1)} km \u00b7 ${t("common.travel", {
+                      min: travelInfo(m.distanceKm).minutes,
+                      mode: travelInfo(m.distanceKm).mode,
+                    })}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" \u00b7 ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[11px] text-ink-500">Marktdata \u00a9 OpenStreetMap-bijdragers</p>
+        </section>
+      )}
 
       {results && (
         <>

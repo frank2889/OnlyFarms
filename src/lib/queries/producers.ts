@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { producers, reports } from "@/db/schema";
+import { markets, producers, reports } from "@/db/schema";
 import type { Producer } from "@/lib/types";
 
 const baseColumns = {
@@ -137,6 +137,44 @@ export async function searchProducersByName(
     .orderBy(dist)
     .limit(limit);
   return rows as Producer[];
+}
+
+export type NearbyMarket = {
+  id: number;
+  name: string;
+  city: string | null;
+  lat: number;
+  lng: number;
+  daysText: string | null;
+  distanceKm: number;
+};
+
+/** Weekmarkten in de buurt (bron: OSM), dichtstbij eerst */
+export async function nearbyMarkets(
+  lat: number,
+  lng: number,
+  limit = 3
+): Promise<NearbyMarket[]> {
+  const dist = sql<number>`6371 * 2 * asin(sqrt(
+    pow(sin(radians((${lat} - ${markets.lat}) / 2)), 2) +
+    cos(radians(${lat})) * cos(radians(${markets.lat})) *
+    pow(sin(radians((${lng} - ${markets.lng}) / 2)), 2)
+  ))`;
+  const rows = await db
+    .select({
+      id: markets.id,
+      name: markets.name,
+      city: markets.city,
+      lat: markets.lat,
+      lng: markets.lng,
+      daysText: markets.daysText,
+      distanceKm: dist,
+    })
+    .from(markets)
+    .where(sql`${dist} <= 15`)
+    .orderBy(dist)
+    .limit(limit);
+  return rows as NearbyMarket[];
 }
 
 export async function producerBySlug(slug: string): Promise<Producer | null> {

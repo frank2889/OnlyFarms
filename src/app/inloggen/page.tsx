@@ -1,18 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BRAND } from "@/lib/brand";
 import { SproutIcon } from "@/components/icons";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // ?terug= brengt je na het inloggen terug waar je heen wilde (alleen
+  // interne paden, tegen open redirects)
+  const terugParam = searchParams.get("terug");
+  const terug =
+    terugParam?.startsWith("/") && !terugParam.startsWith("//") ? terugParam : "/lijsten";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +42,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError(true);
     } else {
-      router.push("/lijsten");
+      router.push(terug);
       router.refresh();
     }
   }

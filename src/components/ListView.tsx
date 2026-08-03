@@ -183,12 +183,29 @@ export default function ListView({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const showIntro = introFlag === "" && !introDismissed;
 
-  // Deep-link #lijst opent de drawer (voor pill op producentpagina's)
+  // Deep-link #lijst opent de drawer; de Lijst-tab togglet hem als je er al bent
   useEffect(() => {
-    if (window.location.hash !== "#lijst") return;
-    const id = setTimeout(() => setDrawerOpen(true), 0);
-    return () => clearTimeout(id);
+    let id: ReturnType<typeof setTimeout> | null = null;
+    if (window.location.hash === "#lijst") {
+      id = setTimeout(() => setDrawerOpen(true), 0);
+    }
+    const onToggle = () => setDrawerOpen((v) => !v);
+    window.addEventListener("of:toggle-drawer", onToggle);
+    return () => {
+      if (id) clearTimeout(id);
+      window.removeEventListener("of:toggle-drawer", onToggle);
+    };
   }, []);
+
+  // Achtergrond niet mee laten scrollen zolang de drawer open is
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [drawerOpen]);
 
   // Toetsenbord-veilig: onderbalk boven het virtuele toetsenbord houden
   useEffect(() => {
@@ -469,7 +486,7 @@ export default function ListView({
     .slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-48 sm:pb-36">
+    <div className="mx-auto max-w-2xl px-4 pb-36 sm:pb-24">
       {/* Kop: lijst-switcher + delen */}
       <div className="flex items-center justify-between py-4">
         <div className="relative min-w-0">
@@ -660,22 +677,6 @@ export default function ListView({
         </div>
       )}
 
-      {/* Drawer-pill: altijd zichtbaar boven de toevoegbalk */}
-      <button
-        onClick={() => setDrawerOpen(true)}
-        className="fixed inset-x-0 bottom-[7.4rem] z-40 mx-auto flex w-[calc(100%-2rem)] max-w-2xl items-center justify-between rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-white shadow-lg sm:bottom-[3.9rem]"
-        style={kbOffset > 0 ? { display: "none" } : undefined}
-      >
-        <span className="inline-flex items-center gap-2">
-          <ListIcon width={16} height={16} />
-          Je lijst
-        </span>
-        <span className="inline-flex items-center gap-2">
-          {t("lists.itemsOpen", { count: snapshot.open.length })}
-          <ChevronDownIcon width={16} height={16} className="rotate-180" />
-        </span>
-      </button>
-
       {/* De lijst-drawer (cart-model) */}
       <div className={`fixed inset-0 z-50 ${drawerOpen ? "" : "pointer-events-none"}`}>
         <div
@@ -691,7 +692,7 @@ export default function ListView({
           onKeyDown={(e) => {
             if (e.key === "Escape") setDrawerOpen(false);
           }}
-          className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-tile bg-cream-50 shadow-2xl transition-transform duration-300 ${
+          className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto overscroll-contain rounded-t-tile bg-cream-50 shadow-2xl transition-transform duration-300 ${
             drawerOpen ? "translate-y-0" : "translate-y-full"
           }`}
         >
@@ -1014,7 +1015,7 @@ export default function ListView({
 
       {/* Undo-snackbar */}
       {undo && (
-        <div className="animate-snack fixed bottom-[11.2rem] sm:bottom-[7.5rem] left-1/2 z-[60] z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
+        <div className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-[60] z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
           <span className="truncate">{undo.label}</span>
           <button
             onClick={() => {

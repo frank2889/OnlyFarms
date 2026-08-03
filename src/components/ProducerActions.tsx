@@ -6,7 +6,7 @@ import { addItemAction, createListAction } from "@/app/lijst/actions";
 import { itemForToken } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { iconForItem } from "@/components/catalog-icons";
-import { CheckIcon, ListIcon, PlusIcon } from "@/components/icons";
+import { CheckIcon, PlusIcon } from "@/components/icons";
 
 type StoredList = { token: string; name: string };
 
@@ -112,19 +112,15 @@ export default function ProducerActions({
       {toast && (
         <p className="animate-rise mt-2 text-sm font-medium text-terra-700">
           {t("producers.addedToList")}
+          {active && (
+            <>
+              {" "}
+              <Link href={`/lijst/${active.token}#lijst`} className="underline">
+                Bekijk je lijst
+              </Link>
+            </>
+          )}
         </p>
-      )}
-
-      {active && (
-        <Link
-          href={`/lijst/${active.token}#lijst`}
-          className="fixed inset-x-0 bottom-16 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-2xl items-center justify-between rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-white shadow-lg sm:bottom-4"
-        >
-          <span className="inline-flex items-center gap-2">
-            <ListIcon width={16} height={16} /> {t("producers.yourList")}: {active.name}
-          </span>
-          <span>Bekijk</span>
-        </Link>
       )}
     </div>
   );

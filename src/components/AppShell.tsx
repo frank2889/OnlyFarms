@@ -26,9 +26,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     () => "[]"
   );
   let listHref = "/lijsten";
+  let activeListPath: string | null = null;
   try {
     const lists: { token: string }[] = JSON.parse(rawLists);
-    if (lists[0]?.token) listHref = `/lijst/${lists[0].token}`;
+    if (lists[0]?.token) {
+      activeListPath = `/lijst/${lists[0].token}`;
+      listHref = `${activeListPath}#lijst`;
+    }
   } catch {}
 
   const tabs = [
@@ -44,8 +48,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-md items-stretch justify-around">
           {tabs.map(({ href, label, Icon, active, badge: count }) => (
             <Link
-              key={href}
+              key={label}
               href={href}
+              onClick={(e) => {
+                // Al op je lijst? Dan togglet de tab de drawer in plaats van te navigeren
+                if (label === "Lijst" && activeListPath && pathname === activeListPath) {
+                  e.preventDefault();
+                  window.dispatchEvent(new Event("of:toggle-drawer"));
+                }
+              }}
               className={`relative flex min-w-20 flex-col items-center gap-0.5 px-4 pb-3 pt-2.5 ${
                 active ? "text-terra-600" : "text-ink-500"
               }`}

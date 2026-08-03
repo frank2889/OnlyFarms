@@ -692,7 +692,7 @@ export default function ListView({
           onKeyDown={(e) => {
             if (e.key === "Escape") setDrawerOpen(false);
           }}
-          className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto overscroll-contain rounded-t-tile bg-cream-50 shadow-2xl transition-transform duration-300 ${
+          className={`absolute inset-x-0 bottom-16 max-h-[82vh] overflow-y-auto overscroll-contain rounded-t-tile bg-cream-50 shadow-2xl transition-transform duration-300 sm:bottom-0 ${
             drawerOpen ? "translate-y-0" : "translate-y-full"
           }`}
         >
@@ -704,8 +704,15 @@ export default function ListView({
             >
               <span className="mx-auto block h-1.5 w-12 rounded-full bg-cream-300" />
             </button>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xl font-bold">{list.name}</h2>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="min-w-0 flex-1 truncate text-xl font-bold">{list.name}</h2>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Lijst sluiten"
+                className="rounded-full bg-cream-200 p-2 text-ink-700 hover:bg-cream-300"
+              >
+                <ChevronDownIcon width={18} height={18} />
+              </button>
               <button
                 onClick={share}
                 className="inline-flex shrink-0 items-center gap-2 rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"

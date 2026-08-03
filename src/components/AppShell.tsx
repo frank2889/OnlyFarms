@@ -44,7 +44,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="pb-20 sm:pb-0">{children}</div>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-cream-200 bg-white/95 backdrop-blur sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-cream-200 bg-white/95 backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-md items-stretch justify-around">
           {tabs.map(({ href, label, Icon, active, badge: count }) => (
             <Link

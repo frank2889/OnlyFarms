@@ -28,6 +28,15 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='reports' and column_name='admin_note'",
     "ALTER TABLE reports ADD COLUMN admin_note text",
   ],
+  // Portaal: koppeling verkoper -> gebruikersaccount (één account per persoon)
+  [
+    "select 1 from information_schema.columns where table_name='sellers' and column_name='user_id'",
+    "ALTER TABLE sellers ADD COLUMN user_id integer CONSTRAINT sellers_user_id_users_id_fk REFERENCES users(id)",
+  ],
+  [
+    "select 1 from pg_constraint where conname='sellers_user_id_unique'",
+    "ALTER TABLE sellers ADD CONSTRAINT sellers_user_id_unique UNIQUE (user_id)",
+  ],
 ];
 
 async function main() {

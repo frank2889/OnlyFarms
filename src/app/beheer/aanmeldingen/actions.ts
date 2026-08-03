@@ -6,9 +6,12 @@ import { requireAdminUser } from "@/lib/authz";
 import {
   createProducerFromSeller,
   linkSellerToProducer,
+  linkSellerUser,
   sellerById,
   setSellerStatus,
+  unlinkSellerUser,
 } from "@/lib/queries/admin";
+import { userByEmail } from "@/lib/queries/accounts";
 import { trackEvent } from "@/lib/klaviyo";
 
 export async function takeInReviewAction(sellerId: number): Promise<void> {
@@ -43,8 +46,32 @@ export async function approveSellerAction(sellerId: number, formData: FormData):
   if (changed) {
     await trackEvent("seller_approved", { sellerName: seller.name, city: seller.city }, seller.email);
   }
+  // Portaal-toegang automatisch koppelen als het e-mailadres al een account heeft
+  if (!seller.userId) {
+    const user = await userByEmail(seller.email);
+    if (user) await linkSellerUser(sellerId, user.id);
+  }
   revalidatePath("/beheer", "layout");
   redirect(`/beheer/aanmeldingen/${sellerId}`);
+}
+
+export async function linkSellerUserAction(sellerId: number, formData: FormData): Promise<void> {
+  const admin = await requireAdminUser();
+  if (!admin) return;
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const user = email ? await userByEmail(email) : null;
+  if (!user) redirect(`/beheer/aanmeldingen/${sellerId}?fout=gebruiker`);
+  const linked = await linkSellerUser(sellerId, user.id);
+  if (!linked) redirect(`/beheer/aanmeldingen/${sellerId}?fout=al-gekoppeld`);
+  revalidatePath("/beheer", "layout");
+  redirect(`/beheer/aanmeldingen/${sellerId}`);
+}
+
+export async function unlinkSellerUserAction(sellerId: number): Promise<void> {
+  const admin = await requireAdminUser();
+  if (!admin) return;
+  await unlinkSellerUser(sellerId);
+  revalidatePath("/beheer", "layout");
 }
 
 export async function rejectSellerAction(sellerId: number, formData: FormData): Promise<void> {

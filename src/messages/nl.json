@@ -209,6 +209,35 @@
     "delete": "Verwijderen",
     "reviewAbout": "Over {name}",
     "openOnSite": "Bekijk op de site",
-    "back": "Terug"
+    "back": "Terug",
+    "portalAccess": "Portaal-toegang",
+    "portalExplain": "Een gekoppeld gebruikersaccount kan op /portaal zelf de vermelding beheren (uren, producten, omschrijving, contact).",
+    "portalLinked": "Gekoppeld aan {email}",
+    "portalUnlink": "Ontkoppelen",
+    "portalLinkPlaceholder": "E-mailadres van het gebruikersaccount",
+    "portalLink": "Koppelen",
+    "portalNoUser": "Geen account gevonden met dat e-mailadres. De verkoper moet zich eerst registreren op de site.",
+    "portalAlreadyLinked": "Dat account is al aan een andere verkoper gekoppeld."
+  },
+  "portal": {
+    "title": "Portaal",
+    "welcome": "Welkom, {name}",
+    "myListing": "Mijn vermelding",
+    "editListing": "Vermelding bewerken",
+    "statusLabel": "Status van je aanmelding",
+    "toSite": "Naar de site",
+    "myLists": "Mijn lijsten",
+    "noSellerTitle": "Geen verkopersaccount gekoppeld",
+    "noSellerText": "Je bent ingelogd, maar aan dit account is nog geen verkoper gekoppeld. Heb je je bedrijf nog niet aangemeld? Doe dat via de verkopen-pagina. Al wel aangemeld en goedgekeurd? Neem contact met ons op, dan koppelen wij je account.",
+    "toSell": "Aanmelden als verkoper",
+    "notApproved": "Je aanmelding is nog in behandeling. Zodra je bent goedgekeurd kun je hier je vermelding beheren.",
+    "rejected": "Je aanmelding is afgewezen. Neem contact met ons op als je denkt dat dit niet klopt.",
+    "suspended": "Je account is geschorst. Neem contact met ons op.",
+    "noListing": "Er is nog geen vermelding aan je account gekoppeld. Neem contact met ons op.",
+    "editIntro": "Deze gegevens staan op je publieke pagina en sturen de matching met boodschappenlijsten. Wijzigingen staan direct op de site en zetten \"laatst bevestigd\" op vandaag.",
+    "editHint": "Adres of naam wijzigen? Dat doet het team voor je, zodat de kaartpositie blijft kloppen. Meld het via een berichtje.",
+    "statusReasonLabel": "Toelichting",
+    "profileLink": "Naar je verkopersportaal",
+    "profileTitle": "Jouw bedrijf"
   }
 }

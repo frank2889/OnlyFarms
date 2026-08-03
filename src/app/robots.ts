@@ -6,8 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Gedeelde lijsten zijn privé (geheime link); beheer is intern
-      disallow: ["/lijst/", "/beheer"],
+      // Gedeelde lijsten zijn privé (geheime link); beheer en portaal zijn intern
+      disallow: ["/lijst/", "/beheer", "/portaal"],
     },
     sitemap: `https://${BRAND.domain}/sitemap.xml`,
   };

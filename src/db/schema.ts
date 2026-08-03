@@ -197,6 +197,8 @@ export const sellers = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     bio: text("bio"),
+    // Portaal-toegang: gekoppeld gebruikersaccount (één account, meerdere petten)
+    userId: integer("user_id").unique().references(() => users.id),
     // Selectieproces: wat wil je aanbieden en waarom
     motivation: text("motivation").notNull(),
     acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),

@@ -110,6 +110,24 @@ export async function setSellerStatus(
   return rows.length > 0;
 }
 
+/** Portaal-toegang: verkoper aan een gebruikersaccount koppelen (uniek per account) */
+export async function linkSellerUser(sellerId: number, userId: number): Promise<boolean> {
+  try {
+    await db
+      .update(sellers)
+      .set({ userId, updatedAt: new Date() })
+      .where(eq(sellers.id, sellerId));
+    return true;
+  } catch {
+    // unique-constraint: dat account is al aan een andere verkoper gekoppeld
+    return false;
+  }
+}
+
+export async function unlinkSellerUser(sellerId: number): Promise<void> {
+  await db.update(sellers).set({ userId: null, updatedAt: new Date() }).where(eq(sellers.id, sellerId));
+}
+
 /** De vermelding die aan deze verkoper gekoppeld is (na goedkeuring) */
 export async function producerForSeller(sellerId: number) {
   const [row] = await db

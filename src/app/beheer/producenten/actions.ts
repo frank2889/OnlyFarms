@@ -23,6 +23,9 @@ export type ProducerFormInput = {
   description: string;
   openingHours: string;
   products: string[];
+  organic: boolean;
+  vendingMachine: boolean;
+  paymentMethods: string;
 };
 
 export async function updateProducerAction(
@@ -60,6 +63,9 @@ export async function updateProducerAction(
     description: input.description.trim().slice(0, 2000) || null,
     openingHours: clean(input.openingHours),
     products,
+    organic: input.organic,
+    vendingMachine: input.vendingMachine,
+    paymentMethods: clean(input.paymentMethods),
   };
   await updateProducerAdmin(producerId, patch);
   revalidatePath("/beheer", "layout");

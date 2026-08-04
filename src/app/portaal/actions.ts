@@ -9,6 +9,7 @@ import {
   deleteOffer,
   offerByIdForSeller,
   updateOffer,
+  updateSellerContact,
   type OfferInput,
 } from "@/lib/queries/portal";
 import { CATEGORIES } from "@/lib/catalog";
@@ -137,6 +138,37 @@ export async function deleteOfferAction(offerId: number): Promise<void> {
 }
 
 /**
+ * "Alles klopt nog": zet de laatst-bevestigd-datum (updateProducerAdmin doet
+ * dat automatisch, ook bij een lege patch). Direct antwoord op het
+ * datakwaliteitsprobleem dat vrijwel niets ooit geverifieerd was.
+ */
+export async function confirmListingAction(): Promise<Result> {
+  const own = await requireOwnProducer();
+  if (!own) return { ok: false, error: "Geen toegang." };
+  await updateProducerAdmin(own.producer.id, {});
+  revalidatePath("/portaal");
+  revalidatePath("/producent/[slug]", "page");
+  return { ok: true };
+}
+
+/** Contactpersoon (sellers-tabel) zelf beheren; e-mail blijft bij het team (koppel-sleutel) */
+export async function updateSellerContactAction(input: {
+  contactName: string;
+  phone: string;
+}): Promise<Result> {
+  const ctx = await requireSellerUser();
+  if (!ctx) return { ok: false, error: "Geen toegang." };
+  const name = input.contactName.trim();
+  if (name.length < 2) return { ok: false, error: "Vul een naam in." };
+  await updateSellerContact(ctx.seller.id, {
+    contactName: name.slice(0, 80),
+    phone: input.phone.trim().slice(0, 40) || null,
+  });
+  revalidatePath("/portaal");
+  return { ok: true };
+}
+
+/**
  * Eigen vermelding bewerken: alleen de eigenaar (gekoppelde, goedgekeurde
  * verkoper) en alleen de portaal-velden (contact, omschrijving, uren,
  * producten). Naam, adres en status blijven bij het team.
@@ -163,6 +195,9 @@ export async function updateOwnProducerAction(
     description: input.description.trim().slice(0, 2000) || null,
     openingHours: clean(input.openingHours),
     products,
+    organic: !!input.organic,
+    vendingMachine: !!input.vendingMachine,
+    paymentMethods: clean(input.paymentMethods),
   };
   await updateProducerAdmin(producerId, patch);
   revalidatePath("/portaal");

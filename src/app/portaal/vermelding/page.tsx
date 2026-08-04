@@ -4,6 +4,7 @@ import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
 import { t } from "@/lib/i18n";
 import AdminProducerForm from "@/components/AdminProducerForm";
+import { SellerContactForm } from "@/components/PortalExtras";
 import { updateOwnProducerAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function PortaalVermeldingPage() {
         <AdminProducerForm
           producerId={producer.id}
           action={updateOwnProducerAction}
-          editableFields={["contact", "description", "openingHours", "products"]}
+          editableFields={["contact", "description", "openingHours", "products", "practical"]}
           initial={{
             name: producer.name,
             kind: producer.kind,
@@ -47,7 +48,22 @@ export default async function PortaalVermeldingPage() {
             description: producer.description ?? "",
             openingHours: producer.openingHours ?? "",
             products: producer.products,
+            organic: producer.organic ?? false,
+            vendingMachine: producer.vendingMachine ?? false,
+            paymentMethods: producer.paymentMethods ?? "",
           }}
+        />
+      </div>
+
+      {/* Contactpersoon: sellers-gegevens, los van de publieke vermelding */}
+      <div className="mt-4 rounded-tile border border-cream-200 bg-white p-4">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
+          {t("portal.contactTitle")}
+        </h2>
+        <SellerContactForm
+          contactName={ctx.seller.contactName}
+          phone={ctx.seller.phone}
+          email={ctx.seller.email}
         />
       </div>
     </main>

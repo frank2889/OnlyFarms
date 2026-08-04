@@ -1,6 +1,40 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { offers, sellers } from "@/db/schema";
+
+export type ProducerEngagement = { picksTotal: number; picks30d: number; mentions: number };
+
+/**
+ * "Jouw bereik" voor het portaal: hoe vaak is deze producent gekozen als
+ * ophaalpunt ("hier halen"/winkelkeuze) en genoemd in Cheffs. Geaggregeerd en
+ * anoniem, zelfde privacylijn als het vraaginzicht.
+ */
+export async function producerEngagement(slug: string): Promise<ProducerEngagement> {
+  const result = await db.execute(sql`
+    select
+      (select count(*) from list_items where producer_slug = ${slug}) as picks_total,
+      (select count(*) from list_items where producer_slug = ${slug}
+        and created_at >= now() - interval '30 days') as picks_30d,
+      (select count(*) from list_messages where producer_slug = ${slug}) as mentions
+  `);
+  const row = result.rows[0] as Record<string, unknown>;
+  return {
+    picksTotal: Number(row.picks_total),
+    picks30d: Number(row.picks_30d),
+    mentions: Number(row.mentions),
+  };
+}
+
+/** Contactpersoon-gegevens die de verkoper zelf mag beheren (e-mail blijft bij het team) */
+export async function updateSellerContact(
+  sellerId: number,
+  patch: { contactName: string; phone: string | null }
+): Promise<void> {
+  await db
+    .update(sellers)
+    .set({ contactName: patch.contactName, phone: patch.phone })
+    .where(eq(sellers.id, sellerId));
+}
 
 /** De verkoper die aan dit gebruikersaccount gekoppeld is (elke status) */
 export async function sellerForUser(userId: number) {

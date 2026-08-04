@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
 import { demandNearProducer } from "@/lib/queries/demand";
-import { offersForSeller } from "@/lib/queries/portal";
+import { offersForSeller, producerEngagement } from "@/lib/queries/portal";
 import { t } from "@/lib/i18n";
-import { StoreIcon } from "@/components/icons";
+import { CheckIcon, PlusIcon, StoreIcon } from "@/components/icons";
+import { ConfirmListingButton } from "@/components/PortalExtras";
 import { SELLER_STATUS_LABELS, sellerStatusBadgeClass } from "@/app/beheer/aanmeldingen/labels";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,23 @@ export default async function PortaalPage() {
     seller.status === "goedgekeurd" ? offersForSeller(seller.id) : Promise.resolve([]),
   ]);
   const demand = producer ? await demandNearProducer(producer) : [];
+  const reach = producer ? await producerEngagement(producer.slug) : null;
+
+  // Profiel-volledigheid: elk ontbrekend punt is een directe link (CRO #44)
+  const checklist = producer
+    ? [
+        { done: producer.photos.length > 0, label: t("portal.checkPhoto"), href: "/portaal/fotos" },
+        { done: !!producer.description, label: t("portal.checkDescription"), href: "/portaal/vermelding" },
+        { done: !!producer.openingHours, label: t("portal.checkHours"), href: "/portaal/vermelding" },
+        { done: !!producer.phone, label: t("portal.checkPhone"), href: "/portaal/vermelding" },
+        { done: !!producer.website, label: t("portal.checkWebsite"), href: "/portaal/vermelding" },
+        { done: producer.products.length > 0, label: t("portal.checkProducts"), href: "/portaal/vermelding" },
+        { done: offers.length > 0, label: t("portal.checkOffers"), href: "/portaal/producten" },
+      ]
+    : [];
+  const doneCount = checklist.filter((c) => c.done).length;
+  const pct = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0;
+  const pendingOffers = offers.filter((o) => !o.published).length;
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -86,14 +104,21 @@ export default async function PortaalPage() {
                     className="rounded-xl border border-cream-200 p-3 text-center hover:border-terra-400"
                   >
                     <span className="block text-xl font-bold">{producer.photos.length}</span>
-                    <span className="block text-xs text-ink-500">{t("portal.tabPhotos")}</span>
+                    <span className="block text-xs text-ink-500">
+                      {t("portal.tabPhotos")}
+                      {producer.photosPending.length > 0 &&
+                        ` (${t("portal.pendingCount", { n: producer.photosPending.length })})`}
+                    </span>
                   </Link>
                   <Link
                     href="/portaal/producten"
                     className="rounded-xl border border-cream-200 p-3 text-center hover:border-terra-400"
                   >
                     <span className="block text-xl font-bold">{offers.length}</span>
-                    <span className="block text-xs text-ink-500">{t("portal.tabProducts")}</span>
+                    <span className="block text-xs text-ink-500">
+                      {t("portal.tabProducts")}
+                      {pendingOffers > 0 && ` (${t("portal.pendingCount", { n: pendingOffers })})`}
+                    </span>
                   </Link>
                   <Link
                     href="/portaal/vermelding"
@@ -113,6 +138,78 @@ export default async function PortaalPage() {
           ) : (
             <p className="p-4 text-sm text-ink-700">{t("portal.noListing")}</p>
           )}
+        </section>
+      )}
+
+      {/* Profiel-volledigheid + laatst bevestigd */}
+      {seller.status === "goedgekeurd" && producer && (
+        <section className="mt-4 rounded-tile border border-cream-200 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-500">
+              {t("portal.checklistTitle")}
+            </h2>
+            <span className="rounded-full bg-terra-100 px-2.5 py-0.5 text-xs font-bold text-terra-700">
+              {t("portal.checklistPct", { pct })}
+            </span>
+          </div>
+          {pct === 100 ? (
+            <p className="text-sm text-terra-700">{t("portal.checklistComplete")}</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {checklist
+                .filter((c) => !c.done)
+                .map((c) => (
+                  <li key={c.label}>
+                    <Link
+                      href={c.href}
+                      className="flex items-center gap-2 text-sm text-terra-700 underline"
+                    >
+                      <PlusIcon width={14} height={14} className="shrink-0" /> {c.label}
+                    </Link>
+                  </li>
+                ))}
+              {checklist
+                .filter((c) => c.done)
+                .map((c) => (
+                  <li key={c.label} className="flex items-center gap-2 text-sm text-ink-500">
+                    <CheckIcon width={14} height={14} className="shrink-0 text-terra-500" /> {c.label}
+                  </li>
+                ))}
+            </ul>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-cream-100 pt-3">
+            <span className="text-sm text-ink-500">
+              {producer.lastVerifiedAt
+                ? t("portal.verifiedOn", { date: dateFmt.format(producer.lastVerifiedAt) })
+                : t("portal.verifiedNever")}
+            </span>
+            <ConfirmListingButton />
+          </div>
+        </section>
+      )}
+
+      {/* Jouw bereik: geaggregeerd en anoniem */}
+      {seller.status === "goedgekeurd" && producer && reach && (
+        <section className="mt-4 rounded-tile border border-cream-200 bg-white p-4">
+          <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-500">
+            {t("portal.reachTitle")}
+          </h2>
+          <p className="mb-3 text-sm text-ink-500">{t("portal.reachHint")}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-cream-50 p-3 text-center">
+              <span className="block text-2xl font-bold">{reach.picksTotal}</span>
+              <span className="block text-xs text-ink-500">{t("portal.reachPicks")}</span>
+              {reach.picks30d > 0 && (
+                <span className="block text-xs text-terra-700">
+                  {t("portal.reachPicks30", { n: reach.picks30d })}
+                </span>
+              )}
+            </div>
+            <div className="rounded-xl bg-cream-50 p-3 text-center">
+              <span className="block text-2xl font-bold">{reach.mentions}</span>
+              <span className="block text-xs text-ink-500">{t("portal.reachMentions")}</span>
+            </div>
+          </div>
         </section>
       )}
 

@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { createListAction, createSampleListAction } from "@/app/lijst/actions";
 import { t } from "@/lib/i18n";
 import { ListIcon, PlusIcon } from "@/components/icons";
-
-type StoredList = { token: string; name: string };
-
-function subscribeStorage(cb: () => void) {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
-}
+import {
+  listsSnapshot,
+  parseStoredLists,
+  rememberList,
+  subscribeLists,
+  type StoredList,
+} from "@/lib/lists-local";
 
 // De lijst direct op de homepage: nieuwe lijst starten of verder met een bestaande.
 export default function HomeListPanel({
@@ -24,35 +24,18 @@ export default function HomeListPanel({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
 
-  const rawLists = useSyncExternalStore(
-    subscribeStorage,
-    () => localStorage.getItem("of_lists") ?? "[]",
-    () => "[]"
-  );
+  const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
   const myLists = useMemo<StoredList[]>(() => {
-    let local: StoredList[] = [];
-    try {
-      local = JSON.parse(rawLists);
-    } catch {}
+    const local = parseStoredLists(rawLists);
     const serverTokens = new Set(serverLists.map((l) => l.token));
     return [...serverLists, ...local.filter((l) => !serverTokens.has(l.token))].slice(0, 4);
   }, [rawLists, serverLists]);
-
-  function remember(token: string, listName: string) {
-    try {
-      const stored: StoredList[] = JSON.parse(localStorage.getItem("of_lists") ?? "[]");
-      localStorage.setItem(
-        "of_lists",
-        JSON.stringify([{ token, name: listName }, ...stored].slice(0, 20))
-      );
-    } catch {}
-  }
 
   function create(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
       const list = await createListAction(name || "Boodschappen");
-      remember(list.token, list.name);
+      rememberList({ token: list.token, name: list.name });
       router.push(`/lijst/${list.token}`);
     });
   }
@@ -61,7 +44,7 @@ export default function HomeListPanel({
   function createSample() {
     startTransition(async () => {
       const list = await createSampleListAction();
-      remember(list.token, "Boodschappen");
+      rememberList({ token: list.token, name: "Boodschappen" });
       router.push(`/lijst/${list.token}`);
     });
   }

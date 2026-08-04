@@ -1,17 +1,11 @@
 "use client";
 
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useSyncExternalStore, useState, useTransition } from "react";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { sendChatMessageAction } from "@/app/lijst/actions";
 import { ChefHatIcon, XIcon } from "@/components/icons";
-
-type StoredList = { token: string; name: string };
-
-function subscribeStorage(cb: () => void) {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
-}
+import { activeList, listsSnapshot, pinnedSnapshot, subscribeLists } from "@/lib/lists-local";
 
 /**
  * "Vraag je cheffs" vanaf een producentpagina: preset-vragen (aantikken =
@@ -29,16 +23,9 @@ export default function AskChefsButton({
   const [state, setState] = useState<"idle" | "sent" | "login" | "limited">("idle");
   const [sending, startTransition] = useTransition();
 
-  const rawLists = useSyncExternalStore(
-    subscribeStorage,
-    () => localStorage.getItem("of_lists") ?? "[]",
-    () => "[]"
-  );
-  let active: StoredList | null = null;
-  try {
-    const lists: StoredList[] = JSON.parse(rawLists);
-    active = lists[0] ?? null;
-  } catch {}
+  const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
+  const rawPinned = useSyncExternalStore(subscribeLists, pinnedSnapshot, () => "");
+  const active = activeList(rawLists, rawPinned);
 
   // Zonder actieve lijst is er geen chat om naar te sturen
   if (!active) return null;

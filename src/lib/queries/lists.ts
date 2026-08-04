@@ -321,3 +321,51 @@ export async function setCategoryOrder(listId: number, order: string[]): Promise
     .set({ categoryOrder: order, updatedAt: sql`now()` })
     .where(eq(lists.id, listId));
 }
+
+/**
+ * Lijst dupliceren: nieuwe token, locatie/straal/categorievolgorde mee, maar
+ * alleen open items (geen gekochte items, geen chat/koophistorie: een echt
+ * nieuw exemplaar). Toewijzing en einddatum gaan bewust niet mee, dat hoort
+ * bij de oude ronde. Eigenaarschap zet de aanroepende action (claimen voor
+ * de ingelogde gebruiker).
+ */
+export async function duplicateList(listId: number, name: string): Promise<ShoppingList> {
+  const [source] = await db.select().from(lists).where(eq(lists.id, listId));
+  if (!source) throw new Error("Lijst niet gevonden.");
+
+  const token = randomBytes(12).toString("base64url");
+  const [created] = await db
+    .insert(lists)
+    .values({
+      token,
+      name: name.trim() || source.name,
+      postcode: source.postcode,
+      lat: source.lat,
+      lng: source.lng,
+      radiusKm: source.radiusKm,
+      categoryOrder: source.categoryOrder,
+    })
+    .returning();
+
+  const openItems = await db
+    .select()
+    .from(listItems)
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, false)));
+  if (openItems.length) {
+    await db.insert(listItems).values(
+      openItems.map((item) => ({
+        listId: created.id,
+        catalogKey: item.catalogKey,
+        label: item.label,
+        qty: item.qty,
+        note: item.note,
+        store: item.store,
+        producerSlug: item.producerSlug,
+        storeSuggestedBy: item.storeSuggestedBy,
+        priority: item.priority,
+        position: item.position,
+      }))
+    );
+  }
+  return created as ShoppingList;
+}

@@ -6,13 +6,7 @@ import { addItemAction, createListAction } from "@/app/lijst/actions";
 import { itemForToken } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { ListIcon } from "@/components/icons";
-
-type StoredList = { token: string; name: string };
-
-function subscribeStorage(cb: () => void) {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
-}
+import { activeList, listsSnapshot, pinnedSnapshot, rememberList, subscribeLists } from "@/lib/lists-local";
 
 /**
  * De conversie-ingang voor de koude Google-bezoeker op een producentpagina:
@@ -34,36 +28,23 @@ export default function ProducerHeroCta({
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
 
-  const rawLists = useSyncExternalStore(
-    subscribeStorage,
-    () => localStorage.getItem("of_lists") ?? "[]",
-    () => "[]"
-  );
+  const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
+  const rawPinned = useSyncExternalStore(subscribeLists, pinnedSnapshot, () => "");
 
   const items = [...new Set(products)]
     .map((token) => itemForToken(token))
     .filter((i): i is NonNullable<typeof i> => !!i);
   if (!items.length) return null;
 
-  function activeList(): StoredList | null {
-    try {
-      const lists: StoredList[] = JSON.parse(rawLists);
-      return lists[0] ?? null;
-    } catch {
-      return null;
-    }
-  }
-  const hasList = !!activeList();
+  const hasList = !!activeList(rawLists, rawPinned);
 
   function addAll() {
     startTransition(async () => {
-      let target = activeList();
+      let target = activeList(rawLists, rawPinned);
       if (!target) {
         const created = await createListAction("Boodschappen");
         target = created;
-        try {
-          localStorage.setItem("of_lists", JSON.stringify([created]));
-        } catch {}
+        rememberList(created);
       }
       for (const item of items) {
         await addItemAction(target.token, {

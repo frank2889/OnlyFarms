@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { currentUserId } from "@/auth";
-import { membersOfHousehold, userById } from "@/lib/queries/accounts";
+import { listsForUser, membersOfHousehold, userById } from "@/lib/queries/accounts";
 import { catalogItem, itemsInSeason } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
@@ -88,6 +88,11 @@ export default async function ListPage({
   // "Wie haalt het" = gevalideerde leden van het gezin waar deze lijst bij hoort
   const userId = await currentUserId();
   const viewer = userId ? await userById(userId) : null;
+  // Gezinslijsten in de switcher: alleen server-lijsten hebben een naam+token
+  // nodig, verder identiek aan wat lokaal wordt onthouden.
+  const serverLists = userId
+    ? (await listsForUser(userId)).map((l) => ({ token: l.token, name: l.name }))
+    : [];
   const chatMessages = await messagesForList(list.id);
   const members = list.householdId ? await membersOfHousehold(list.householdId) : [];
   const memberNames = members.map((m) => m.name);
@@ -127,6 +132,7 @@ export default async function ListPage({
         viewerIsMember={viewerIsMember}
         viewerCanManage={viewerCanManage}
         nearbyCounts={nearbyCounts}
+        serverLists={serverLists}
         chatMessages={chatMessages}
         viewerUserId={userId ?? null}
         accountRadiusM={viewer ? (viewer.nearbyRadiusM ?? null) : undefined}

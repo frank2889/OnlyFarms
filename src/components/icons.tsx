@@ -304,6 +304,24 @@ export function XIcon(p: IconProps) {
   );
 }
 
+export function CopyIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </Svg>
+  );
+}
+
+export function PinIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 17v4" />
+      <path d="M8 10.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4.5c0 .8.5 1.5 1.3 1.8l.9.3a1.5 1.5 0 0 1 1 1.4H6.8a1.5 1.5 0 0 1 1-1.4l.9-.3c.8-.3 1.3-1 1.3-1.8Z" />
+    </Svg>
+  );
+}
+
 export function ChefHatIcon(p: IconProps) {
   return (
     <Svg {...p}>

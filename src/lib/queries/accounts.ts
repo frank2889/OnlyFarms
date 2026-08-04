@@ -18,6 +18,7 @@ export async function userById(userId: number) {
       name: users.name,
       role: users.role,
       nearbyRadiusM: users.nearbyRadiusM,
+      shoppingDay: users.shoppingDay,
     })
     .from(users)
     .where(eq(users.id, userId));
@@ -31,6 +32,11 @@ export async function updateUserName(userId: number, name: string): Promise<void
 /** Account-brede vlakbij-meldingsradius (meters); null = uit */
 export async function updateNearbyRadius(userId: number, meters: number | null): Promise<void> {
   await db.update(users).set({ nearbyRadiusM: meters }).where(eq(users.id, userId));
+}
+
+/** Vaste boodschappendag (0=zondag..6=zaterdag); null = uit */
+export async function updateShoppingDay(userId: number, day: number | null): Promise<void> {
+  await db.update(users).set({ shoppingDay: day }).where(eq(users.id, userId));
 }
 
 /**

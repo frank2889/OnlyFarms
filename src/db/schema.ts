@@ -97,6 +97,8 @@ export const users = pgTable("users", {
   // Account-brede instelling: vlakbij-meldingsradius in meters (null = uit).
   // Ingelogd wint dit van de device-lokale localStorage-waarde.
   nearbyRadiusM: integer("nearby_radius_m"),
+  // Vaste boodschappendag: 0=zondag..6=zaterdag (DAY_NAMES in opening-hours.ts), null = uit
+  shoppingDay: integer("shopping_day"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

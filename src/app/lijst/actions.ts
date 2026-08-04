@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
-import { claimList, householdForUser, membersOfHousehold, userById } from "@/lib/queries/accounts";
+import {
+  claimList,
+  householdForUser,
+  isHouseholdMember,
+  membersOfHousehold,
+  userById,
+} from "@/lib/queries/accounts";
 import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 import { recordSwipeSignal } from "@/lib/queries/swipe";
@@ -14,9 +20,11 @@ import {
   createList,
   getListByToken,
   getListItems,
+  recheckItems,
   removeItem,
   removeOpenItemByCatalogKey,
   restoreBought,
+  restoreClearedItems,
   setItemChecked,
   clearBought,
   deleteList,
@@ -30,7 +38,7 @@ import { notifyListUpdated } from "@/lib/realtime";
 import { nearbyProducers, producerBySlug, searchProducersByName } from "@/lib/queries/producers";
 import { openFirst } from "@/lib/opening-hours";
 import { SAMPLE_LIST, catalogItem } from "@/lib/catalog";
-import type { Producer } from "@/lib/types";
+import type { ListItem, Producer, ShoppingList } from "@/lib/types";
 
 export type NearbyLite = {
   name: string;
@@ -77,6 +85,26 @@ async function requireList(token: string) {
   const list = await getListByToken(token);
   if (!list) throw new Error("Lijst niet gevonden");
   return list;
+}
+
+type ManageResult = { ok: true; list: ShoppingList } | { ok: false; error: string };
+
+/**
+ * Rechtencheck voor destructieve/identiteitsacties (hernoemen, verwijderen).
+ * Een anonieme lijst (geen eigenaar, geen gezin) blijft volledig bestuurbaar
+ * met alleen de link, zoals de rest van de app; zodra een lijst geclaimd is,
+ * mag alleen de eigenaar of een gezinslid haar nog hernoemen of verwijderen.
+ * Lezen, afvinken, toevoegen en chatten blijven ongemoeid (requireList).
+ */
+async function requireListManage(token: string): Promise<ManageResult> {
+  const list = await requireList(token);
+  if (!list.ownerUserId && !list.householdId) return { ok: true, list };
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Log in om deze lijst te beheren." };
+  if (list.ownerUserId === userId) return { ok: true, list };
+  if (list.householdId && (await isHouseholdMember(userId, list.householdId)))
+    return { ok: true, list };
+  return { ok: false, error: "Je hebt geen rechten om deze lijst te beheren." };
 }
 
 async function bump(token: string) {
@@ -273,16 +301,34 @@ export async function updateItemAction(
   await bump(token);
 }
 
-/** CRO #81: de vorige boodschappen in een tik weer op de lijst */
-export async function restoreBoughtAction(token: string): Promise<void> {
+/** CRO #81: de vorige boodschappen in een tik weer op de lijst. Retourneert de
+ *  geraakte ids zodat de undo-knop ze precies kan terugzetten. */
+export async function restoreBoughtAction(token: string): Promise<number[]> {
   const list = await requireList(token);
-  await restoreBought(list.id);
+  const ids = await restoreBought(list.id);
+  await bump(token);
+  return ids;
+}
+
+/** Undo van restoreBoughtAction */
+export async function recheckItemsAction(token: string, ids: number[]): Promise<void> {
+  const list = await requireList(token);
+  await recheckItems(list.id, ids);
   await bump(token);
 }
 
-export async function clearBoughtAction(token: string): Promise<void> {
+/** Retourneert de gewiste items zodat de undo-knop ze exact kan terugzetten */
+export async function clearBoughtAction(token: string): Promise<ListItem[]> {
   const list = await requireList(token);
-  await clearBought(list.id);
+  const removed = await clearBought(list.id);
+  await bump(token);
+  return removed;
+}
+
+/** Undo van clearBoughtAction */
+export async function restoreClearedAction(token: string, items: ListItem[]): Promise<void> {
+  const list = await requireList(token);
+  await restoreClearedItems(list.id, items);
   await bump(token);
 }
 
@@ -340,16 +386,23 @@ export async function searchProducersAction(
   return searchProducersByName(query, list.lat, list.lng, 4);
 }
 
-export async function renameListAction(token: string, name: string): Promise<void> {
-  const list = await requireList(token);
-  await renameList(list.id, name.trim() || list.name);
+export async function renameListAction(
+  token: string,
+  name: string
+): Promise<{ ok: boolean; error?: string }> {
+  const manage = await requireListManage(token);
+  if (!manage.ok) return manage;
+  await renameList(manage.list.id, name.trim() || manage.list.name);
   await bump(token);
+  return { ok: true };
 }
 
-export async function deleteListAction(token: string): Promise<void> {
-  const list = await requireList(token);
-  await deleteList(list.id);
+export async function deleteListAction(token: string): Promise<{ ok: boolean; error?: string }> {
+  const manage = await requireListManage(token);
+  if (!manage.ok) return manage;
+  await deleteList(manage.list.id);
   await notifyListUpdated(token);
+  return { ok: true };
 }
 
 export async function setRadiusAction(token: string, radiusKm: number): Promise<void> {

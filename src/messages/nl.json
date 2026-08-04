@@ -16,6 +16,7 @@
     "notFoundText": "Misschien is de link verouderd of verkeerd getypt. Vanaf de startpagina vind je alles terug.",
     "close": "Sluiten",
     "save": "Opslaan",
+    "undo": "Ongedaan maken",
     "cancel": "Annuleren"
   },
   "profile": {
@@ -161,7 +162,14 @@
     "supermarketFallback": "Niet lokaal gevonden? Dit vind je ook bij de supermarkt.",
     "supermarketItem": "Haal je bij de supermarkt",
     "rowTipExact": "Bij {name} · {km} km",
-    "rowTipSuggestion": "Suggestie: {name} · {km} km"
+    "rowTipSuggestion": "Suggestie: {name} · {km} km",
+    "renameList": "Naam wijzigen",
+    "deleteList": "Lijst verwijderen",
+    "confirmAgain": "Zeker weten? Tik nog een keer",
+    "clearBought": "Wis gekochte items",
+    "clearedUndoLabel": "{n} gekochte items gewist",
+    "restoredUndoLabel": "{n} items terug op de lijst",
+    "manageDenied": "Je hebt geen rechten om deze lijst te beheren."
   },
   "producers": {
     "title": "Lokale producenten",

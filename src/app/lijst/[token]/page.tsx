@@ -31,7 +31,7 @@ export default async function ListPage({
   if (!list) notFound();
 
   const { open, bought } = await getListItems(list.id);
-  const boughtBeforeKeys = await boughtBefore(list.id);
+  const boughtBeforeKeys = await boughtBefore({ id: list.id, householdId: list.householdId });
 
   // Matching per open item met een catalog-key, alleen als de lijst een locatie heeft
   const matches: Record<string, ItemMatch> = {};
@@ -92,6 +92,12 @@ export default async function ListPage({
   const members = list.householdId ? await membersOfHousehold(list.householdId) : [];
   const memberNames = members.map((m) => m.name);
   const viewerIsMember = userId != null && members.some((m) => m.id === userId);
+  // Anonieme lijst (geen eigenaar, geen gezin): de link is en blijft genoeg.
+  // Geclaimde lijst: alleen de eigenaar of een gezinslid mag hernoemen/verwijderen.
+  const viewerCanManage =
+    (!list.ownerUserId && !list.householdId) ||
+    (userId != null && list.ownerUserId === userId) ||
+    viewerIsMember;
 
   return (
     <main>
@@ -119,6 +125,7 @@ export default async function ListPage({
         memberNames={memberNames}
         hasHousehold={!!list.householdId}
         viewerIsMember={viewerIsMember}
+        viewerCanManage={viewerCanManage}
         nearbyCounts={nearbyCounts}
         chatMessages={chatMessages}
         viewerUserId={userId ?? null}

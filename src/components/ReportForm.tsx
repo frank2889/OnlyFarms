@@ -17,7 +17,7 @@ export default function ReportForm({ producerId }: { producerId: number }) {
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="text-sm text-ink-500 underline">
+      <button onClick={() => setOpen(true)} className="px-1 py-1.5 text-sm text-ink-500 underline">
         {t("producers.reportWrong")}
       </button>
     );
@@ -40,7 +40,7 @@ export default function ReportForm({ producerId }: { producerId: number }) {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
-        placeholder="Wat klopt er niet meer? (bijv. gestopt, andere openingstijden)"
+        placeholder={t("producers.reportPlaceholder")}
         className="rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-sm"
       />
       <input
@@ -57,10 +57,14 @@ export default function ReportForm({ producerId }: { producerId: number }) {
           disabled={pending || message.trim().length < 5}
           className="rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600 disabled:opacity-50"
         >
-          Versturen
+          {t("producers.reportSubmit")}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="text-sm text-ink-500 underline">
-          Annuleren
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="px-1 py-1.5 text-sm text-ink-500 underline"
+        >
+          {t("common.cancel")}
         </button>
       </div>
     </form>

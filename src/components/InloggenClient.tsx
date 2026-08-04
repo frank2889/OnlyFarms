@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { BRAND } from "@/lib/brand";
+import { t } from "@/lib/i18n";
 import { SproutIcon } from "@/components/icons";
 
 export default function InloggenClient() {
@@ -56,13 +57,13 @@ function LoginForm() {
         <SproutIcon width={24} height={24} className="text-terra-500" />
         {BRAND.name}
       </Link>
-      <h1 className="mb-4 text-center text-2xl font-bold">Inloggen</h1>
+      <h1 className="mb-4 text-center text-2xl font-bold">{t("auth.loginTitle")}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="E-mailadres"
+          placeholder={t("auth.emailPlaceholder")}
           required
           className={field}
         />
@@ -70,13 +71,13 @@ function LoginForm() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Wachtwoord"
+          placeholder={t("auth.passwordPlaceholder")}
           required
           className={field}
         />
         {error && (
           <p className="rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">
-            Inloggen mislukt. controleer je e-mailadres en wachtwoord.
+            {t("auth.loginError")}
           </p>
         )}
         <button
@@ -84,13 +85,13 @@ function LoginForm() {
           disabled={busy}
           className="rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600 disabled:opacity-50"
         >
-          {busy ? "Bezig…" : "Inloggen"}
+          {busy ? t("auth.busy") : t("auth.loginCta")}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-ink-500">
-        Nog geen account?{" "}
+        {t("auth.noAccountYet")}{" "}
         <Link href="/registreren" className="text-terra-700 underline">
-          Maak er gratis een aan
+          {t("auth.registerFree")}
         </Link>
       </p>
     </main>

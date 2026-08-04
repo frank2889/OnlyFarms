@@ -14,8 +14,9 @@ const DAY_MAP: Record<string, number> = {
   za: 6, sa: 6, sat: 6,
 };
 
-const DAY_NAMES = ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
-const DAY_SHORT = ["zo", "ma", "di", "wo", "do", "vr", "za"];
+// dag-index 0=zondag..6=zaterdag, gedeeld met users.shopping_day
+export const DAY_NAMES = ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
+export const DAY_SHORT = ["zo", "ma", "di", "wo", "do", "vr", "za"];
 
 const TIME = "(\\d{1,2})[:.](\\d{2})";
 
@@ -153,7 +154,7 @@ export function daysSummary(text: string | null): string | null {
     : names[0];
 }
 
-function nowInAmsterdam(): { day: number; minutes: number } {
+export function nowInAmsterdam(): { day: number; minutes: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Amsterdam",
     weekday: "short",
@@ -164,6 +165,11 @@ function nowInAmsterdam(): { day: number; minutes: number } {
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   const day = DAY_MAP[get("weekday").toLowerCase().slice(0, 3)] ?? 0;
   return { day, minutes: Number(get("hour")) * 60 + Number(get("minute")) };
+}
+
+/** Kalenderdatum "YYYY-MM-DD" in Europe/Amsterdam, voor device-lokale dismiss-sleutels per dag */
+export function todayInAmsterdam(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam" }).format(new Date());
 }
 
 export type HoursStatus =

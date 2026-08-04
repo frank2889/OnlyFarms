@@ -138,6 +138,7 @@ export default async function ListPage({
         chatMessages={chatMessages}
         viewerUserId={userId ?? null}
         accountRadiusM={viewer ? (viewer.nearbyRadiusM ?? null) : undefined}
+        shoppingDay={viewer?.shoppingDay ?? null}
       />
     </main>
   );

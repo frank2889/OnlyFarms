@@ -67,7 +67,7 @@ import {
   updateItemAction,
   type NearbyLite,
 } from "@/app/lijst/actions";
-import { hoursStatus, hoursStatusText } from "@/lib/opening-hours";
+import { hoursStatus, hoursStatusText, nowInAmsterdam, todayInAmsterdam } from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
 import NearbyWatch from "@/components/NearbyWatch";
 import ChefsSheet from "@/components/ChefsSheet";
@@ -91,6 +91,8 @@ type Props = {
   chatMessages?: ChatMessage[];
   viewerUserId?: number | null;
   accountRadiusM?: number | null;
+  /** Vaste boodschappendag van het account (0=zondag..6=zaterdag); null = uit of niet ingelogd */
+  shoppingDay?: number | null;
 };
 
 type Snapshot = { open: ListItem[]; bought: ListItem[] };
@@ -243,6 +245,7 @@ export default function ListView({
   chatMessages = [],
   viewerUserId = null,
   accountRadiusM,
+  shoppingDay = null,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -483,6 +486,16 @@ export default function ListView({
     });
   }
 
+  /** CRO #81: alle gekochte items weer open, met undo. Ook gebruikt door de boodschappendag-prompt. */
+  function restoreAllBought() {
+    act(() => restoreBoughtAction(list.token), { type: "restoreBought" }).then((ids) => {
+      if (!ids.length) return;
+      showUndo(t("lists.restoredUndoLabel", { n: ids.length }), () =>
+        act(() => recheckItemsAction(list.token, ids), { type: "recheck", ids })
+      );
+    });
+  }
+
   /** "Zet mijn vaste boodschappen erop": alles wat nog niet open staat in één tik toevoegen */
   function addStaples(items: CatalogItem[]) {
     navigator.vibrate?.(10);
@@ -678,6 +691,20 @@ export default function ListView({
     .map((k) => catalogItem(k))
     .filter((i): i is CatalogItem => !!i && !openKeys.has(i.key));
 
+  // Boodschappendag-prompt (CRO #83 laag 1): alleen op de dag zelf, alleen als
+  // er iets te herhalen valt, en niet als je 'm vandaag al hebt weggetikt.
+  const isShoppingDayToday = shoppingDay != null && nowInAmsterdam().day === shoppingDay;
+  const dayPromptKey = `of_dayprompt:${list.token}:${todayInAmsterdam()}`;
+  const dayPromptDismissed = useSyncExternalStore(
+    subscribeStorage,
+    () => localStorage.getItem(dayPromptKey) === "1",
+    () => false
+  );
+  const showDayPrompt =
+    isShoppingDayToday &&
+    !dayPromptDismissed &&
+    (snapshot.bought.length > 0 || staplesToAdd.length > 0);
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-36 sm:pb-24">
       {/* Kop: lijst-switcher + delen */}
@@ -786,6 +813,40 @@ export default function ListView({
           )}
         </div>
       </div>
+      {showDayPrompt && (
+        <div className="mb-4 rounded-tile bg-terra-500 p-4 text-white">
+          <p className="mb-3 font-medium">{t("lists.dayPromptTitle")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {snapshot.bought.length > 0 && (
+              <button
+                onClick={restoreAllBought}
+                className="rounded-full bg-white px-4 py-2 text-sm font-medium text-terra-700 hover:bg-cream-50"
+              >
+                {t("lists.restoreBought")}
+              </button>
+            )}
+            {staplesToAdd.length > 0 && (
+              <button
+                onClick={() => addStaples(staplesToAdd)}
+                className="rounded-full border border-white/60 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
+              >
+                {t("lists.addStaples")}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem(dayPromptKey, "1");
+                } catch {}
+                window.dispatchEvent(new Event("storage"));
+              }}
+              className="rounded-full px-3 py-2 text-sm text-terra-100 underline"
+            >
+              {t("common.close")}
+            </button>
+          </div>
+        </div>
+      )}
       {renameOpen && (
         <form
           onSubmit={(e) => {
@@ -1308,16 +1369,7 @@ export default function ListView({
             <h2 className="text-sm font-semibold text-ink-500">{t("lists.recentlyBought")}</h2>
             <span className="flex gap-3">
               <button
-                onClick={() => {
-                  act(() => restoreBoughtAction(list.token), { type: "restoreBought" }).then(
-                    (ids) => {
-                      if (!ids.length) return;
-                      showUndo(t("lists.restoredUndoLabel", { n: ids.length }), () =>
-                        act(() => recheckItemsAction(list.token, ids), { type: "recheck", ids })
-                      );
-                    }
-                  );
-                }}
+                onClick={restoreAllBought}
                 className="inline-block px-1 py-2.5 text-xs font-medium text-terra-700 underline"
               >
                 {t("lists.restoreBought")}

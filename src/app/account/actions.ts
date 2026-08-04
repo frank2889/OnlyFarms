@@ -18,6 +18,7 @@ import {
   renameHousehold,
   rotateInviteCode,
   updateNearbyRadius,
+  updateShoppingDay,
   updatePasswordHash,
   updateUserName,
   userByEmail,
@@ -112,6 +113,17 @@ export async function setNearbyRadiusAction(meters: number | null): Promise<Resu
   if (meters !== null && !RADIUS_CHOICES.has(meters))
     return { ok: false, error: "Ongeldige afstand." };
   await updateNearbyRadius(userId, meters);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+/** Vaste boodschappendag: 0=zondag..6=zaterdag; null = uit */
+export async function setShoppingDayAction(day: number | null): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  if (day !== null && (!Number.isInteger(day) || day < 0 || day > 6))
+    return { ok: false, error: "Ongeldige dag." };
+  await updateShoppingDay(userId, day);
   revalidatePath("/profiel");
   return { ok: true };
 }

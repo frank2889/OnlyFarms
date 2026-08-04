@@ -11,9 +11,11 @@ import {
   resetTasteProfileAction,
   rotateInviteCodeAction,
   setNearbyRadiusAction,
+  setShoppingDayAction,
   updateNameAction,
 } from "@/app/account/actions";
 import { PencilIcon } from "@/components/icons";
+import { DAY_SHORT } from "@/lib/opening-hours";
 
 const field = "w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-sm";
 
@@ -165,6 +167,49 @@ export function NearbyRadiusSetting({ current }: { current: number | null }) {
       <option value="1000">1 km</option>
       <option value="2000">2 km</option>
     </select>
+  );
+}
+
+/** Vaste boodschappendag: zeven dag-chips + "uit", grote tikvlakken */
+export function ShoppingDaySetting({ current }: { current: number | null }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function choose(day: number | null) {
+    setBusy(true);
+    await setShoppingDayAction(day);
+    setBusy(false);
+    router.refresh();
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {DAY_SHORT.map((label, day) => (
+        <button
+          key={day}
+          type="button"
+          disabled={busy}
+          onClick={() => choose(current === day ? null : day)}
+          className={`rounded-full border px-3.5 py-2 text-sm font-medium disabled:opacity-50 ${
+            current === day
+              ? "border-terra-500 bg-terra-500 text-white"
+              : "border-cream-300 bg-white text-ink-700 hover:border-terra-400"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+      {current !== null && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => choose(null)}
+          className="rounded-full border border-cream-300 bg-white px-3.5 py-2 text-sm text-ink-500 hover:border-terra-400 disabled:opacity-50"
+        >
+          {t("profile.shoppingDayOff")}
+        </button>
+      )}
+    </div>
   );
 }
 

@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
 import { demandNearProducer } from "@/lib/queries/demand";
-import { offersForSeller, producerEngagement } from "@/lib/queries/portal";
+import { offersForSeller, producerEngagement, topItemsForProducer } from "@/lib/queries/portal";
 import { t } from "@/lib/i18n";
 import { CheckIcon, PlusIcon, StoreIcon } from "@/components/icons";
 import { ConfirmListingButton } from "@/components/PortalExtras";
+import PortalPromote from "@/components/PortalPromote";
 import { SELLER_STATUS_LABELS, sellerStatusBadgeClass } from "@/app/beheer/aanmeldingen/labels";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function PortaalPage() {
   ]);
   const demand = producer ? await demandNearProducer(producer) : [];
   const reach = producer ? await producerEngagement(producer.slug) : null;
+  const topItems = producer ? await topItemsForProducer(producer.slug) : [];
 
   // Profiel-volledigheid: elk ontbrekend punt is een directe link (CRO #44)
   const checklist = producer
@@ -197,6 +199,14 @@ export default async function PortaalPage() {
           <p className="mb-3 text-sm text-ink-500">{t("portal.reachHint")}</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-cream-50 p-3 text-center">
+              <span className="block text-2xl font-bold">{reach.views30d}</span>
+              <span className="block text-xs text-ink-500">{t("portal.reachViews30")}</span>
+            </div>
+            <div className="rounded-xl bg-cream-50 p-3 text-center">
+              <span className="block text-2xl font-bold">{reach.routeClicks30d}</span>
+              <span className="block text-xs text-ink-500">{t("portal.reachRouteClicks30")}</span>
+            </div>
+            <div className="rounded-xl bg-cream-50 p-3 text-center">
               <span className="block text-2xl font-bold">{reach.picksTotal}</span>
               <span className="block text-xs text-ink-500">{t("portal.reachPicks")}</span>
               {reach.picks30d > 0 && (
@@ -210,7 +220,26 @@ export default async function PortaalPage() {
               <span className="block text-xs text-ink-500">{t("portal.reachMentions")}</span>
             </div>
           </div>
+          {topItems.length > 0 && (
+            <div className="mt-3 border-t border-cream-100 pt-3">
+              <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                {t("portal.topItemsTitle")}
+              </h3>
+              <ul className="flex flex-col gap-1.5">
+                {topItems.map((i) => (
+                  <li key={i.label} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-medium">{i.label}</span>
+                    <span className="text-ink-500">{t("portal.topItemsLine", { n: i.lists })}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
+      )}
+
+      {seller.status === "goedgekeurd" && producer && (
+        <PortalPromote slug={producer.slug} name={producer.name} />
       )}
 
       {/* Vraag in de buurt: geaggregeerd en geanonimiseerd (drempel 3 lijsten) */}

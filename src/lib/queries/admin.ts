@@ -408,8 +408,18 @@ export async function listUnpublishedOffers() {
     .limit(200);
 }
 
-export async function publishOffer(id: number): Promise<void> {
-  await db.update(offers).set({ published: true }).where(eq(offers.id, id));
+/** Publiceren; geeft verkoper-e-mail + titel terug voor het Klaviyo-signaal */
+export async function publishOffer(
+  id: number
+): Promise<{ sellerEmail: string; title: string } | null> {
+  const [row] = await db
+    .update(offers)
+    .set({ published: true })
+    .where(eq(offers.id, id))
+    .returning({ sellerId: offers.sellerId, title: offers.title });
+  if (!row) return null;
+  const [seller] = await db.select({ email: sellers.email }).from(sellers).where(eq(sellers.id, row.sellerId));
+  return seller ? { sellerEmail: seller.email, title: row.title } : null;
 }
 
 /** Verwijderen door het team; geeft de foto-URL terug voor blob-opruiming */
@@ -433,13 +443,24 @@ export async function listPendingPhotos() {
     .limit(100);
 }
 
-/** Goedkeuren = verplaatsen naar de publieke galerij (max blijft de zorg van het portaal) */
-export async function approveProducerPhoto(producerId: number, url: string): Promise<void> {
+/**
+ * Goedkeuren = verplaatsen naar de publieke galerij (max blijft de zorg van
+ * het portaal). Geeft de verkoper-e-mail terug voor het Klaviyo-signaal
+ * (null als er geen gekoppelde verkoper is, bijv. bij een gids-record).
+ */
+export async function approveProducerPhoto(
+  producerId: number,
+  url: string
+): Promise<{ sellerEmail: string } | null> {
   const [row] = await db
-    .select({ photos: producers.photos, photosPending: producers.photosPending })
+    .select({
+      photos: producers.photos,
+      photosPending: producers.photosPending,
+      claimedBySellerId: producers.claimedBySellerId,
+    })
     .from(producers)
     .where(eq(producers.id, producerId));
-  if (!row || !row.photosPending.includes(url)) return;
+  if (!row || !row.photosPending.includes(url)) return null;
   await db
     .update(producers)
     .set({
@@ -448,6 +469,12 @@ export async function approveProducerPhoto(producerId: number, url: string): Pro
       updatedAt: new Date(),
     })
     .where(eq(producers.id, producerId));
+  if (!row.claimedBySellerId) return null;
+  const [seller] = await db
+    .select({ email: sellers.email })
+    .from(sellers)
+    .where(eq(sellers.id, row.claimedBySellerId));
+  return seller ? { sellerEmail: seller.email } : null;
 }
 
 /** Afwijzen = alleen uit de wachtrij halen; de blob ruimt de caller op */

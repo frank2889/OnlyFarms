@@ -9,6 +9,7 @@ import {
   publishOffer,
   rejectProducerPhoto,
 } from "@/lib/queries/admin";
+import { trackEvent } from "@/lib/klaviyo";
 
 function isOwnBlobUrl(url: string): boolean {
   return /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(url);
@@ -27,9 +28,12 @@ async function cleanupBlob(url: string | null): Promise<void> {
 export async function publishOfferAction(offerId: number): Promise<void> {
   const admin = await requireAdminUser();
   if (!admin) return;
-  await publishOffer(offerId);
+  const result = await publishOffer(offerId);
   revalidatePath("/beheer", "layout");
   revalidatePath("/producent/[slug]", "page");
+  if (result) {
+    await trackEvent("offer_published", { title: result.title }, result.sellerEmail);
+  }
 }
 
 export async function deleteOfferAdminAction(offerId: number): Promise<void> {
@@ -45,10 +49,13 @@ export async function deleteOfferAdminAction(offerId: number): Promise<void> {
 export async function approvePhotoAction(producerId: number, url: string): Promise<void> {
   const admin = await requireAdminUser();
   if (!admin) return;
-  await approveProducerPhoto(producerId, url);
+  const result = await approveProducerPhoto(producerId, url);
   revalidatePath("/beheer", "layout");
   revalidatePath("/producent/[slug]", "page");
   revalidatePath("/portaal");
+  if (result) {
+    await trackEvent("photo_approved", {}, result.sellerEmail);
+  }
 }
 
 export async function rejectPhotoAction(producerId: number, url: string): Promise<void> {

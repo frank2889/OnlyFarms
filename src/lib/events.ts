@@ -15,6 +15,7 @@ export const CONVERSION_EVENTS = [
   "lijst_gedeeld",
   "producent_aangemeld",
   "producent_bekeken",
+  "lijst_herhaald",
 ] as const;
 
 export type ConversionEvent = (typeof CONVERSION_EVENTS)[number];

@@ -48,8 +48,10 @@ import {
 } from "@/lib/lists-local";
 import {
   addItemAction,
+  addStaplesAction,
   restoreBoughtAction,
   recheckItemsAction,
+  removeCatalogItemsAction,
   clearBoughtAction,
   restoreClearedAction,
   deleteListAction,
@@ -78,6 +80,7 @@ type Props = {
   matches: Record<string, ItemMatch>;
   seasonal: CatalogItem[];
   boughtBeforeKeys: string[];
+  staples?: string[];
   memberNames?: string[];
   hasHousehold?: boolean;
   viewerIsMember?: boolean;
@@ -97,11 +100,13 @@ type OptAction =
   | { type: "uncheck"; id: number }
   | { type: "remove"; id: number }
   | { type: "add"; item: ListItem }
+  | { type: "addMany"; items: ListItem[] }
   | { type: "setQty"; id: number; qty: string }
   | { type: "clearBought" }
   | { type: "restoreBought" }
   | { type: "addBoughtMany"; items: ListItem[] }
-  | { type: "recheck"; ids: number[] };
+  | { type: "recheck"; ids: number[] }
+  | { type: "removeByCatalogKeys"; keys: string[] };
 
 function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
   switch (action.type) {
@@ -128,6 +133,8 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
       };
     case "add":
       return { ...state, open: [...state.open, action.item] };
+    case "addMany":
+      return { ...state, open: [...state.open, ...action.items] };
     case "setQty":
       return {
         ...state,
@@ -153,6 +160,15 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
       return {
         open: state.open.filter((i) => !ids.has(i.id)),
         bought: [...moving.map((i) => ({ ...i, checked: true })), ...state.bought],
+      };
+    }
+    case "removeByCatalogKeys": {
+      // Undo van "Zet mijn vaste boodschappen erop": op catalogKey i.p.v. id,
+      // want de zojuist toegevoegde items hebben nog een tijdelijk temp-id.
+      const keys = new Set(action.keys);
+      return {
+        ...state,
+        open: state.open.filter((i) => !i.catalogKey || !keys.has(i.catalogKey)),
       };
     }
   }
@@ -217,6 +233,7 @@ export default function ListView({
   matches,
   seasonal,
   boughtBeforeKeys,
+  staples = [],
   memberNames = [],
   hasHousehold = false,
   viewerIsMember = false,
@@ -466,6 +483,23 @@ export default function ListView({
     });
   }
 
+  /** "Zet mijn vaste boodschappen erop": alles wat nog niet open staat in één tik toevoegen */
+  function addStaples(items: CatalogItem[]) {
+    navigator.vibrate?.(10);
+    act(() => addStaplesAction(list.token), {
+      type: "addMany",
+      items: items.map((item) => makeTempItem({ label: item.label, catalogKey: item.key })),
+    }).then((addedKeys) => {
+      if (!addedKeys.length) return;
+      showUndo(t("lists.staplesUndoLabel", { n: addedKeys.length }), () =>
+        act(() => removeCatalogItemsAction(list.token, addedKeys), {
+          type: "removeByCatalogKeys",
+          keys: addedKeys,
+        })
+      );
+    });
+  }
+
   function addFreeText(label: string) {
     act(() => addItemAction(list.token, { label }), {
       type: "add",
@@ -640,6 +674,9 @@ export default function ListView({
     .map((k) => catalogItem(k))
     .filter((i): i is CatalogItem => !!i && !openKeys.has(i.key))
     .slice(0, 6);
+  const staplesToAdd = staples
+    .map((k) => catalogItem(k))
+    .filter((i): i is CatalogItem => !!i && !openKeys.has(i.key));
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-36 sm:pb-24">
@@ -925,13 +962,23 @@ export default function ListView({
             />
           )}
           {rebuy.length > 0 && (
-            <TileRow
-              title={t("lists.boughtBefore")}
-              items={rebuy}
-              onAdd={tapTile}
-              nearbyOf={countNearby}
-              onNearby={openNearby}
-            />
+            <>
+              {staplesToAdd.length > 0 && (
+                <button
+                  onClick={() => addStaples(staplesToAdd)}
+                  className="mb-2 inline-flex items-center gap-2 rounded-full border border-terra-300 px-4 py-2.5 text-sm font-medium text-terra-700 hover:bg-terra-50"
+                >
+                  <PlusIcon width={15} height={15} /> {t("lists.addStaples")}
+                </button>
+              )}
+              <TileRow
+                title={t("lists.boughtBefore")}
+                items={rebuy}
+                onAdd={tapTile}
+                nearbyOf={countNearby}
+                onNearby={openNearby}
+              />
+            </>
           )}
         </div>
       )}
@@ -1236,9 +1283,15 @@ export default function ListView({
         ))}
         {snapshot.open.length === 0 && (
           <li className="rounded-tile border border-dashed border-cream-300 p-5 text-center">
-            <p className="mb-3 text-ink-500">
-              Je lijst is leeg. Probeer iets uit het seizoen:
-            </p>
+            {staplesToAdd.length > 0 && (
+              <button
+                onClick={() => addStaples(staplesToAdd)}
+                className="mb-3 inline-flex items-center gap-2 rounded-full bg-terra-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-terra-600"
+              >
+                <PlusIcon width={15} height={15} /> {t("lists.addStaples")}
+              </button>
+            )}
+            <p className="mb-3 text-ink-500">{t("lists.emptyListSeason")}</p>
             <div className="grid grid-cols-4 gap-2">
               {seasonal.slice(0, 4).map((item) => (
                 <AddTile key={item.key} item={item} onAdd={() => tapTile(item)} />

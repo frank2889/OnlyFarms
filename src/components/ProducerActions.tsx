@@ -7,13 +7,7 @@ import { itemForToken } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { iconForItem } from "@/components/catalog-icons";
 import { CheckIcon, PlusIcon } from "@/components/icons";
-
-type StoredList = { token: string; name: string };
-
-function subscribeStorage(cb: () => void) {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
-}
+import { activeList, listsSnapshot, pinnedSnapshot, rememberList, subscribeLists } from "@/lib/lists-local";
 
 /**
  * Producten van een producent direct op je actieve lijst zetten,
@@ -32,11 +26,8 @@ export default function ProducerActions({
   const [addedKeys, setAddedKeys] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState(false);
 
-  const rawLists = useSyncExternalStore(
-    subscribeStorage,
-    () => localStorage.getItem("of_lists") ?? "[]",
-    () => "[]"
-  );
+  const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
+  const rawPinned = useSyncExternalStore(subscribeLists, pinnedSnapshot, () => "");
 
   const items = products
     .map((token) => ({ token, item: itemForToken(token) }))
@@ -44,27 +35,16 @@ export default function ProducerActions({
 
   if (!items.length) return null;
 
-  function activeList(): StoredList | null {
-    try {
-      const lists: StoredList[] = JSON.parse(rawLists);
-      return lists[0] ?? null;
-    } catch {
-      return null;
-    }
-  }
-
   function addFrom(token: string) {
     const item = itemForToken(token);
     if (!item) return;
     navigator.vibrate?.(10);
     startTransition(async () => {
-      let target = activeList();
+      let target = activeList(rawLists, rawPinned);
       if (!target) {
         const created = await createListAction("Boodschappen");
         target = created;
-        try {
-          localStorage.setItem("of_lists", JSON.stringify([created]));
-        } catch {}
+        rememberList(created);
       }
       await addItemAction(target.token, {
         catalogKey: item.key,
@@ -82,11 +62,11 @@ export default function ProducerActions({
     });
   }
 
-  const active = activeList();
+  const active = activeList(rawLists, rawPinned);
 
   return (
     <div className="mb-6">
-      <p className="mb-2 text-sm font-semibold text-ink-500">Zet op je lijst</p>
+      <p className="mb-2 text-sm font-semibold text-ink-500">{t("producers.setOnListTitle")}</p>
       <div className="flex flex-wrap gap-2">
         {items.map(({ token, item }) => {
           const added = addedKeys.has(item!.key);
@@ -116,7 +96,7 @@ export default function ProducerActions({
             <>
               {" "}
               <Link href={`/lijst/${active.token}#lijst`} className="underline">
-                Bekijk je lijst
+                {t("producers.viewList")}
               </Link>
             </>
           )}

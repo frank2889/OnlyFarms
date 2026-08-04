@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { t } from "@/lib/i18n";
 import { CardsIcon, ListIcon, StoreIcon, UserIcon } from "@/components/icons";
+import { activeToken, listsSnapshot, pinnedSnapshot, subscribeLists } from "@/lib/lists-local";
 
 function subscribeStorage(cb: () => void) {
   window.addEventListener("storage", cb);
@@ -20,21 +21,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     () => ""
   );
   const badgeCount = Number(badge) || 0;
-  // Tab "Lijst" opent direct je actieve (nieuwste) lijst; zonder lijsten het overzicht
-  const rawLists = useSyncExternalStore(
-    subscribeStorage,
-    () => localStorage.getItem("of_lists") ?? "[]",
-    () => "[]"
-  );
-  let listHref = "/lijsten";
-  let activeListPath: string | null = null;
-  try {
-    const lists: { token: string }[] = JSON.parse(rawLists);
-    if (lists[0]?.token) {
-      activeListPath = `/lijst/${lists[0].token}`;
-      listHref = `${activeListPath}#lijst`;
-    }
-  } catch {}
+  // Tab "Lijst" opent direct je actieve lijst (pin wint, anders de meest recente); zonder lijsten het overzicht
+  const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
+  const rawPinned = useSyncExternalStore(subscribeLists, pinnedSnapshot, () => "");
+  const active = activeToken(rawLists, rawPinned);
+  const listHref = active ? `/lijst/${active}#lijst` : "/lijsten";
+  const activeListPath = active ? `/lijst/${active}` : null;
 
   // Beheer (en straks het producentenportaal) heeft een eigen shell; de
   // consumenten-nav en onderpadding horen daar niet. Na de hooks, vóór de UI.

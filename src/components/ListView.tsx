@@ -27,6 +27,7 @@ import {
   ListIcon,
   MapPinIcon,
   PencilIcon,
+  PinIcon,
   PlusIcon,
   RouteIcon,
   SearchIcon,
@@ -35,6 +36,16 @@ import {
   TrashIcon,
   UserIcon,
 } from "@/components/icons";
+import {
+  forgetList,
+  listsSnapshot,
+  parseStoredLists,
+  pinnedSnapshot,
+  rememberList,
+  renameStoredList,
+  subscribeLists,
+  togglePinnedList,
+} from "@/lib/lists-local";
 import {
   addItemAction,
   restoreBoughtAction,
@@ -72,6 +83,8 @@ type Props = {
   viewerIsMember?: boolean;
   viewerCanManage: boolean;
   nearbyCounts?: Record<string, number>;
+  /** Lijsten van het account/huishouden (server-waarheid), voor de switcher naast het apparaat-geheugen */
+  serverLists?: { token: string; name: string }[];
   chatMessages?: ChatMessage[];
   viewerUserId?: number | null;
   accountRadiusM?: number | null;
@@ -209,6 +222,7 @@ export default function ListView({
   viewerIsMember = false,
   viewerCanManage,
   nearbyCounts = {},
+  serverLists = [],
   chatMessages = [],
   viewerUserId = null,
   accountRadiusM,
@@ -248,6 +262,8 @@ export default function ListView({
   const [renameValue, setRenameValue] = useState(list.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [myLists, setMyLists] = useState<{ token: string; name: string }[]>([]);
+  const rawPinned = useSyncExternalStore(subscribeLists, pinnedSnapshot, () => "");
+  const pinned = rawPinned === list.token;
   const [undo, setUndo] = useState<{ label: string; action?: () => void } | null>(null);
   const [justChecked, setJustChecked] = useState<number | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -331,15 +347,8 @@ export default function ListView({
 
   // Lijst registreren op dit apparaat + andere lijsten voor de switcher
   useEffect(() => {
+    rememberList({ token: list.token, name: list.name });
     try {
-      const stored: { token: string; name: string }[] = JSON.parse(
-        localStorage.getItem("of_lists") ?? "[]"
-      );
-      const next = [
-        { token: list.token, name: list.name },
-        ...stored.filter((l) => l.token !== list.token),
-      ].slice(0, 20);
-      localStorage.setItem("of_lists", JSON.stringify(next));
       localStorage.setItem("of_badge", String(open.length));
     } catch {}
   }, [list.token, list.name, open.length]);
@@ -639,42 +648,59 @@ export default function ListView({
         <div className="relative min-w-0">
           <button
             onClick={() => {
-              try {
-                setMyLists(JSON.parse(localStorage.getItem("of_lists") ?? "[]"));
-              } catch {}
+              const local = parseStoredLists(listsSnapshot());
+              const serverTokens = new Set(serverLists.map((l) => l.token));
+              setMyLists([...serverLists, ...local.filter((l) => !serverTokens.has(l.token))]);
               setSwitcherOpen((v) => !v);
             }}
             className="flex max-w-full items-center gap-1.5 text-2xl font-bold"
           >
             <span className="truncate">{list.name}</span>
+            {pinned && (
+              <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs font-medium text-terra-700">
+                {t("lists.pinnedBadge")}
+              </span>
+            )}
             <ChevronDownIcon width={18} height={18} className="shrink-0 text-ink-300" />
           </button>
           {switcherOpen && (
             <div className="absolute left-0 top-10 z-30 w-64 rounded-tile border border-cream-200 bg-white p-2 shadow-lg">
-              {myLists
-                .filter((l) => l.token !== list.token)
-                .slice(0, 6)
-                .map((l) => (
-                  <Link
-                    key={l.token}
-                    href={`/lijst/${l.token}`}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
-                  >
-                    <ListIcon width={16} height={16} className="text-terra-500" />
-                    <span className="truncate">{l.name}</span>
-                  </Link>
-                ))}
+              <div className="max-h-64 overflow-y-auto">
+                {myLists
+                  .filter((l) => l.token !== list.token)
+                  .slice(0, 10)
+                  .map((l) => (
+                    <Link
+                      key={l.token}
+                      href={`/lijst/${l.token}`}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
+                    >
+                      <ListIcon width={16} height={16} className="text-terra-500" />
+                      <span className="truncate">{l.name}</span>
+                    </Link>
+                  ))}
+              </div>
               <Link
                 href="/lijsten"
                 className="flex items-center gap-2 rounded-xl px-3 py-2.5 font-medium text-terra-700 hover:bg-cream-50"
               >
                 <PlusIcon width={16} height={16} /> {t("lists.newList")}
               </Link>
+              <div className="my-1 border-t border-cream-100" />
+              <button
+                onClick={() => {
+                  togglePinnedList(list.token);
+                  setSwitcherOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
+              >
+                <PinIcon width={15} height={15} className={pinned ? "text-terra-500" : "text-ink-500"} />
+                {pinned ? t("lists.unpin") : t("lists.pin")}
+              </button>
               {/* Hernoemen/verwijderen zijn alleen zichtbaar met beheerrecht: anonieme
                   lijst (link is genoeg) of eigenaar/gezinslid van een geclaimde lijst */}
               {viewerCanManage && (
                 <>
-                  <div className="my-1 border-t border-cream-100" />
                   <button
                     onClick={() => {
                       setRenameValue(list.name);
@@ -701,14 +727,8 @@ export default function ListView({
                           showUndo(result.error ?? t("lists.manageDenied"));
                           return;
                         }
+                        forgetList(token);
                         try {
-                          const stored: { token: string }[] = JSON.parse(
-                            localStorage.getItem("of_lists") ?? "[]"
-                          );
-                          localStorage.setItem(
-                            "of_lists",
-                            JSON.stringify(stored.filter((l) => l.token !== token))
-                          );
                           localStorage.setItem("of_badge", "0");
                         } catch {}
                         router.push("/lijsten");
@@ -739,19 +759,7 @@ export default function ListView({
                 showUndo(result.error ?? t("lists.manageDenied"));
                 return;
               }
-              try {
-                const stored: { token: string; name: string }[] = JSON.parse(
-                  localStorage.getItem("of_lists") ?? "[]"
-                );
-                localStorage.setItem(
-                  "of_lists",
-                  JSON.stringify(
-                    stored.map((l) =>
-                      l.token === list.token ? { ...l, name: name.trim() || l.name } : l
-                    )
-                  )
-                );
-              } catch {}
+              renameStoredList(list.token, name.trim() || list.name);
               setRenameOpen(false);
             });
           }}

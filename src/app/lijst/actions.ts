@@ -29,6 +29,7 @@ import {
   setItemChecked,
   clearBought,
   deleteList,
+  duplicateList,
   renameList,
   setCategoryOrder,
   setListLocation,
@@ -416,6 +417,26 @@ export async function deleteListAction(token: string): Promise<{ ok: boolean; er
   await deleteList(manage.list.id);
   await notifyListUpdated(token);
   return { ok: true };
+}
+
+/**
+ * Lijst dupliceren: niet-destructief (de bron blijft ongemoeid), dus geen
+ * beheerrecht nodig, net als lezen/toevoegen — alleen de link is genoeg.
+ * De kopie wordt voor een ingelogde gebruiker meteen geclaimd.
+ */
+export async function duplicateListAction(
+  token: string,
+  name: string
+): Promise<{ ok: true; token: string; name: string } | { ok: false; error: string }> {
+  const list = await requireList(token);
+  const created = await duplicateList(list.id, name);
+  const userId = await currentUserId();
+  if (userId) {
+    const household = await householdForUser(userId);
+    await claimList(created.id, userId, household?.id ?? null);
+  }
+  await trackConversion("lijst_gestart", { userId, listId: created.id, properties: { via: "duplicaat" } });
+  return { ok: true, token: created.token, name: created.name };
 }
 
 export async function setRadiusAction(token: string, radiusKm: number): Promise<void> {

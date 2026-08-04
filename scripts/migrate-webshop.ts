@@ -47,6 +47,11 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='producers' and column_name='closed_until'",
     "ALTER TABLE producers ADD COLUMN closed_until timestamptz",
   ],
+  // Warme funnel: claim-slug uit ?vermelding=<slug> op de aanmeldpagina.
+  [
+    "select 1 from information_schema.columns where table_name='sellers' and column_name='claim_producer_slug'",
+    "ALTER TABLE sellers ADD COLUMN claim_producer_slug text",
+  ],
 ];
 
 async function main() {

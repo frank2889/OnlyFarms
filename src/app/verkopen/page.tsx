@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { producerBySlug } from "@/lib/queries/producers";
 import VerkopenClient from "@/components/VerkopenClient";
 
 export const metadata = {
@@ -8,6 +9,17 @@ export const metadata = {
   alternates: { canonical: "/verkopen" },
 };
 
-export default function VerkopenPage() {
-  return <VerkopenClient />;
+export default async function VerkopenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vermelding?: string }>;
+}) {
+  const { vermelding } = await searchParams;
+  const producer = vermelding ? await producerBySlug(vermelding) : null;
+  const prefill =
+    producer && !producer.isMember
+      ? { slug: producer.slug, name: producer.name, city: producer.city }
+      : null;
+
+  return <VerkopenClient prefill={prefill} />;
 }

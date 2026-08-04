@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { sellers } from "@/db/schema";
+import { producers, sellers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { trackConversion } from "@/lib/events";
+import { trackEvent } from "@/lib/klaviyo";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -16,6 +18,7 @@ type ApplyBody = {
   city?: string;
   motivation?: string;
   acceptedTerms?: boolean;
+  claimProducerSlug?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -54,6 +57,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ errors }, { status: 400 });
   }
 
+  // Warme funnel: alleen bewaren als de slug daadwerkelijk een bestaande,
+  // nog niet geclaimde gids-vermelding is (bodydata is door de bezoeker
+  // te manipuleren, dus altijd verifiëren tegen de database).
+  const claimSlug = body.claimProducerSlug?.trim();
+  let claimProducerSlug: string | null = null;
+  if (claimSlug) {
+    const [candidate] = await db
+      .select({ slug: producers.slug, isMember: producers.isMember })
+      .from(producers)
+      .where(eq(producers.slug, claimSlug));
+    if (candidate && !candidate.isMember) claimProducerSlug = candidate.slug;
+  }
+
   try {
     const [row] = await db
       .insert(sellers)
@@ -68,13 +84,19 @@ export async function POST(req: NextRequest) {
         motivation,
         acceptedTermsAt: new Date(),
         status: "aangemeld",
+        claimProducerSlug,
       })
       .returning({ id: sellers.id });
 
     await trackConversion("producent_aangemeld");
+    await trackEvent("seller_applied", { name, city, claimProducerSlug }, email);
     return NextResponse.json({ ok: true, id: row.id }, { status: 201 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    // Drizzle wrapt de echte postgres-foutmelding ("duplicate key value
+    // violates unique constraint...") in err.cause; err.message zelf is
+    // alleen "Failed query: ...", dus die matcht de check hieronder nooit.
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause : undefined;
+    const msg = cause?.message ?? (err instanceof Error ? err.message : String(err));
     if (msg.includes("duplicate key")) {
       return NextResponse.json(
         { errors: ["dit KVK-nummer of e-mailadres is al aangemeld"] },

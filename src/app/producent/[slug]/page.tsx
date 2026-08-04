@@ -400,7 +400,10 @@ export default async function ProducerPage({
       {!producer.isMember && (
         <div className="mb-6 rounded-tile bg-terra-50 p-4">
           <p className="mb-2 text-sm text-terra-800">{t("producers.notMemberNotice")}</p>
-          <Link href="/verkopen" className="text-sm font-medium text-terra-700 underline">
+          <Link
+            href={`/verkopen?vermelding=${producer.slug}`}
+            className="text-sm font-medium text-terra-700 underline"
+          >
             {t("producers.claimCta")}
           </Link>
         </div>

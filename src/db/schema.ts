@@ -293,6 +293,10 @@ export const sellers = pgTable(
     // Selectieproces: wat wil je aanbieden en waarom
     motivation: text("motivation").notNull(),
     acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),
+    // Warme funnel: gevuld als de aanmelding via een claim-teaser op een
+    // gids-pagina kwam (?vermelding=<slug>), zodat het team niet hoeft te
+    // gokken tussen 2.279 gids-records bij het koppelen.
+    claimProducerSlug: text("claim_producer_slug"),
     status: sellerStatus("status").notNull().default("aangemeld"),
     statusReason: text("status_reason"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

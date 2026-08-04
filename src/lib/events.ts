@@ -14,9 +14,21 @@ export const CONVERSION_EVENTS = [
   "route_geopend",
   "lijst_gedeeld",
   "producent_aangemeld",
+  "producent_bekeken",
 ] as const;
 
 export type ConversionEvent = (typeof CONVERSION_EVENTS)[number];
+
+/**
+ * Momenten die client-side gebeuren (sendBeacon naar /api/event) i.p.v.
+ * server-side in een action; één bron zodat de API-whitelist en deze lijst
+ * nooit uit elkaar kunnen lopen.
+ */
+export const CLIENT_EVENTS: ReadonlySet<ConversionEvent> = new Set([
+  "route_geopend",
+  "lijst_gedeeld",
+  "producent_bekeken",
+]);
 
 /**
  * Best-effort event-log: meting mag nooit het kernpad breken (patroon

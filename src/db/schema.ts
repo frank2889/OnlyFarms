@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -390,5 +391,11 @@ export const events = pgTable(
     properties: jsonb("properties"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("events_name_created_idx").on(t.name, t.createdAt)]
+  (t) => [
+    index("events_name_created_idx").on(t.name, t.createdAt),
+    // Expression-index op properties->>'slug': goedkope per-producent counts
+    // voor "Jouw bereik" in het portaal (route_geopend/producent_bekeken).
+    // Als sql-expressie in schema.ts houden, anders wil db:push hem droppen.
+    index("events_slug_idx").on(sql`((${t.properties}) ->> 'slug')`),
+  ]
 );

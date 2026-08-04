@@ -498,11 +498,11 @@ export default function ListView({
   }
 
   // Conversie-events die client-side gebeuren (fire-and-forget, nooit blokkerend)
-  function beacon(name: "route_geopend" | "lijst_gedeeld") {
+  function beacon(name: "route_geopend" | "lijst_gedeeld", slug?: string) {
     try {
       navigator.sendBeacon(
         "/api/event",
-        new Blob([JSON.stringify({ name, token: list.token })], { type: "application/json" })
+        new Blob([JSON.stringify({ name, token: list.token, slug })], { type: "application/json" })
       );
     } catch {}
   }
@@ -1217,6 +1217,7 @@ export default function ListView({
                         updateItemAction(list.token, item.id, { store: name, producerSlug: slug })
                       )
                     }
+                    onRouteClick={(slug) => beacon("route_geopend", slug)}
                   />
                 </details>
               )}
@@ -1563,7 +1564,7 @@ export default function ListView({
                             href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
                             target="_blank"
                             rel="noopener"
-                            onClick={() => beacon("route_geopend")}
+                            onClick={() => beacon("route_geopend", p.slug)}
                             className="inline-flex shrink-0 items-center gap-1 text-terra-700 hover:underline"
                           >
                             <RouteIcon width={13} height={13} /> {t("common.route")}
@@ -1817,18 +1818,31 @@ function TileRow({
 function MatchList({
   match,
   onPick,
+  onRouteClick,
 }: {
   match: ItemMatch;
   radiusKm?: number;
   onPick?: (name: string, slug: string) => void;
+  onRouteClick?: (slug: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 pb-1 pt-2">
       {match.exact.length > 0 && (
-        <ProducerRows title={t("lists.sellsThis")} producers={match.exact} member onPick={onPick} />
+        <ProducerRows
+          title={t("lists.sellsThis")}
+          producers={match.exact}
+          member
+          onPick={onPick}
+          onRouteClick={onRouteClick}
+        />
       )}
       {match.category.length > 0 && (
-        <ProducerRows title={t("lists.suggestion")} producers={match.category} onPick={onPick} />
+        <ProducerRows
+          title={t("lists.suggestion")}
+          producers={match.category}
+          onPick={onPick}
+          onRouteClick={onRouteClick}
+        />
       )}
       {match.exact.length + match.category.length === 0 && (
         <p className="text-sm text-ink-500">{t("lists.noMatch")}</p>
@@ -1845,11 +1859,13 @@ function ProducerRows({
   producers,
   member,
   onPick,
+  onRouteClick,
 }: {
   title: string;
   producers: Producer[];
   member?: boolean;
   onPick?: (name: string, slug: string) => void;
+  onRouteClick?: (slug: string) => void;
 }) {
   return (
     <div>
@@ -1886,6 +1902,7 @@ function ProducerRows({
                 href={routeUrl(p.lat, p.lng)}
                 target="_blank"
                 rel="noopener"
+                onClick={() => onRouteClick?.(p.slug)}
                 className="inline-flex items-center gap-1 text-terra-700 hover:underline"
               >
                 <RouteIcon width={12} height={12} /> {t("common.route")}

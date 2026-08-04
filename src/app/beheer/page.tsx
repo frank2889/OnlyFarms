@@ -39,6 +39,7 @@ export default async function AdminDashboardPage() {
     route_geopend: t("admin.eventRouteOpened"),
     lijst_gedeeld: t("admin.eventListShared"),
     producent_aangemeld: t("admin.eventSellerApplied"),
+    producent_bekeken: t("admin.eventProducerViewed"),
   };
 
   return (

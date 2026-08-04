@@ -67,7 +67,13 @@ import {
   updateItemAction,
   type NearbyLite,
 } from "@/app/lijst/actions";
-import { hoursStatus, hoursStatusText, nowInAmsterdam, todayInAmsterdam } from "@/lib/opening-hours";
+import {
+  DAY_SHORT,
+  hoursStatus,
+  hoursStatusText,
+  nowInAmsterdam,
+  todayInAmsterdam,
+} from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
 import NearbyWatch from "@/components/NearbyWatch";
 import ChefsSheet from "@/components/ChefsSheet";
@@ -108,7 +114,8 @@ type OptAction =
   | { type: "restoreBought" }
   | { type: "addBoughtMany"; items: ListItem[] }
   | { type: "recheck"; ids: number[] }
-  | { type: "removeByCatalogKeys"; keys: string[] };
+  | { type: "removeByCatalogKeys"; keys: string[] }
+  | { type: "setDue"; id: number; dueAt: string | null };
 
 function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
   switch (action.type) {
@@ -173,10 +180,57 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
         open: state.open.filter((i) => !i.catalogKey || !keys.has(i.catalogKey)),
       };
     }
+    case "setDue":
+      return {
+        ...state,
+        open: state.open.map((i) =>
+          i.id === action.id
+            ? { ...i, dueAt: action.dueAt ? new Date(`${action.dueAt}T00:00:00Z`) : null }
+            : i
+        ),
+      };
   }
 }
 
 const PRIORITY_RANK: Record<string, number> = { dringend: 0, normaal: 1, "kan-wachten": 2 };
+
+/** Kalenderdatum-rekenen op "YYYY-MM-DD"-strings (UTC-middernacht), geen tijdzone-gedoe */
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function weekdayOf(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+/** Eerstvolgende datum (kan vandaag zijn) die op deze weekdag valt */
+function nextDateForWeekday(weekday: number): string {
+  const today = todayInAmsterdam();
+  const diff = (weekday - weekdayOf(today) + 7) % 7;
+  return addDays(today, diff);
+}
+
+const DAY_BUCKET_ORDER = ["vandaag", "morgen", "deze-week", "later", "zonder-datum"] as const;
+type DayBucketKey = (typeof DAY_BUCKET_ORDER)[number];
+const DAY_BUCKET_LABELS: Record<DayBucketKey, string> = {
+  vandaag: t("lists.dueToday"),
+  morgen: t("lists.dueTomorrow"),
+  "deze-week": t("lists.dueThisWeek"),
+  later: t("lists.dueLater"),
+  "zonder-datum": t("lists.dueNone"),
+};
+
+/** Dag-emmer voor een dueAt-datumstring (of null), t.o.v. vandaag (Europe/Amsterdam) */
+function bucketKeyForDate(dueDateStr: string | null): DayBucketKey {
+  if (!dueDateStr) return "zonder-datum";
+  const today = todayInAmsterdam();
+  if (dueDateStr <= today) return "vandaag";
+  if (dueDateStr === addDays(today, 1)) return "morgen";
+  if (dueDateStr <= addDays(today, 6)) return "deze-week";
+  return "later";
+}
 
 function routeUrl(lat: number | null, lng: number | null): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -667,6 +721,51 @@ export default function ListView({
     };
     return [...CATEGORIES].sort((a, b) => orderIndex(a.key) - orderIndex(b.key));
   }, [catOrder]);
+
+  // Plannen (dag-modus): dezelfde items, gegroepeerd op emmer i.p.v. categorie.
+  // Tijdzone-risico bewust vermeden: vergelijken op "YYYY-MM-DD"-strings, niet epoch.
+  const groupedByDay = useMemo(() => {
+    const buckets = new Map<DayBucketKey, ListItem[]>();
+    for (const item of snapshot.open) {
+      const dueDateStr = item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 10) : null;
+      const key = bucketKeyForDate(dueDateStr);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key)!.push(item);
+    }
+    return DAY_BUCKET_ORDER.filter((k) => buckets.has(k)).map((key) => ({
+      key,
+      label: DAY_BUCKET_LABELS[key],
+      items: [...buckets.get(key)!].sort(
+        (a, b) => (PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1)
+      ),
+    }));
+  }, [snapshot.open]);
+
+  // Week-strip: 7 losse dagen met eigen teller, springt naar de bijbehorende emmer
+  const weekStrip = useMemo(() => {
+    const today = todayInAmsterdam();
+    return Array.from({ length: 7 }, (_, i) => {
+      const dateStr = addDays(today, i);
+      const count = snapshot.open.filter(
+        (item) => item.dueAt && new Date(item.dueAt).toISOString().slice(0, 10) === dateStr
+      ).length;
+      return { label: DAY_SHORT[weekdayOf(dateStr)], count, bucketKey: bucketKeyForDate(dateStr) };
+    });
+  }, [snapshot.open]);
+
+  const rawViewMode = useSyncExternalStore(
+    subscribeStorage,
+    () => localStorage.getItem(`of_viewmode:${list.token}`) ?? "categorie",
+    () => "categorie"
+  );
+  const viewMode: "categorie" | "dag" = rawViewMode === "dag" ? "dag" : "categorie";
+  function setViewMode(mode: "categorie" | "dag") {
+    try {
+      localStorage.setItem(`of_viewmode:${list.token}`, mode);
+    } catch {}
+    window.dispatchEvent(new Event("storage"));
+  }
+  const openGroups = viewMode === "dag" ? groupedByDay : groupedOpen;
 
   function moveCategory(key: string, dir: -1 | 1) {
     const idx = catOrder.indexOf(key);
@@ -1176,26 +1275,63 @@ export default function ListView({
               </button>
             </div>
       {/* Open items */}
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink-500">
           {t("lists.itemsOpen", { count: snapshot.open.length })}
         </h2>
-        {groupedOpen.length > 1 && (
-          <button
-            onClick={() => setOrderMode((v) => !v)}
-            className="inline-block px-1 py-2.5 text-xs text-ink-500 underline hover:text-terra-700"
-          >
-            {orderMode ? t("common.done") : t("lists.orderCategories")}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-full border border-cream-300 bg-cream-50 p-0.5 text-xs">
+            <button
+              onClick={() => setViewMode("categorie")}
+              className={`rounded-full px-2.5 py-1.5 ${
+                viewMode === "categorie" ? "bg-white font-medium shadow-sm" : "text-ink-500"
+              }`}
+            >
+              {t("lists.viewByCategory")}
+            </button>
+            <button
+              onClick={() => setViewMode("dag")}
+              className={`rounded-full px-2.5 py-1.5 ${
+                viewMode === "dag" ? "bg-white font-medium shadow-sm" : "text-ink-500"
+              }`}
+            >
+              {t("lists.viewByDay")}
+            </button>
+          </div>
+          {viewMode === "categorie" && groupedOpen.length > 1 && (
+            <button
+              onClick={() => setOrderMode((v) => !v)}
+              className="inline-block px-1 py-2.5 text-xs text-ink-500 underline hover:text-terra-700"
+            >
+              {orderMode ? t("common.done") : t("lists.orderCategories")}
+            </button>
+          )}
+        </div>
       </div>
+      {viewMode === "dag" && (
+        <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
+          {weekStrip.map((d, i) => (
+            <a
+              key={i}
+              href={`#oli-${d.bucketKey}`}
+              className="flex shrink-0 flex-col items-center rounded-xl bg-cream-100 px-3 py-1.5 text-xs hover:bg-cream-200"
+            >
+              <span className="font-medium">{d.label}</span>
+              <span className="text-ink-500">{d.count}</span>
+            </a>
+          ))}
+        </div>
+      )}
       <ul className="flex flex-col gap-2">
-        {groupedOpen.map((group) => (
+        {openGroups.map((group) => (
           <Fragment key={group.key}>
-            {groupedOpen.length > 1 && (
-              <li className="mt-1.5 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+            {openGroups.length > 1 && (
+              <li
+                id={`oli-${group.key}`}
+                className="mt-1.5 flex scroll-mt-28 items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-500"
+              >
                 {group.label}
-                {orderMode && group.key !== "_los" && (
+                {viewMode === "categorie" && orderMode && group.key !== "_los" && (
                   <span className="flex gap-1">
                     <button
                       onClick={() => moveCategory(group.key, -1)}
@@ -1312,9 +1448,25 @@ export default function ListView({
                   memberNames={memberNames}
                   hasHousehold={hasHousehold}
                   viewerIsMember={viewerIsMember}
+                  shoppingDay={shoppingDay}
                   onSave={(patch) => {
-                    act(() => updateItemAction(list.token, item.id, patch));
+                    act(
+                      () => updateItemAction(list.token, item.id, patch),
+                      patch.dueAt !== undefined
+                        ? { type: "setDue", id: item.id, dueAt: patch.dueAt }
+                        : undefined
+                    );
                     setEditItem(null);
+                    if (patch.dueAt !== undefined && viewMode === "dag") {
+                      const bucket = bucketKeyForDate(patch.dueAt);
+                      setTimeout(
+                        () =>
+                          document
+                            .getElementById(`oli-${bucket}`)
+                            ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                        50
+                      );
+                    }
                   }}
                 />
               )}
@@ -2093,11 +2245,13 @@ function ItemEditor({
   memberNames = [],
   hasHousehold = false,
   viewerIsMember = false,
+  shoppingDay = null,
 }: {
   item: ListItem;
   memberNames?: string[];
   hasHousehold?: boolean;
   viewerIsMember?: boolean;
+  shoppingDay?: number | null;
   onSave: (patch: {
     qty?: string;
     note?: string;
@@ -2120,6 +2274,13 @@ function ItemEditor({
   const field = "w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-1.5 text-sm";
   // Gezinslijst: toewijzen alleen door gezinsleden, en alleen aan gezinsleden
   const assigneeLocked = hasHousehold && !viewerIsMember;
+
+  const today = todayInAmsterdam();
+  const tomorrow = addDays(today, 1);
+  const shoppingDayIndex = shoppingDay ?? 6;
+  const shoppingDate = nextDateForWeekday(shoppingDayIndex);
+  const isFixedChipValue = (value: string) => value === today || value === tomorrow || value === shoppingDate;
+  const [customOpen, setCustomOpen] = useState(!!dueAt && !isFixedChipValue(dueAt));
 
   return (
     <div className="flex flex-col gap-2 border-t border-cream-100 p-3">
@@ -2175,10 +2336,76 @@ function ItemEditor({
             />
           )}
         </div>
-        <label className="flex flex-col gap-1 text-xs font-medium text-ink-500">
-          Uiterlijk
-          <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className={field} />
-        </label>
+        <div className="col-span-2 flex flex-col gap-1 text-xs font-medium text-ink-500">
+          {t("lists.dueLabel")}
+          <div className="flex flex-wrap gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setDueAt(today);
+                setCustomOpen(false);
+              }}
+              className={`rounded-full px-3 py-1.5 ${
+                dueAt === today ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+              }`}
+            >
+              {t("lists.dueToday")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDueAt(tomorrow);
+                setCustomOpen(false);
+              }}
+              className={`rounded-full px-3 py-1.5 ${
+                dueAt === tomorrow ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+              }`}
+            >
+              {t("lists.dueTomorrow")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDueAt(shoppingDate);
+                setCustomOpen(false);
+              }}
+              className={`rounded-full px-3 py-1.5 ${
+                dueAt === shoppingDate ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+              }`}
+            >
+              {DAY_SHORT[shoppingDayIndex]}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCustomOpen(true)}
+              className={`rounded-full px-3 py-1.5 ${
+                customOpen ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+              }`}
+            >
+              {t("common.pickDate")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDueAt("");
+                setCustomOpen(false);
+              }}
+              className={`rounded-full px-3 py-1.5 ${
+                !dueAt ? "bg-terra-500 text-white" : "bg-cream-100 hover:bg-cream-200"
+              }`}
+            >
+              {t("lists.dueNone")}
+            </button>
+          </div>
+          {customOpen && (
+            <input
+              type="date"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              className={`${field} mt-1`}
+            />
+          )}
+        </div>
         <div className="flex flex-col gap-1 text-xs font-medium text-ink-500">
           {t("lists.priorityLabel")}
           <div className="flex flex-wrap gap-1">

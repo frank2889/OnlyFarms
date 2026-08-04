@@ -144,6 +144,17 @@ export async function membersOfHousehold(
     .where(eq(householdMembers.householdId, householdId));
 }
 
+/** Is deze gebruiker lid van dit gezin? (rechtencheck op destructieve lijst-acties) */
+export async function isHouseholdMember(userId: number, householdId: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: householdMembers.id })
+    .from(householdMembers)
+    .where(
+      and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId))
+    );
+  return !!row;
+}
+
 export async function userByEmail(email: string) {
   const [user] = await db
     .select({ id: users.id })

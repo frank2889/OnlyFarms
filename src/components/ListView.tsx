@@ -38,7 +38,9 @@ import {
 import {
   addItemAction,
   restoreBoughtAction,
+  recheckItemsAction,
   clearBoughtAction,
+  restoreClearedAction,
   deleteListAction,
   nearbyForItemAction,
   renameListAction,
@@ -68,6 +70,7 @@ type Props = {
   memberNames?: string[];
   hasHousehold?: boolean;
   viewerIsMember?: boolean;
+  viewerCanManage: boolean;
   nearbyCounts?: Record<string, number>;
   chatMessages?: ChatMessage[];
   viewerUserId?: number | null;
@@ -83,7 +86,9 @@ type OptAction =
   | { type: "add"; item: ListItem }
   | { type: "setQty"; id: number; qty: string }
   | { type: "clearBought" }
-  | { type: "restoreBought" };
+  | { type: "restoreBought" }
+  | { type: "addBoughtMany"; items: ListItem[] }
+  | { type: "recheck"; ids: number[] };
 
 function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
   switch (action.type) {
@@ -122,6 +127,21 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
         open: [...state.open, ...state.bought.map((i) => ({ ...i, checked: false }))],
         bought: [],
       };
+    case "addBoughtMany":
+      // Undo van "Wis gekochte items": de gewiste items direct terug in het
+      // overzicht; router.refresh() vervangt ze zodra de server de nieuwe
+      // (echte) ids teruggeeft.
+      return { ...state, bought: [...action.items, ...state.bought] };
+    case "recheck": {
+      // Undo van "Alles terug op de lijst": de teruggezette items weer als
+      // gekocht markeren, zonder de koophistorie opnieuw te tellen.
+      const ids = new Set(action.ids);
+      const moving = state.open.filter((i) => ids.has(i.id));
+      return {
+        open: state.open.filter((i) => !ids.has(i.id)),
+        bought: [...moving.map((i) => ({ ...i, checked: true })), ...state.bought],
+      };
+    }
   }
 }
 
@@ -187,6 +207,7 @@ export default function ListView({
   memberNames = [],
   hasHousehold = false,
   viewerIsMember = false,
+  viewerCanManage,
   nearbyCounts = {},
   chatMessages = [],
   viewerUserId = null,
@@ -227,7 +248,7 @@ export default function ListView({
   const [renameValue, setRenameValue] = useState(list.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [myLists, setMyLists] = useState<{ token: string; name: string }[]>([]);
-  const [undo, setUndo] = useState<{ label: string; action: () => void } | null>(null);
+  const [undo, setUndo] = useState<{ label: string; action?: () => void } | null>(null);
   const [justChecked, setJustChecked] = useState<number | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tempId = useRef(-1);
@@ -351,17 +372,25 @@ export default function ListView({
     };
   }, [list.token, router]);
 
-  /** Directe UI-update; server volgt op de achtergrond (offline: zodra er weer verbinding is) */
-  function act(fn: () => Promise<unknown>, optimistic?: OptAction) {
-    startTransition(async () => {
-      if (optimistic) applyOptimistic(optimistic);
-      await ensureOnline();
-      await fn();
-      router.refresh();
+  /**
+   * Directe UI-update; server volgt op de achtergrond (offline: zodra er weer
+   * verbinding is). Geeft de opgeloste waarde van fn() terug zodat bulkacties
+   * (bijv. de gewiste items) er hun eigen undo op kunnen bouwen.
+   */
+  function act<T>(fn: () => Promise<T>, optimistic?: OptAction): Promise<T> {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        if (optimistic) applyOptimistic(optimistic);
+        await ensureOnline();
+        const result = await fn();
+        router.refresh();
+        resolve(result);
+      });
     });
   }
 
-  function showUndo(label: string, action: () => void) {
+  /** Toont een snackbar; zonder action is het gewoon een korte melding (bijv. een geweigerde actie) */
+  function showUndo(label: string, action?: () => void) {
     if (undoTimer.current) clearTimeout(undoTimer.current);
     setUndo({ label, action });
     undoTimer.current = setTimeout(() => setUndo(null), 5000);
@@ -641,49 +670,61 @@ export default function ListView({
               >
                 <PlusIcon width={16} height={16} /> {t("lists.newList")}
               </Link>
-              <div className="my-1 border-t border-cream-100" />
-              <button
-                onClick={() => {
-                  setRenameValue(list.name);
-                  setRenameOpen(true);
-                  setSwitcherOpen(false);
-                }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
-              >
-                <PencilIcon width={15} height={15} className="text-ink-500" /> Naam wijzigen
-              </button>
-              <button
-                onClick={() => {
-                  if (!confirmDelete) {
-                    setConfirmDelete(true);
-                    setTimeout(() => setConfirmDelete(false), 4000);
-                    return;
-                  }
-                  const token = list.token;
-                  try {
-                    const stored: { token: string }[] = JSON.parse(
-                      localStorage.getItem("of_lists") ?? "[]"
-                    );
-                    localStorage.setItem(
-                      "of_lists",
-                      JSON.stringify(stored.filter((l) => l.token !== token))
-                    );
-                    localStorage.setItem("of_badge", "0");
-                  } catch {}
-                  startTransition(async () => {
-                    await deleteListAction(token);
-                    router.push("/lijsten");
-                  });
-                }}
-                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 ${
-                  confirmDelete
-                    ? "bg-terra-700 font-medium text-white"
-                    : "text-terra-800 hover:bg-cream-50"
-                }`}
-              >
-                <TrashIcon width={15} height={15} />
-                {confirmDelete ? "Zeker weten? Tik nog een keer" : "Lijst verwijderen"}
-              </button>
+              {/* Hernoemen/verwijderen zijn alleen zichtbaar met beheerrecht: anonieme
+                  lijst (link is genoeg) of eigenaar/gezinslid van een geclaimde lijst */}
+              {viewerCanManage && (
+                <>
+                  <div className="my-1 border-t border-cream-100" />
+                  <button
+                    onClick={() => {
+                      setRenameValue(list.name);
+                      setRenameOpen(true);
+                      setSwitcherOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-cream-50"
+                  >
+                    <PencilIcon width={15} height={15} className="text-ink-500" />{" "}
+                    {t("lists.renameList")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!confirmDelete) {
+                        setConfirmDelete(true);
+                        setTimeout(() => setConfirmDelete(false), 4000);
+                        return;
+                      }
+                      const token = list.token;
+                      startTransition(async () => {
+                        const result = await deleteListAction(token);
+                        setConfirmDelete(false);
+                        if (!result.ok) {
+                          showUndo(result.error ?? t("lists.manageDenied"));
+                          return;
+                        }
+                        try {
+                          const stored: { token: string }[] = JSON.parse(
+                            localStorage.getItem("of_lists") ?? "[]"
+                          );
+                          localStorage.setItem(
+                            "of_lists",
+                            JSON.stringify(stored.filter((l) => l.token !== token))
+                          );
+                          localStorage.setItem("of_badge", "0");
+                        } catch {}
+                        router.push("/lijsten");
+                      });
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 ${
+                      confirmDelete
+                        ? "bg-terra-700 font-medium text-white"
+                        : "text-terra-800 hover:bg-cream-50"
+                    }`}
+                  >
+                    <TrashIcon width={15} height={15} />
+                    {confirmDelete ? t("lists.confirmAgain") : t("lists.deleteList")}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -692,21 +733,27 @@ export default function ListView({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            act(() => renameListAction(list.token, renameValue));
-            try {
-              const stored: { token: string; name: string }[] = JSON.parse(
-                localStorage.getItem("of_lists") ?? "[]"
-              );
-              localStorage.setItem(
-                "of_lists",
-                JSON.stringify(
-                  stored.map((l) =>
-                    l.token === list.token ? { ...l, name: renameValue.trim() || l.name } : l
+            const name = renameValue;
+            act(() => renameListAction(list.token, name)).then((result) => {
+              if (!result.ok) {
+                showUndo(result.error ?? t("lists.manageDenied"));
+                return;
+              }
+              try {
+                const stored: { token: string; name: string }[] = JSON.parse(
+                  localStorage.getItem("of_lists") ?? "[]"
+                );
+                localStorage.setItem(
+                  "of_lists",
+                  JSON.stringify(
+                    stored.map((l) =>
+                      l.token === list.token ? { ...l, name: name.trim() || l.name } : l
+                    )
                   )
-                )
-              );
-            } catch {}
-            setRenameOpen(false);
+                );
+              } catch {}
+              setRenameOpen(false);
+            });
           }}
           className="mb-3 flex gap-2"
         >
@@ -1199,16 +1246,37 @@ export default function ListView({
             <h2 className="text-sm font-semibold text-ink-500">{t("lists.recentlyBought")}</h2>
             <span className="flex gap-3">
               <button
-                onClick={() => act(() => restoreBoughtAction(list.token), { type: "restoreBought" })}
+                onClick={() => {
+                  act(() => restoreBoughtAction(list.token), { type: "restoreBought" }).then(
+                    (ids) => {
+                      if (!ids.length) return;
+                      showUndo(t("lists.restoredUndoLabel", { n: ids.length }), () =>
+                        act(() => recheckItemsAction(list.token, ids), { type: "recheck", ids })
+                      );
+                    }
+                  );
+                }}
                 className="text-xs font-medium text-terra-700 underline"
               >
                 {t("lists.restoreBought")}
               </button>
               <button
-                onClick={() => act(() => clearBoughtAction(list.token), { type: "clearBought" })}
+                onClick={() => {
+                  act(() => clearBoughtAction(list.token), { type: "clearBought" }).then(
+                    (removed) => {
+                      if (!removed.length) return;
+                      showUndo(t("lists.clearedUndoLabel", { n: removed.length }), () =>
+                        act(() => restoreClearedAction(list.token, removed), {
+                          type: "addBoughtMany",
+                          items: removed,
+                        })
+                      );
+                    }
+                  );
+                }}
                 className="text-xs text-ink-500 underline hover:text-terra-700"
               >
-                Wis gekochte items
+                {t("lists.clearBought")}
               </button>
             </span>
           </div>
@@ -1413,15 +1481,17 @@ export default function ListView({
       {undo && (
         <div className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-60 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
           <span className="truncate">{undo.label}</span>
-          <button
-            onClick={() => {
-              undo.action();
-              setUndo(null);
-            }}
-            className="shrink-0 font-semibold text-terra-300 underline"
-          >
-            Ongedaan maken
-          </button>
+          {undo.action && (
+            <button
+              onClick={() => {
+                undo.action!();
+                setUndo(null);
+              }}
+              className="shrink-0 font-semibold text-terra-300 underline"
+            >
+              {t("common.undo")}
+            </button>
+          )}
         </div>
       )}
 

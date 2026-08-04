@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { boughtStats, listItems, lists } from "@/db/schema";
 import type { ListItem, ShoppingList } from "@/lib/types";
@@ -127,7 +127,11 @@ export async function boughtStatsFor(list: {
   // huishouden-scope kan hetzelfde item vanuit meerdere lijsten bevatten: sommeren
   const merged = new Map<string, number>();
   for (const r of rows) merged.set(r.key, (merged.get(r.key) ?? 0) + r.times);
-  return [...merged.entries()].map(([key, times]) => ({ key, times }));
+  // Na het sommeren opnieuw op totaal sorteren: de DB-sortering hierboven geldt
+  // per losse rij, niet per samengevoegd item
+  return [...merged.entries()]
+    .map(([key, times]) => ({ key, times }))
+    .sort((a, b) => b.times - a.times);
 }
 
 /** Open item van de lijst halen op catalogKey (undo van een swipe-toevoeging) */
@@ -176,19 +180,62 @@ export async function updateItem(
   await touch(listId);
 }
 
-/** "Vorige lijst met een tik herhalen" (CRO #81): alles wat gekocht is weer open zetten */
-export async function restoreBought(listId: number): Promise<void> {
-  await db
+/**
+ * "Vorige lijst met een tik herhalen" (CRO #81): alles wat gekocht is weer
+ * open zetten. Retourneert de geraakte ids zodat de undo-knop ze precies kan
+ * terugzetten (recheckItems), zonder de koophistorie dubbel te tellen.
+ */
+export async function restoreBought(listId: number): Promise<number[]> {
+  const rows = await db
     .update(listItems)
     .set({ checked: false, checkedAt: null })
-    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)));
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)))
+    .returning({ id: listItems.id });
+  await touch(listId);
+  return rows.map((r) => r.id);
+}
+
+/** Undo van restoreBought: dezelfde items weer als gekocht markeren, zonder bought_stats te verhogen */
+export async function recheckItems(listId: number, ids: number[]): Promise<void> {
+  if (!ids.length) return;
+  await db
+    .update(listItems)
+    .set({ checked: true, checkedAt: sql`now()` })
+    .where(and(eq(listItems.listId, listId), inArray(listItems.id, ids)));
   await touch(listId);
 }
 
-export async function clearBought(listId: number): Promise<void> {
-  await db
+/** Retourneert de gewiste items zodat "Wis gekochte items" ongedaan gemaakt kan worden */
+export async function clearBought(listId: number): Promise<ListItem[]> {
+  const rows = (await db
     .delete(listItems)
-    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)));
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)))
+    .returning()) as ListItem[];
+  await touch(listId);
+  return rows;
+}
+
+/** Undo van clearBought: de gewiste items opnieuw als gekocht invoegen (nieuwe ids, geen stats-telling) */
+export async function restoreClearedItems(listId: number, items: ListItem[]): Promise<void> {
+  if (!items.length) return;
+  await db.insert(listItems).values(
+    items.map((item) => ({
+      listId,
+      catalogKey: item.catalogKey,
+      label: item.label,
+      qty: item.qty,
+      note: item.note,
+      store: item.store,
+      producerSlug: item.producerSlug,
+      storeSuggestedBy: item.storeSuggestedBy,
+      assignee: item.assignee,
+      assigneeUserId: item.assigneeUserId,
+      priority: item.priority,
+      dueAt: item.dueAt,
+      checked: true,
+      checkedAt: sql`now()`,
+    }))
+  );
   await touch(listId);
 }
 
@@ -240,17 +287,19 @@ async function touch(listId: number): Promise<void> {
     .where(eq(lists.id, listId));
 }
 
-/** "Eerder gekocht": catalog-keys op frequentie (meest gekocht eerst).
- *  Leest uit de wisbestendige bought_stats; valt terug op de oude aggregatie
- *  zolang een lijst nog geen historie heeft opgebouwd. */
-export async function boughtBefore(listId: number): Promise<string[]> {
-  const stats = await db
-    .select({ key: boughtStats.catalogKey })
-    .from(boughtStats)
-    .where(eq(boughtStats.listId, listId))
-    .orderBy(desc(boughtStats.times), desc(boughtStats.lastAt))
-    .limit(12);
-  if (stats.length) return stats.map((r) => r.key);
+/**
+ * "Eerder gekocht": catalog-keys op frequentie (meest gekocht eerst).
+ * Zelfde bron als het swipe-deck (boughtStatsFor, huishouden-breed waar
+ * mogelijk) zodat de tegelrij, de zoek-overlay en de swipe-winkelmodus altijd
+ * dezelfde set tonen. Valt terug op de oude lijst-aggregatie zolang er nog
+ * geen bought_stats-historie is opgebouwd.
+ */
+export async function boughtBefore(list: {
+  id: number;
+  householdId: number | null;
+}): Promise<string[]> {
+  const stats = await boughtStatsFor(list);
+  if (stats.length) return stats.slice(0, 12).map((r) => r.key);
 
   const rows = await db
     .select({
@@ -259,7 +308,7 @@ export async function boughtBefore(listId: number): Promise<string[]> {
       last: sql<Date>`max(${listItems.checkedAt})`,
     })
     .from(listItems)
-    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)))
+    .where(and(eq(listItems.listId, list.id), eq(listItems.checked, true)))
     .groupBy(listItems.catalogKey)
     .orderBy(sql`count(*) desc`, sql`max(${listItems.checkedAt}) desc`)
     .limit(12);

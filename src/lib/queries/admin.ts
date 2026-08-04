@@ -155,6 +155,26 @@ export async function adminSearchProducers(query: string) {
     .limit(10);
 }
 
+/**
+ * De gids-vermelding die bij de aanmelding als claim opgegeven is (warme
+ * funnel via ?vermelding=<slug>). Alleen nog niet-lid vermeldingen: als hij
+ * inmiddels al lid is, is de claim niet meer relevant.
+ */
+export async function producerByClaimSlug(slug: string) {
+  const [row] = await db
+    .select({
+      id: producers.id,
+      name: producers.name,
+      city: producers.city,
+      slug: producers.slug,
+      isMember: producers.isMember,
+      status: producers.status,
+    })
+    .from(producers)
+    .where(and(eq(producers.slug, slug), eq(producers.isMember, false)));
+  return row ?? null;
+}
+
 export async function linkSellerToProducer(
   sellerId: number,
   producerId: number,

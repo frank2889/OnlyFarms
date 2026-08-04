@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/authz";
 import {
   adminSearchProducers,
+  producerByClaimSlug,
   producerForSeller,
   sellerById,
 } from "@/lib/queries/admin";
@@ -42,6 +43,8 @@ export default async function AdminSellerDetailPage({
     seller.userId ? userById(seller.userId) : Promise.resolve(null),
   ]);
   const open = seller.status === "aangemeld" || seller.status === "in_beoordeling";
+  const suggested =
+    !linked && seller.claimProducerSlug ? await producerByClaimSlug(seller.claimProducerSlug) : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -195,6 +198,35 @@ export default async function AdminSellerDetailPage({
         <section className="mb-4 rounded-tile border border-cream-200 bg-white p-4">
           <h2 className="mb-1 font-semibold">{t("admin.approveTitle")}</h2>
           <p className="mb-3 text-sm text-ink-500">{t("admin.approveExplain")}</p>
+
+          {suggested && (
+            <div className="mb-3 rounded-xl border border-terra-300 bg-terra-50 p-3">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-terra-800">
+                {t("admin.suggestedProducer")}
+              </p>
+              <form action={approveSellerAction.bind(null, seller.id)}>
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-terra-300 bg-white px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="producerId"
+                    value={suggested.id}
+                    defaultChecked={!q?.trim()}
+                    className="accent-terra-500"
+                  />
+                  <span className="min-w-0 flex-1 truncate">
+                    {suggested.name}
+                    {suggested.city ? ` · ${suggested.city}` : ""}
+                  </span>
+                </label>
+                <button
+                  type="submit"
+                  className="mt-2 rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600"
+                >
+                  {t("admin.approve")}
+                </button>
+              </form>
+            </div>
+          )}
 
           <form method="get" className="mb-3 flex gap-2">
             <input

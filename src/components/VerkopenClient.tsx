@@ -5,7 +5,9 @@ import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
 
-export default function VerkopenClient() {
+type Prefill = { slug: string; name: string; city: string | null };
+
+export default function VerkopenClient({ prefill }: { prefill: Prefill | null }) {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -28,6 +30,7 @@ export default function VerkopenClient() {
         city: form.get("city"),
         motivation: form.get("motivation"),
         acceptedTerms: form.get("acceptedTerms") === "on",
+        claimProducerSlug: prefill?.slug,
       }),
     });
 
@@ -36,20 +39,17 @@ export default function VerkopenClient() {
       setDone(true);
     } else {
       const data = await res.json().catch(() => null);
-      setErrors(data?.errors ?? [data?.error ?? "Er ging iets mis, probeer het later opnieuw."]);
+      setErrors(data?.errors ?? [data?.error ?? t("sell.genericError")]);
     }
   }
 
   if (done) {
     return (
       <main className="mx-auto max-w-xl p-8">
-        <h1 className="mb-4 text-2xl font-bold">Aanmelding ontvangen</h1>
-        <p className="text-ink-500">
-          Bedankt voor je aanmelding. We beoordelen elke aanmelding handmatig en
-          nemen contact met je op via het opgegeven e-mailadres.
-        </p>
+        <h1 className="mb-4 text-2xl font-bold">{t("sell.received")}</h1>
+        <p className="text-ink-500">{t("sell.receivedText")}</p>
         <Link href="/" className="mt-6 inline-block underline">
-          terug naar home
+          {t("sell.backHome")}
         </Link>
       </main>
     );
@@ -60,56 +60,60 @@ export default function VerkopenClient() {
   return (
     <main className="mx-auto max-w-xl p-8">
       <h1 className="mb-2 text-2xl font-bold">{t("sell.title", { brand: BRAND.name })}</h1>
-      <p className="mb-6 text-sm text-ink-500">
-        Voor bedrijven met een KVK-inschrijving. Na aanmelding volgt een
-        handmatige beoordeling. OnlyFarms is een platform dat vraag en aanbod
-        bij elkaar brengt: wij verwerken geen betalingen en zijn geen partij
-        bij de verkoop. jij blijft als verkoper zelf verantwoordelijk voor je
-        producten en voor het naleven van de regels die daarvoor gelden.
-      </p>
+      <p className="mb-6 text-sm text-ink-500">{t("sell.intro", { brand: BRAND.name })}</p>
+
+      {prefill && (
+        <p className="mb-4 inline-block rounded-full bg-terra-50 px-4 py-2 text-sm font-medium text-terra-800">
+          {prefill.city
+            ? t("sell.claimChipCity", { name: prefill.name, city: prefill.city })
+            : t("sell.claimChipNoCity", { name: prefill.name })}
+        </p>
+      )}
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Bedrijfsnaam *
-          <input name="name" required className={field} />
+          {t("sell.fieldCompanyName")}
+          <input name="name" required defaultValue={prefill?.name ?? ""} className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          KVK-nummer *
-          <input name="kvkNumber" required pattern="[0-9]{8}" title="8 cijfers" className={field} />
+          {t("sell.fieldKvk")}
+          <input
+            name="kvkNumber"
+            required
+            pattern="[0-9]{8}"
+            title={t("sell.fieldKvkHint")}
+            className={field}
+          />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Contactpersoon *
+          {t("sell.fieldContactName")}
           <input name="contactName" required className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          E-mailadres *
+          {t("sell.fieldEmail")}
           <input name="email" type="email" required className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Telefoon
+          {t("sell.fieldPhone")}
           <input name="phone" type="tel" className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Plaats *
-          <input name="city" required className={field} />
+          {t("sell.fieldCity")}
+          <input name="city" required defaultValue={prefill?.city ?? ""} className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Wat wil je aanbieden, en waarom past dat bij OnlyFarms? *
+          {t("sell.fieldMotivation", { brand: BRAND.name })}
           <textarea name="motivation" required rows={4} className={field} />
         </label>
         <label className="flex items-start gap-2 text-sm">
           <input name="acceptedTerms" type="checkbox" required className="mt-1" />
-          <span>
-            Ik ga akkoord met de voorwaarden en begrijp dat ik als verkoper
-            zelf verantwoordelijk ben voor mijn producten, de kwaliteit ervan
-            en het naleven van de geldende wet- en regelgeving. *
-          </span>
+          <span>{t("sell.fieldTerms")}</span>
         </label>
 
         {errors.length > 0 && (
-          <ul className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          <ul className="list-inside list-disc rounded-xl bg-terra-50 p-3 text-sm text-terra-800">
             {errors.map((e) => (
-              <li key={e}>• {e}</li>
+              <li key={e}>{e}</li>
             ))}
           </ul>
         )}
@@ -119,7 +123,7 @@ export default function VerkopenClient() {
           disabled={submitting}
           className="rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600 disabled:opacity-50"
         >
-          {submitting ? "Versturen…" : "Aanmelding versturen"}
+          {submitting ? t("sell.submitting") : t("sell.submit")}
         </button>
       </form>
     </main>

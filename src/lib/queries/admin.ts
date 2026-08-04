@@ -287,6 +287,9 @@ export type ProducerPatch = Partial<{
   products: string[];
   photos: string[];
   photosPending: string[];
+  organic: boolean;
+  vendingMachine: boolean;
+  paymentMethods: string | null;
 }>;
 
 /**

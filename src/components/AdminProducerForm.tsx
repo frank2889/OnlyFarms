@@ -14,7 +14,8 @@ export type ProducerFormField =
   | "contact"
   | "description"
   | "openingHours"
-  | "products";
+  | "products"
+  | "practical";
 
 const ALL_FIELDS: ProducerFormField[] = [
   "name",
@@ -26,6 +27,7 @@ const ALL_FIELDS: ProducerFormField[] = [
   "description",
   "openingHours",
   "products",
+  "practical",
 ];
 
 const KIND_OPTIONS = [
@@ -188,6 +190,39 @@ export default function AdminProducerForm({ producerId, initial, editableFields,
             rows={4}
             className={field}
           />
+        </div>
+      )}
+
+      {fields.has("practical") && (
+        <div className="flex flex-col gap-3">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={form.organic}
+              onChange={(e) => set("organic", e.target.checked)}
+              className="h-4 w-4 accent-terra-500"
+            />
+            {t("admin.formOrganic")}
+          </label>
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={form.vendingMachine}
+              onChange={(e) => set("vendingMachine", e.target.checked)}
+              className="h-4 w-4 accent-terra-500"
+            />
+            {t("admin.formVending")}
+          </label>
+          <div>
+            <label className={label} htmlFor="p-payment">{t("admin.formPayment")}</label>
+            <input
+              id="p-payment"
+              value={form.paymentMethods}
+              onChange={(e) => set("paymentMethods", e.target.value)}
+              placeholder={t("admin.formPaymentPlaceholder")}
+              className={field}
+            />
+          </div>
         </div>
       )}
 

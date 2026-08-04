@@ -60,6 +60,9 @@ export default async function AdminProducerDetailPage({
             description: producer.description ?? "",
             openingHours: producer.openingHours ?? "",
             products: producer.products,
+            organic: producer.organic ?? false,
+            vendingMachine: producer.vendingMachine ?? false,
+            paymentMethods: producer.paymentMethods ?? "",
           }}
         />
       </div>

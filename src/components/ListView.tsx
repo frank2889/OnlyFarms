@@ -37,6 +37,7 @@ import {
 } from "@/components/icons";
 import {
   addItemAction,
+  restoreBoughtAction,
   clearBoughtAction,
   deleteListAction,
   nearbyForItemAction,
@@ -81,7 +82,8 @@ type OptAction =
   | { type: "remove"; id: number }
   | { type: "add"; item: ListItem }
   | { type: "setQty"; id: number; qty: string }
-  | { type: "clearBought" };
+  | { type: "clearBought" }
+  | { type: "restoreBought" };
 
 function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
   switch (action.type) {
@@ -115,6 +117,11 @@ function optimisticReducer(state: Snapshot, action: OptAction): Snapshot {
       };
     case "clearBought":
       return { ...state, bought: [] };
+    case "restoreBought":
+      return {
+        open: [...state.open, ...state.bought.map((i) => ({ ...i, checked: false }))],
+        bought: [],
+      };
   }
 }
 
@@ -1190,12 +1197,20 @@ export default function ListView({
         <>
           <div className="mt-6 mb-2 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-ink-500">{t("lists.recentlyBought")}</h2>
-            <button
-              onClick={() => act(() => clearBoughtAction(list.token), { type: "clearBought" })}
-              className="text-xs text-ink-500 underline hover:text-terra-700"
-            >
-              Wis gekochte items
-            </button>
+            <span className="flex gap-3">
+              <button
+                onClick={() => act(() => restoreBoughtAction(list.token), { type: "restoreBought" })}
+                className="text-xs font-medium text-terra-700 underline"
+              >
+                {t("lists.restoreBought")}
+              </button>
+              <button
+                onClick={() => act(() => clearBoughtAction(list.token), { type: "clearBought" })}
+                className="text-xs text-ink-500 underline hover:text-terra-700"
+              >
+                Wis gekochte items
+              </button>
+            </span>
           </div>
           <ul className="flex flex-col gap-1">
             {snapshot.bought.slice(0, 10).map((item) => (

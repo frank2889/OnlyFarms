@@ -16,7 +16,7 @@ Bron: Frank, 4 aug 2026 (aangeleverd onder de werknaam "Raccolo"; de productnaam
 - #49 (laatst gecontroleerd tonen) en #50 (beschikbaarheid bevestigen): "Alles klopt nog"-knop + laatst-bevestigd-datum, publiek zichtbaar
 - #67 (zien wie toevoegde, deels): Cheffs-berichten dragen de afzendernaam; itemniveau-attributie nog niet
 - #75-77 (seizoen): seizoenstegels en swipe-deck bestaan; regionale weging nog niet
-- #81-82 (vorige lijst/veelgekocht): "Eerder gekocht"-rij, swipe-winkelmodus, lijsten-met-teller op /profiel
+- #81-82 (vorige lijst/veelgekocht): "Alles terug op de lijst"-knop (één tik, 4 aug 2026), "Eerder gekocht"-rij, swipe-winkelmodus, lijsten-met-teller op /profiel
 - #86 (notificatiefrequentie zelf bepalen, fundament): account-brede instellingenstructuur op /profiel
 
 **Nu meetbaar dankzij het event-fundament**: #1-10 (startpercentages), #21-22 (registratie-timing), #39-41 (match-openratio), #42-43/#59-60 (routeklikken), #61-63 (delen), #81/#88-90 (retentie via terugkeer-analyse).

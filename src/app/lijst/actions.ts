@@ -16,6 +16,7 @@ import {
   getListItems,
   removeItem,
   removeOpenItemByCatalogKey,
+  restoreBought,
   setItemChecked,
   clearBought,
   deleteList,
@@ -269,6 +270,13 @@ export async function updateItemAction(
     dueAt:
       patch.dueAt === undefined ? undefined : patch.dueAt ? new Date(patch.dueAt) : null,
   });
+  await bump(token);
+}
+
+/** CRO #81: de vorige boodschappen in een tik weer op de lijst */
+export async function restoreBoughtAction(token: string): Promise<void> {
+  const list = await requireList(token);
+  await restoreBought(list.id);
   await bump(token);
 }
 

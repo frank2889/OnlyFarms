@@ -176,6 +176,15 @@ export async function updateItem(
   await touch(listId);
 }
 
+/** "Vorige lijst met een tik herhalen" (CRO #81): alles wat gekocht is weer open zetten */
+export async function restoreBought(listId: number): Promise<void> {
+  await db
+    .update(listItems)
+    .set({ checked: false, checkedAt: null })
+    .where(and(eq(listItems.listId, listId), eq(listItems.checked, true)));
+  await touch(listId);
+}
+
 export async function clearBought(listId: number): Promise<void> {
   await db
     .delete(listItems)

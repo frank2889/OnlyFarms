@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/authz";
-import { adminStats, queueCounts } from "@/lib/queries/stats";
+import { adminStats, eventCounts, queueCounts } from "@/lib/queries/stats";
 import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,20 @@ function StatTile({ value, label, href }: { value: number; label: string; href?:
 export default async function AdminDashboardPage() {
   const admin = await requireAdminUser();
   if (!admin) redirect("/inloggen");
-  const [stats, queues] = await Promise.all([adminStats(), queueCounts()]);
+  const [stats, queues, conversions] = await Promise.all([
+    adminStats(),
+    queueCounts(),
+    eventCounts(),
+  ]);
+  const EVENT_LABELS: Record<string, string> = {
+    lijst_gestart: t("admin.eventListStarted"),
+    product_toegevoegd: t("admin.eventItemAdded"),
+    locatie_ingesteld: t("admin.eventLocationSet"),
+    match_bekeken: t("admin.eventMatchViewed"),
+    route_geopend: t("admin.eventRouteOpened"),
+    lijst_gedeeld: t("admin.eventListShared"),
+    producent_aangemeld: t("admin.eventSellerApplied"),
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16">
@@ -41,6 +54,36 @@ export default async function AdminDashboardPage() {
         <StatTile value={queues.pendingReviews} label={t("admin.statPendingReviews")} href="/beheer/ervaringen" />
         <StatTile value={queues.pendingOffers} label={t("admin.statPendingOffers")} href="/beheer/aanbod" />
       </div>
+
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
+        {t("admin.statsConversionsTitle")}
+      </h2>
+      {conversions.length === 0 ? (
+        <p className="mb-6 rounded-tile border border-dashed border-cream-300 p-4 text-sm text-ink-500">
+          {t("admin.conversionsEmpty")}
+        </p>
+      ) : (
+        <div className="mb-6 overflow-hidden rounded-tile border border-cream-200 bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-cream-200 text-left text-xs uppercase tracking-wide text-ink-500">
+                <th className="px-4 py-2 font-semibold">{t("admin.conversionMoment")}</th>
+                <th className="px-4 py-2 text-right font-semibold">7 {t("admin.days")}</th>
+                <th className="px-4 py-2 text-right font-semibold">30 {t("admin.days")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {conversions.map((c) => (
+                <tr key={c.name} className="border-b border-cream-100 last:border-0">
+                  <td className="px-4 py-2">{EVENT_LABELS[c.name] ?? c.name}</td>
+                  <td className="px-4 py-2 text-right font-medium">{c.last7}</td>
+                  <td className="px-4 py-2 text-right text-ink-500">{c.last30}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
         {t("admin.statsProducersTitle")}

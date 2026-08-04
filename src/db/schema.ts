@@ -5,6 +5,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -374,3 +375,20 @@ export const reports = pgTable("reports", {
     .notNull()
     .defaultNow(),
 });
+
+// Eigen event-log voor de primaire conversiemomenten uit het CRO-plan
+// (docs/CRO-HYPOTHESES.md): privacyvriendelijk (geen extern script, geen
+// cookies), geaggregeerd uitgelezen op het beheer-dashboard. Meting mag
+// nooit het kernpad breken: schrijven gebeurt altijd best-effort.
+export const events = pgTable(
+  "events",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+    listId: integer("list_id").references(() => lists.id, { onDelete: "set null" }),
+    properties: jsonb("properties"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_name_created_idx").on(t.name, t.createdAt)]
+);

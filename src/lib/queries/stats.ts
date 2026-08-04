@@ -30,6 +30,25 @@ export async function queueCounts(): Promise<QueueCounts> {
   };
 }
 
+export type EventCount = { name: string; last7: number; last30: number };
+
+/** Conversiemomenten (CRO) voor het beheer-dashboard, geaggregeerd */
+export async function eventCounts(): Promise<EventCount[]> {
+  const result = await db.execute(sql`
+    select name,
+      count(*) filter (where created_at >= now() - interval '7 days')::int as last7,
+      count(*) filter (where created_at >= now() - interval '30 days')::int as last30
+    from events
+    group by name
+    order by name
+  `);
+  return (result.rows as { name: string; last7: number; last30: number }[]).map((r) => ({
+    name: r.name,
+    last7: Number(r.last7),
+    last30: Number(r.last30),
+  }));
+}
+
 export type AdminStats = {
   producers: {
     totaal: number;

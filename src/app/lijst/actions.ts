@@ -6,6 +6,7 @@ import { claimList, householdForUser, membersOfHousehold, userById } from "@/lib
 import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 import { recordSwipeSignal } from "@/lib/queries/swipe";
+import { trackConversion } from "@/lib/events";
 import { sendListMessage } from "@/lib/queries/chat";
 
 import {
@@ -56,6 +57,7 @@ export async function nearbyForItemAction(
     tokens: item.matchTokens,
     limit: 8,
   });
+  await trackConversion("match_bekeken", { listId: list.id, properties: { key: catalogKey } });
   return producers.map((p) => ({
     name: p.name,
     slug: p.slug,
@@ -88,6 +90,7 @@ export async function createListAction(name: string): Promise<{ token: string; n
     await claimList(list.id, userId, household?.id ?? null);
   }
   await trackEvent("list_created", { listName: list.name });
+  await trackConversion("lijst_gestart", { userId, listId: list.id });
   return { token: list.token, name: list.name };
 }
 
@@ -111,6 +114,10 @@ export async function addItemAction(
   }
   await addItem(list.id, { ...item, storeSuggestedBy });
   await trackEvent("item_added", { item: item.catalogKey ?? item.label });
+  await trackConversion("product_toegevoegd", {
+    listId: list.id,
+    properties: { key: item.catalogKey ?? item.label },
+  });
   await bump(token);
 }
 
@@ -266,6 +273,7 @@ export async function setLocationByQueryAction(
     lat: result.lat,
     lng: result.lng,
   });
+  await trackConversion("locatie_ingesteld", { listId: list.id });
   await bump(token);
   return { ok: true, label: result.label };
 }
@@ -279,6 +287,7 @@ export async function setLocationByCoordsAction(
   // Toon wélk punt de app gebruikt — geolocation op desktop kan er flink naast zitten
   const label = await reverseGeocode(lat, lng);
   await setListLocation(list.id, { postcode: label ?? "Mijn locatie", lat, lng });
+  await trackConversion("locatie_ingesteld", { listId: list.id });
   await bump(token);
 }
 

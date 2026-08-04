@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { sellers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
+import { trackConversion } from "@/lib/events";
 
 export const runtime = "nodejs";
 
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
       })
       .returning({ id: sellers.id });
 
+    await trackConversion("producent_aangemeld");
     return NextResponse.json({ ok: true, id: row.id }, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -14,6 +14,7 @@ import { trackEvent } from "@/lib/klaviyo";
 import { recordSwipeSignal } from "@/lib/queries/swipe";
 import { trackConversion } from "@/lib/events";
 import { countRecentMessagesByUser, sendListMessage } from "@/lib/queries/chat";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 import {
   addItem,
@@ -113,6 +114,10 @@ async function bump(token: string) {
 }
 
 export async function createListAction(name: string): Promise<{ token: string; name: string }> {
+  // Ruime limiet tegen runaway scripts, niet tegen normaal gebruik
+  if (isRateLimited(`create-list:${await clientIp()}`, 30, 60_000)) {
+    throw new Error("Te veel lijsten in korte tijd. Probeer het over een minuutje opnieuw.");
+  }
   const list = await createList(name);
   // Ingelogd? Dan hoort de lijst bij het account en het huishouden (family account)
   const userId = await currentUserId();
@@ -158,6 +163,10 @@ export async function addItemAction(
   }
 ): Promise<void> {
   const list = await requireList(token);
+  // Ruime limiet tegen runaway scripts, niet tegen een gezin dat een grote lijst opbouwt
+  if (isRateLimited(`add-item:${await clientIp()}`, 120, 60_000)) {
+    throw new Error("Te veel wijzigingen in korte tijd. Probeer het over een minuutje opnieuw.");
+  }
   let storeSuggestedBy: string | null | undefined;
   if (item.store) {
     const userId = await currentUserId();

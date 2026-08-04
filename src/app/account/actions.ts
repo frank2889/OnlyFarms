@@ -24,6 +24,7 @@ import {
 } from "@/lib/queries/accounts";
 import { resetTasteProfile } from "@/lib/queries/swipe";
 import { getListByToken } from "@/lib/queries/lists";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -33,6 +34,8 @@ export async function registerAction(input: {
   password: string;
   inviteCode?: string;
 }): Promise<Result> {
+  if (isRateLimited(`register:${await clientIp()}`, 10, 60 * 60_000))
+    return { ok: false, error: "Even rustig aan: probeer het over een uur opnieuw." };
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
   if (name.length < 2) return { ok: false, error: "Vul je naam in." };

@@ -20,6 +20,7 @@
     "errorTitle": "Er ging iets mis",
     "errorText": "Probeer het nog een keer. Blijft het misgaan, kom dan later terug.",
     "errorRetry": "Probeer opnieuw",
+    "tooFast": "Even rustig aan: probeer het over een paar minuten opnieuw.",
     "cancel": "Annuleren"
   },
   "profile": {

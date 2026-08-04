@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { sellers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { trackConversion } from "@/lib/events";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,12 @@ type ApplyBody = {
 };
 
 export async function POST(req: NextRequest) {
+  if (isRateLimited(`sellers-apply:${await clientIp()}`, 5, 60 * 60_000)) {
+    return NextResponse.json(
+      { errors: ["Even rustig aan: probeer het over een uur opnieuw."] },
+      { status: 429 }
+    );
+  }
   let body: ApplyBody;
   try {
     body = await req.json();

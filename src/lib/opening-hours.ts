@@ -154,6 +154,29 @@ export function daysSummary(text: string | null): string | null {
     : names[0];
 }
 
+export type NextOpenDay = { label: string; inDays: number };
+
+/**
+ * Eerstvolgende dag met een interval in deze tekst ("vandaag"/"morgen"/
+ * dagnaam), gezien vanaf nu (Europe/Amsterdam). Voor marktdag-tips: een markt
+ * heeft meestal maar één of twee dagen per week. `null` = niets herkend.
+ */
+export function nextOpenDay(text: string | null): NextOpenDay | null {
+  if (!text) return null;
+  const intervals = parseHours(text);
+  if (!intervals.length) return null;
+  const days = new Set(intervals.map((i) => i.day));
+  const { day: todayDay } = nowInAmsterdam();
+  for (let offset = 0; offset < 7; offset++) {
+    const day = (todayDay + offset) % 7;
+    if (days.has(day)) {
+      const label = offset === 0 ? "vandaag" : offset === 1 ? "morgen" : DAY_NAMES[day];
+      return { label, inDays: offset };
+    }
+  }
+  return null;
+}
+
 export function nowInAmsterdam(): { day: number; minutes: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Amsterdam",

@@ -214,6 +214,8 @@
     "orderCategories": "Volgorde aanpassen",
     "viewByCategory": "Categorie",
     "viewByDay": "Dag",
+    "marketTip": "{day} markt in {city} ({km} km): {n} boodschappen van je lijst vind je daar vaak",
+    "marketSource": "Bron: OpenStreetMap",
     "dueLabel": "Uiterlijk",
     "dueToday": "Vandaag",
     "dueTomorrow": "Morgen",

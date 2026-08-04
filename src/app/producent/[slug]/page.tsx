@@ -4,7 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
-import { producerBySlug } from "@/lib/queries/producers";
+import { nearbyProducers, producerBySlug } from "@/lib/queries/producers";
 import { publicOffersForSeller } from "@/lib/queries/portal";
 import { hoursStatusText } from "@/lib/opening-hours";
 import { LeafIcon, RouteIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
@@ -12,6 +12,7 @@ import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 import AskChefsButton from "@/components/AskChefsButton";
 import JsonLd from "@/components/JsonLd";
+import ProducerHeroCta from "@/components/ProducerHeroCta";
 import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -45,6 +46,21 @@ export default async function ProducerPage({
   const offers = producer.claimedBySellerId
     ? await publicOffersForSeller(producer.claimedBySellerId)
     : [];
+
+  // Lokale interne linking (SEO-mesh) en handig voor de bezoeker: buren binnen 15 km
+  const nearby =
+    producer.lat != null && producer.lng != null
+      ? (
+          await nearbyProducers({
+            lat: producer.lat,
+            lng: producer.lng,
+            radiusKm: 15,
+            limit: 7,
+          })
+        ).producers
+          .filter((p) => p.id !== producer.id)
+          .slice(0, 6)
+      : [];
 
   const crumbs = producerBreadcrumbs(producer);
 
@@ -117,6 +133,13 @@ export default async function ProducerPage({
         )}
         <AskChefsButton producerSlug={producer.slug} producerName={producer.name} />
       </div>
+
+      {/* Conversie-ingang voor de Google-bezoeker: alles in een tik op je lijst */}
+      <ProducerHeroCta
+        producerName={producer.name}
+        producerSlug={producer.slug}
+        products={producer.products}
+      />
 
       {producer.photos.length > 0 && (
         <div className="mb-6 grid grid-cols-2 gap-2">
@@ -253,6 +276,36 @@ export default async function ProducerPage({
             {t("producers.claimCta")}
           </Link>
         </div>
+      )}
+
+      {nearby.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-lg font-bold">{t("producers.nearbyTitle")}</h2>
+          <ul className="flex flex-col gap-2">
+            {nearby.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/producent/${p.slug}`}
+                  className="flex items-center gap-3 rounded-tile border border-cream-200 bg-white p-3 hover:border-terra-400"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium">{p.name}</span>
+                    <p className="truncate text-sm text-ink-500">
+                      {[p.city, p.distanceKm != null ? t("common.distanceKm", { km: p.distanceKm.toFixed(1) }) : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  {p.isMember && (
+                    <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
+                      {t("producers.memberBadge")}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <ReportForm producerId={producer.id} />

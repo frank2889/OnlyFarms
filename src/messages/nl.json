@@ -17,6 +17,9 @@
     "close": "Sluiten",
     "save": "Opslaan",
     "undo": "Ongedaan maken",
+    "errorTitle": "Er ging iets mis",
+    "errorText": "Probeer het nog een keer. Blijft het misgaan, kom dan later terug.",
+    "errorRetry": "Probeer opnieuw",
     "cancel": "Annuleren"
   },
   "profile": {
@@ -170,7 +173,10 @@
     "clearBought": "Wis gekochte items",
     "clearedUndoLabel": "{n} gekochte items gewist",
     "restoredUndoLabel": "{n} items terug op de lijst",
-    "manageDenied": "Je hebt geen rechten om deze lijst te beheren."
+    "manageDenied": "Je hebt geen rechten om deze lijst te beheren.",
+    "listGoneTitle": "Deze lijst bestaat niet meer",
+    "listGoneText": "Hij is verwijderd, of de link klopt niet meer. Begin gerust een nieuwe.",
+    "startNewList": "Nieuwe lijst starten"
   },
   "producers": {
     "title": "Lokale producenten",

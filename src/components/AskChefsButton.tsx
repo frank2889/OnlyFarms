@@ -26,7 +26,7 @@ export default function AskChefsButton({
   producerName: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<"idle" | "sent" | "login">("idle");
+  const [state, setState] = useState<"idle" | "sent" | "login" | "limited">("idle");
   const [sending, startTransition] = useTransition();
 
   const rawLists = useSyncExternalStore(
@@ -54,7 +54,7 @@ export default function AskChefsButton({
     if (sending) return;
     startTransition(async () => {
       const result = await sendChatMessageAction(list.token, preset, null, producerSlug);
-      setState(result.ok ? "sent" : "login");
+      setState(result.ok ? "sent" : result.error === "te-snel" ? "limited" : "login");
     });
   }
 
@@ -118,6 +118,8 @@ export default function AskChefsButton({
                   {t("chefs.loginPrompt")}
                 </Link>
               </p>
+            ) : state === "limited" ? (
+              <p className="text-sm text-terra-700">{t("chefs.rateLimited")}</p>
             ) : (
               <div>
                 <p className="mb-2 text-sm font-medium">

@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listMessages, users } from "@/db/schema";
 
@@ -13,7 +13,7 @@ export type ChatMessage = {
   createdAt: Date;
 };
 
-/** "Cheffs": de laatste berichten van een lijst, oudste eerst (chatvolgorde) */
+/** "Cheffs": de nieuwste `limit` berichten van een lijst, in chatvolgorde (oudste eerst) */
 export async function messagesForList(listId: number, limit = 50): Promise<ChatMessage[]> {
   const rows = await db
     .select({
@@ -29,9 +29,25 @@ export async function messagesForList(listId: number, limit = 50): Promise<ChatM
     .from(listMessages)
     .innerJoin(users, eq(users.id, listMessages.userId))
     .where(eq(listMessages.listId, listId))
-    .orderBy(asc(listMessages.createdAt), asc(listMessages.id))
+    // Nieuwste `limit` berichten ophalen (desc), daarna omkeren naar
+    // chatvolgorde: met alleen `asc` + limit kreeg je de oudste in plaats van
+    // de nieuwste berichten te zien zodra een lijst er meer dan `limit` had.
+    .orderBy(desc(listMessages.createdAt), desc(listMessages.id))
     .limit(limit);
-  return rows;
+  return rows.reverse();
+}
+
+/** Rate limit voor Cheffs: hoeveel berichten stuurde deze gebruiker de laatste `windowMs`? */
+export async function countRecentMessagesByUser(
+  userId: number,
+  windowMs: number
+): Promise<number> {
+  const since = new Date(Date.now() - windowMs);
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(listMessages)
+    .where(and(eq(listMessages.userId, userId), gte(listMessages.createdAt, since)));
+  return row?.n ?? 0;
 }
 
 export async function sendListMessage(

@@ -100,7 +100,8 @@
     "producerPreset2": "Zal ik hier iets van de lijst halen?",
     "producerPreset3": "Kennen we deze? Is die goed?",
     "sentToList": "Verstuurd naar de cheffs van \"{list}\".",
-    "viewInList": "Bekijk in je lijst"
+    "viewInList": "Bekijk in je lijst",
+    "rateLimited": "Even rustig aan: probeer het over een minuutje opnieuw."
   },
   "home": {
     "heroTitle": "Je boodschappenlijst, vers van de lokale producent",

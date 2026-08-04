@@ -51,7 +51,7 @@ import {
   updateItemAction,
   type NearbyLite,
 } from "@/app/lijst/actions";
-import { hoursStatusText } from "@/lib/opening-hours";
+import { hoursStatus, hoursStatusText } from "@/lib/opening-hours";
 import type { Producer } from "@/lib/types";
 import NearbyWatch from "@/components/NearbyWatch";
 import ChefsSheet from "@/components/ChefsSheet";
@@ -122,6 +122,20 @@ const PRIORITY_RANK: Record<string, number> = { dringend: 0, normaal: 1, "kan-wa
 
 function routeUrl(lat: number | null, lng: number | null): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}
+
+/** "Nu open" springt eruit (CRO): chip als open, anders stille grijze tekst */
+function HoursBadge({ hours }: { hours: string | null }) {
+  const status = hoursStatus(hours);
+  if (!status) return null;
+  if (status.kind === "open") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-full bg-terra-100 px-2 py-0.5 text-xs font-medium text-terra-700">
+        {hoursStatusText(hours)}
+      </span>
+    );
+  }
+  return <span className="text-xs text-ink-500">{hoursStatusText(hours)}</span>;
 }
 
 function subscribeStorage(cb: () => void) {
@@ -805,6 +819,30 @@ export default function ListView({
         </div>
       )}
 
+      {/* CRO #4/#41: "X van je Y boodschappen zijn lokaal verkrijgbaar" */}
+      {list.lat != null &&
+        snapshot.open.length > 0 &&
+        (() => {
+          const withMatch = snapshot.open.filter((i) => {
+            const m = i.catalogKey ? matches[i.catalogKey] : undefined;
+            return m && m.exact.length + m.category.length > 0;
+          }).length;
+          if (withMatch === 0) return null;
+          return (
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="mb-4 flex w-full items-center justify-between gap-2 rounded-tile bg-terra-50 px-4 py-3 text-left"
+            >
+              <span className="text-sm font-medium text-terra-800">
+                {t("lists.localSummary", { n: withMatch, total: snapshot.open.length })}
+              </span>
+              <span className="shrink-0 text-sm font-medium text-terra-700 underline">
+                {t("swipe.viewList")}
+              </span>
+            </button>
+          );
+        })()}
+
       {/* "Je bent vlakbij"-melding: alleen zinvol met locatie en matches */}
       {list.lat != null && (
         <NearbyWatch
@@ -1445,17 +1483,19 @@ export default function ListView({
                           </a>
                         )}
                       </div>
-                      <p className="text-ink-500">
-                        {[
-                          p.city,
-                          `${p.distanceKm.toFixed(1)} km · ${t("common.travel", {
-                            min: travelInfo(p.distanceKm).minutes,
-                            mode: travelInfo(p.distanceKm).mode,
-                          })}`,
-                          hoursStatusText(p.openingHours),
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
+                      <p className="flex flex-wrap items-center gap-x-2 text-ink-500">
+                        <span>
+                          {[
+                            p.city,
+                            `${p.distanceKm.toFixed(1)} km · ${t("common.travel", {
+                              min: travelInfo(p.distanceKm).minutes,
+                              mode: travelInfo(p.distanceKm).mode,
+                            })}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                        <HoursBadge hours={p.openingHours} />
                       </p>
                     </li>
                   ))}
@@ -1754,6 +1794,7 @@ function ProducerRows({
                   })}
                 </span>
               )}
+              <HoursBadge hours={p.openingHours} />
               <a
                 href={routeUrl(p.lat, p.lng)}
                 target="_blank"

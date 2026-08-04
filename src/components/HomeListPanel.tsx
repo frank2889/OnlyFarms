@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createListAction } from "@/app/lijst/actions";
+import { createListAction, createSampleListAction } from "@/app/lijst/actions";
 import { t } from "@/lib/i18n";
 import { ListIcon, PlusIcon } from "@/components/icons";
 
@@ -38,17 +38,30 @@ export default function HomeListPanel({
     return [...serverLists, ...local.filter((l) => !serverTokens.has(l.token))].slice(0, 4);
   }, [rawLists, serverLists]);
 
+  function remember(token: string, listName: string) {
+    try {
+      const stored: StoredList[] = JSON.parse(localStorage.getItem("of_lists") ?? "[]");
+      localStorage.setItem(
+        "of_lists",
+        JSON.stringify([{ token, name: listName }, ...stored].slice(0, 20))
+      );
+    } catch {}
+  }
+
   function create(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
       const list = await createListAction(name || "Boodschappen");
-      try {
-        const stored: StoredList[] = JSON.parse(localStorage.getItem("of_lists") ?? "[]");
-        localStorage.setItem(
-          "of_lists",
-          JSON.stringify([{ token: list.token, name: list.name }, ...stored].slice(0, 20))
-        );
-      } catch {}
+      remember(list.token, list.name);
+      router.push(`/lijst/${list.token}`);
+    });
+  }
+
+  // CRO #7: zonder typen meteen een gevulde lijst en dus meteen lokale matches
+  function createSample() {
+    startTransition(async () => {
+      const list = await createSampleListAction();
+      remember(list.token, "Boodschappen");
       router.push(`/lijst/${list.token}`);
     });
   }
@@ -70,6 +83,15 @@ export default function HomeListPanel({
           <PlusIcon width={16} height={16} /> {t("home.ctaList")}
         </button>
       </form>
+      <p className="mt-2 text-center text-sm text-ink-500">
+        <button
+          onClick={createSample}
+          disabled={pending}
+          className="text-terra-700 underline disabled:opacity-50"
+        >
+          {t("home.sampleList")}
+        </button>
+      </p>
 
       {myLists.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1.5">

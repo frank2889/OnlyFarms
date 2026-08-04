@@ -230,6 +230,19 @@ export const BASICS: string[] = [
   "jam",
 ];
 
+// Voorbeeldlijst (CRO #7): populaire items met brede lokale dekking, zodat een
+// nieuwe gebruiker meteen matches ziet zonder eerst te hoeven typen.
+export const SAMPLE_LIST: string[] = [
+  "melk",
+  "eieren",
+  "brood",
+  "kaas",
+  "boter",
+  "appels",
+  "aardappelen",
+  "tomaten",
+];
+
 export function catalogItem(key: string): CatalogItem | undefined {
   return CATALOG.find((i) => i.key === key);
 }

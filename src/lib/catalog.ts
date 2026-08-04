@@ -247,6 +247,36 @@ export function catalogItem(key: string): CatalogItem | undefined {
   return CATALOG.find((i) => i.key === key);
 }
 
+/** Alle geldige producten-tokens (waarop de matching daadwerkelijk kijkt) */
+export const KNOWN_TOKENS: string[] = [
+  ...new Set(CATALOG.flatMap((item) => item.matchTokens)),
+].sort();
+
+/**
+ * Tokens gegroepeerd per categorie, voor een chip-picker. Een token hoort bij
+ * de categorie van "zijn" catalogusitem (waar token === item.key); tokens
+ * zonder zo'n zelfdefiniërend item (bijv. "zaden", "streekproducten") krijgen
+ * de categorie van het eerste item waarin ze voorkomen.
+ */
+export function tokensByCategory(): { category: CategoryKey; label: string; tokens: string[] }[] {
+  const byToken = new Map<string, CategoryKey>();
+  for (const item of CATALOG) {
+    for (const token of item.matchTokens) {
+      if (!byToken.has(token) || item.key === token) byToken.set(token, item.category);
+    }
+  }
+  const grouped = new Map<CategoryKey, Set<string>>();
+  for (const [token, category] of byToken) {
+    if (!grouped.has(category)) grouped.set(category, new Set());
+    grouped.get(category)!.add(token);
+  }
+  return CATEGORIES.filter((c) => grouped.has(c.key)).map((c) => ({
+    category: c.key,
+    label: c.label,
+    tokens: [...grouped.get(c.key)!].sort(),
+  }));
+}
+
 /** Producten-token van een producent naar het best passende catalogusitem */
 export function itemForToken(token: string): CatalogItem | undefined {
   return (

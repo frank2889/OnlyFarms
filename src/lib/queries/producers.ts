@@ -27,6 +27,7 @@ const baseColumns = {
   description: producers.description,
   status: producers.status,
   lastVerifiedAt: producers.lastVerifiedAt,
+  closedUntil: producers.closedUntil,
 };
 
 function distanceKm(lat: number, lng: number) {

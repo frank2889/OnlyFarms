@@ -83,6 +83,9 @@ export default async function ProducerPage({
       ? await publishedExperiencesForSeller(producer.claimedBySellerId)
       : [];
 
+  // eslint-disable-next-line react-hooks/purity -- klokvergelijking voor vakantiestatus is hier bewust
+  const isOnVacation = producer.closedUntil != null && producer.closedUntil.getTime() > Date.now();
+
   const ALCOHOL_TOKENS = ["bier", "wijn", "cider"];
   const showsNix18 =
     producer.kind === "brouwerij" ||
@@ -331,22 +334,35 @@ export default async function ProducerPage({
             </dd>
           </div>
         )}
-        {producer.openingHours && (
+        {(producer.openingHours || isOnVacation) && (
           <div>
             <dt className="text-sm font-semibold text-ink-500">{t("producers.openingHours")}</dt>
-            {(() => {
-              const status = hoursStatusText(producer.openingHours);
-              return status ? (
-                <dd
-                  className={`mt-1 ${
-                    status.startsWith("Nu open") ? "font-medium text-terra-700" : ""
-                  }`}
-                >
-                  {status}
-                </dd>
-              ) : null;
-            })()}
-            <dd className="mt-1 text-sm text-ink-500">{producer.openingHours}</dd>
+            {isOnVacation ? (
+              <dd className="mt-1 font-medium text-terra-700">
+                {t("producers.closedUntil", {
+                  date: producer.closedUntil!.toLocaleDateString("nl-NL", {
+                    day: "numeric",
+                    month: "long",
+                  }),
+                })}
+              </dd>
+            ) : (
+              (() => {
+                const status = hoursStatusText(producer.openingHours);
+                return status ? (
+                  <dd
+                    className={`mt-1 ${
+                      status.startsWith("Nu open") ? "font-medium text-terra-700" : ""
+                    }`}
+                  >
+                    {status}
+                  </dd>
+                ) : null;
+              })()
+            )}
+            {producer.openingHours && (
+              <dd className="mt-1 text-sm text-ink-500">{producer.openingHours}</dd>
+            )}
           </div>
         )}
         <div className="flex flex-wrap gap-3">

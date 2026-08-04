@@ -8,6 +8,7 @@ import { BRAND } from "@/lib/brand";
 import { boughtBefore, getListByToken, getListItems } from "@/lib/queries/lists";
 import { messagesForList } from "@/lib/queries/chat";
 import { nearbyCountsByToken, nearbyProducers } from "@/lib/queries/producers";
+import { openFirst } from "@/lib/opening-hours";
 import type { ItemMatch } from "@/lib/types";
 import ListView from "@/components/ListView";
 import ClaimListButton from "@/components/ClaimListButton";
@@ -57,13 +58,14 @@ export default async function ListPage({
             : Promise.resolve({ producers: [], usedFallback: false }),
         ]);
         const exactIds = new Set(exactResult.producers.map((p) => p.id));
-        const exact = exactResult.usedFallback ? [] : exactResult.producers;
+        // "Nu open" eerst (CRO: open locaties krijgen voorrang), daarbinnen op afstand
+        const exact = exactResult.usedFallback ? [] : openFirst(exactResult.producers);
         matches[key] = {
           catalogKey: key,
           exact,
           category: categoryResult.usedFallback
             ? []
-            : categoryResult.producers.filter((p) => !exactIds.has(p.id)).slice(0, 5),
+            : openFirst(categoryResult.producers.filter((p) => !exactIds.has(p.id)).slice(0, 5)),
           usedFallback:
             exact.length === 0 && (categoryResult.usedFallback || categoryResult.producers.length === 0),
         };

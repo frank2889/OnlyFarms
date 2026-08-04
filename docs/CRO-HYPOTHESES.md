@@ -8,6 +8,9 @@ Bron: Frank, 4 aug 2026 (aangeleverd onder de werknaam "Raccolo"; de productnaam
 
 **Al gedekt door gebouwde features** (stand 4 aug 2026):
 
+- #4/#41 (lokale samenvatting bovenaan de lijst): tikbare banner "X van je Y boodschappen zijn lokaal verkrijgbaar" (4 aug 2026)
+- #6/#18/#43 ("Nu open" prioriteren): open producenten eerst in matches + terra-chip (4 aug 2026)
+- #7/#27-28 (voorbeeldlijst): één tik vanaf de homepage, 8 populaire items met brede dekking (4 aug 2026)
 - #16 (zelf reisafstand kiezen): straal-instelling per lijst + account-brede vlakbij-radius op /profiel
 - #44 (herkenbare foto) en #45 (praktische info: pinnen/automaat): volledigheids-checklist en praktisch-blok in het verkopersportaal
 - #49 (laatst gecontroleerd tonen) en #50 (beschikbaarheid bevestigen): "Alles klopt nog"-knop + laatst-bevestigd-datum, publiek zichtbaar

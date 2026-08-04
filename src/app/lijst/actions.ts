@@ -27,7 +27,8 @@ import {
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
 import { nearbyProducers, producerBySlug, searchProducersByName } from "@/lib/queries/producers";
-import { catalogItem } from "@/lib/catalog";
+import { openFirst } from "@/lib/opening-hours";
+import { SAMPLE_LIST, catalogItem } from "@/lib/catalog";
 import type { Producer } from "@/lib/types";
 
 export type NearbyLite = {
@@ -58,7 +59,8 @@ export async function nearbyForItemAction(
     limit: 8,
   });
   await trackConversion("match_bekeken", { listId: list.id, properties: { key: catalogKey } });
-  return producers.map((p) => ({
+  // "Nu open" eerst (CRO), daarbinnen blijft de afstandsvolgorde
+  return openFirst(producers).map((p) => ({
     name: p.name,
     slug: p.slug,
     city: p.city,
@@ -92,6 +94,27 @@ export async function createListAction(name: string): Promise<{ token: string; n
   await trackEvent("list_created", { listName: list.name });
   await trackConversion("lijst_gestart", { userId, listId: list.id });
   return { token: list.token, name: list.name };
+}
+
+/**
+ * Voorbeeldlijst (CRO #7): direct een gevulde lijst zodat een nieuwe gebruiker
+ * zonder typen bij de eerste lokale match komt. Items gaan er rechtstreeks in
+ * (geen per-item conversie-events, dat zou de metrics vervuilen).
+ */
+export async function createSampleListAction(): Promise<{ token: string }> {
+  const list = await createList("Boodschappen");
+  const userId = await currentUserId();
+  if (userId) {
+    const household = await householdForUser(userId);
+    await claimList(list.id, userId, household?.id ?? null);
+  }
+  for (const key of SAMPLE_LIST) {
+    const item = catalogItem(key);
+    if (item) await addItem(list.id, { catalogKey: key, label: item.label });
+  }
+  await trackEvent("list_created", { listName: list.name, sample: true });
+  await trackConversion("lijst_gestart", { userId, listId: list.id, properties: { sample: true } });
+  return { token: list.token };
 }
 
 export async function addItemAction(

@@ -173,3 +173,15 @@ export function hoursStatusText(text: string | null): string | null {
       return `Opent ${status.day} om ${status.at}`;
   }
 }
+
+/** Nu geopend? Voor "Nu open"-prioritering in matches (CRO: open locaties eerst) */
+export function isOpenNow(text: string | null): boolean {
+  return hoursStatus(text)?.kind === "open";
+}
+
+/** Stabiele hersortering: nu-geopende producenten eerst, daarbinnen blijft de afstandsvolgorde */
+export function openFirst<T extends { openingHours: string | null }>(producers: T[]): T[] {
+  return [...producers].sort(
+    (a, b) => Number(isOpenNow(b.openingHours)) - Number(isOpenNow(a.openingHours))
+  );
+}

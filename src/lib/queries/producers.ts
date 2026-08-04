@@ -23,6 +23,7 @@ const baseColumns = {
   website: producers.website,
   organic: producers.organic,
   vendingMachine: producers.vendingMachine,
+  paymentMethods: producers.paymentMethods,
   description: producers.description,
   status: producers.status,
   lastVerifiedAt: producers.lastVerifiedAt,
@@ -211,12 +212,11 @@ export async function allProvinces(): Promise<{ province: string; count: number 
   return rows.filter((r) => r.province) as { province: string; count: number }[];
 }
 
-export async function allProducerSlugs(): Promise<string[]> {
-  const rows = await db
-    .select({ slug: producers.slug })
+export async function allProducerSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
+  return db
+    .select({ slug: producers.slug, updatedAt: producers.updatedAt })
     .from(producers)
     .where(ne(producers.status, "gestopt"));
-  return rows.map((r) => r.slug);
 }
 
 export async function createReport(

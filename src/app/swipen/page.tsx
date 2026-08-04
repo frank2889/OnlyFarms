@@ -3,6 +3,10 @@ import { currentUserId } from "@/auth";
 import { listsForUser } from "@/lib/queries/accounts";
 import SwipeRedirect from "@/components/SwipeRedirect";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = "force-dynamic";
 
 // /swipen zonder lijst-token: stuur door naar het deck van je actieve lijst.

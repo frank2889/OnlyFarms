@@ -3,12 +3,11 @@ import { redirect } from "next/navigation";
 import { currentUserId } from "@/auth";
 import { requireAdminUser } from "@/lib/authz";
 import { queueCounts } from "@/lib/queries/stats";
-import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import AdminNav from "@/components/AdminNav";
 
 export const metadata: Metadata = {
-  title: `${t("admin.title")} | ${BRAND.name}`,
+  title: t("admin.title"),
   robots: { index: false, follow: false },
 };
 

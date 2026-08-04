@@ -21,6 +21,10 @@ import {
   TasteResetButton,
 } from "@/components/ProfileControls";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = "force-dynamic";
 
 const dateFmt = new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium" });

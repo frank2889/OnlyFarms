@@ -18,6 +18,7 @@ export type Producer = {
   website: string | null;
   organic: boolean | null;
   vendingMachine: boolean | null;
+  paymentMethods: string | null;
   description: string | null;
   status: string;
   lastVerifiedAt: Date | null;

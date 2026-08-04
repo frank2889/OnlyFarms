@@ -1,14 +1,24 @@
 import type { MetadataRoute } from "next";
-import { BRAND } from "@/lib/brand";
+import { siteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Gedeelde lijsten zijn privé (geheime link); beheer en portaal zijn intern
-      disallow: ["/lijst/", "/beheer", "/portaal"],
+      // Gedeelde lijsten en uitnodigingen zijn privé (geheime link); beheer,
+      // portaal, profiel, auth en de API horen niet in een index
+      disallow: [
+        "/lijst/",
+        "/gezin/",
+        "/beheer",
+        "/portaal",
+        "/profiel",
+        "/inloggen",
+        "/registreren",
+        "/api/",
+      ],
     },
-    sitemap: `https://${BRAND.domain}/sitemap.xml`,
+    sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

@@ -10,6 +10,10 @@ import { SproutIcon } from "@/components/icons";
 import SwipeModeSwitcher from "@/components/SwipeModeSwitcher";
 import type { SwipeCard } from "@/components/SwipeDeck";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 // Random-gewogen shuffle (Efraimidis-Spirakis): hogere weight komt vaker
 // vooraan, maar het blijft door elkaar (geen vaste categorie-volgorde).
 function weightedShuffle(cards: SwipeCard[], weight: (card: SwipeCard) => number): SwipeCard[] {

@@ -2,7 +2,7 @@
 // "Mo-We, Fr 09:00-18:00", "Dagelijks 08:00-20:00") omzetten naar wat je nu wilt
 // weten: nu open, opent om, of opent morgen/op dag X. Plus een marktdagen-samenvatting.
 
-type Interval = { day: number; start: number; end: number }; // dag 0=zondag, tijden in minuten
+export type Interval = { day: number; start: number; end: number }; // dag 0=zondag, tijden in minuten
 
 const DAY_MAP: Record<string, number> = {
   zo: 0, su: 0, sun: 0,

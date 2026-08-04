@@ -171,6 +171,24 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='users' and column_name='nearby_radius_m'",
     "ALTER TABLE users ADD COLUMN nearby_radius_m integer",
   ],
+  // Event-log voor de CRO-conversiemomenten (docs/CRO-HYPOTHESES.md)
+  [
+    "select 1 from information_schema.tables where table_name='events'",
+    `CREATE TABLE events (
+      id serial PRIMARY KEY,
+      name text NOT NULL,
+      user_id integer,
+      list_id integer,
+      properties jsonb,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT events_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      CONSTRAINT events_list_id_lists_id_fk FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE SET NULL
+    )`,
+  ],
+  [
+    "select 1 from pg_indexes where indexname='events_name_created_idx'",
+    "CREATE INDEX events_name_created_idx ON events (name, created_at)",
+  ],
 ];
 
 async function main() {

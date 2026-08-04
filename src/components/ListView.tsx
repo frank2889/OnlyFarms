@@ -447,7 +447,18 @@ export default function ListView({
     setQtyValue("");
   }
 
+  // Conversie-events die client-side gebeuren (fire-and-forget, nooit blokkerend)
+  function beacon(name: "route_geopend" | "lijst_gedeeld") {
+    try {
+      navigator.sendBeacon(
+        "/api/event",
+        new Blob([JSON.stringify({ name, token: list.token })], { type: "application/json" })
+      );
+    } catch {}
+  }
+
   async function share() {
+    beacon("lijst_gedeeld");
     const url = `${window.location.origin}/lijst/${list.token}`;
     if (navigator.share) {
       try {
@@ -796,7 +807,12 @@ export default function ListView({
 
       {/* "Je bent vlakbij"-melding: alleen zinvol met locatie en matches */}
       {list.lat != null && (
-        <NearbyWatch open={snapshot.open} matches={matches} accountRadiusM={accountRadiusM} />
+        <NearbyWatch
+          open={snapshot.open}
+          matches={matches}
+          accountRadiusM={accountRadiusM}
+          token={list.token}
+        />
       )}
 
       {/* De lijst zelf leeft in de drawer (cart-model) */}
@@ -1422,6 +1438,7 @@ export default function ListView({
                             href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`}
                             target="_blank"
                             rel="noopener"
+                            onClick={() => beacon("route_geopend")}
                             className="inline-flex shrink-0 items-center gap-1 text-terra-700 hover:underline"
                           >
                             <RouteIcon width={13} height={13} /> {t("common.route")}

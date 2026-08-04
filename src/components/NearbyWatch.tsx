@@ -71,11 +71,13 @@ export default function NearbyWatch({
   open,
   matches,
   accountRadiusM,
+  token,
 }: {
   open: ListItem[];
   matches: Record<string, ItemMatch>;
   /** Ingelogd: de account-brede instelling wint (null = uit); anoniem: undefined → localStorage */
   accountRadiusM?: number | null;
+  token?: string;
 }) {
   const router = useRouter();
   const hasAccount = accountRadiusM !== undefined;
@@ -192,6 +194,14 @@ export default function NearbyWatch({
               href={`https://www.google.com/maps/dir/?api=1&destination=${alert.lat},${alert.lng}`}
               target="_blank"
               rel="noopener"
+              onClick={() => {
+                try {
+                  navigator.sendBeacon(
+                    "/api/event",
+                    new Blob([JSON.stringify({ name: "route_geopend", token })], { type: "application/json" })
+                  );
+                } catch {}
+              }}
               className="inline-flex items-center gap-1 text-terra-700 underline"
             >
               <RouteIcon width={13} height={13} /> {t("common.route")}

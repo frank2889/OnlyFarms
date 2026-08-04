@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { t } from "@/lib/i18n";
-import { CATALOG } from "@/lib/catalog";
+import { KNOWN_TOKENS, tokensByCategory } from "@/lib/catalog";
+import { describeHours } from "@/lib/opening-hours";
 import { updateProducerAction, type ProducerFormInput } from "@/app/beheer/producenten/actions";
 
 export type ProducerFormField =
@@ -61,9 +62,17 @@ type Props = {
   editableFields?: ProducerFormField[];
   /** Portaal geeft zijn eigen (owner-gecheckte) action mee; default is de beheer-action */
   action?: SaveAction;
+  /** Portaal: chip-picker per categorie i.p.v. vrije invoer (beheer kent zelf al alle tokens) */
+  productsPicker?: boolean;
 };
 
-export default function AdminProducerForm({ producerId, initial, editableFields, action }: Props) {
+export default function AdminProducerForm({
+  producerId,
+  initial,
+  editableFields,
+  action,
+  productsPicker,
+}: Props) {
   const save: SaveAction = action ?? updateProducerAction;
   const fields = new Set(editableFields ?? ALL_FIELDS);
   const [form, setForm] = useState<ProducerFormInput>(initial);
@@ -72,10 +81,12 @@ export default function AdminProducerForm({ producerId, initial, editableFields,
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const knownTokens = useMemo(
-    () => [...new Set(CATALOG.flatMap((item) => item.matchTokens))].sort(),
-    []
-  );
+  const grouped = useMemo(() => tokensByCategory(), []);
+  const hoursPreview = useMemo(() => {
+    const text = form.openingHours.trim();
+    if (!text) return null;
+    return describeHours(text) ?? "warning";
+  }, [form.openingHours]);
 
   const set = <K extends keyof ProducerFormInput>(key: K, value: ProducerFormInput[K]) => {
     setSaved(false);
@@ -231,10 +242,59 @@ export default function AdminProducerForm({ producerId, initial, editableFields,
           <label className={label} htmlFor="p-hours">{t("admin.formHours")}</label>
           <input id="p-hours" value={form.openingHours} onChange={(e) => set("openingHours", e.target.value)} className={field} />
           <p className="mt-1 text-xs text-ink-500">{t("admin.formHoursHint")}</p>
+          {hoursPreview === "warning" ? (
+            <p className="mt-1 text-xs text-terra-700">{t("admin.formHoursWarning")}</p>
+          ) : hoursPreview ? (
+            <p className="mt-1 text-xs text-terra-700">
+              {t("admin.formHoursPreview", { summary: hoursPreview })}
+            </p>
+          ) : null}
         </div>
       )}
 
-      {fields.has("products") && (
+      {fields.has("products") && productsPicker && (
+        <div>
+          <span className={label}>{t("admin.formProductsPicker")}</span>
+          <div className="flex flex-col gap-3">
+            {grouped.map((group) => (
+              <div key={group.category}>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  {group.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {group.tokens.map((token) => {
+                    const active = form.products.includes(token);
+                    return (
+                      <button
+                        key={token}
+                        type="button"
+                        onClick={() =>
+                          set(
+                            "products",
+                            active
+                              ? form.products.filter((p) => p !== token)
+                              : [...form.products, token]
+                          )
+                        }
+                        aria-pressed={active}
+                        className={`rounded-full border px-4 py-2.5 text-sm font-medium ${
+                          active
+                            ? "border-terra-500 bg-terra-500 text-white"
+                            : "border-cream-300 bg-white text-ink-700 hover:border-terra-400"
+                        }`}
+                      >
+                        {token}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {fields.has("products") && !productsPicker && (
         <div>
           <span className={label}>{t("admin.formProducts")}</span>
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -265,7 +325,7 @@ export default function AdminProducerForm({ producerId, initial, editableFields,
               className={`${field} flex-1`}
             />
             <datalist id="known-tokens">
-              {knownTokens.map((token) => (
+              {KNOWN_TOKENS.map((token) => (
                 <option key={token} value={token} />
               ))}
             </datalist>

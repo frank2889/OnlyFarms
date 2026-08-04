@@ -290,6 +290,7 @@ export type ProducerPatch = Partial<{
   organic: boolean;
   vendingMachine: boolean;
   paymentMethods: string | null;
+  closedUntil: Date | null;
 }>;
 
 /**

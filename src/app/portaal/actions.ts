@@ -12,7 +12,8 @@ import {
   updateSellerContact,
   type OfferInput,
 } from "@/lib/queries/portal";
-import { CATEGORIES } from "@/lib/catalog";
+import { CATEGORIES, KNOWN_TOKENS } from "@/lib/catalog";
+import { t } from "@/lib/i18n";
 import type { ProducerFormInput } from "@/app/beheer/producenten/actions";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -186,9 +187,14 @@ export async function updateOwnProducerAction(
     return { ok: false, error: "Dit is niet jouw vermelding." };
 
   const clean = (v: string) => v.trim().slice(0, 500) || null;
-  const products = [
+  const requested = [
     ...new Set(input.products.map((p) => p.trim().toLowerCase().slice(0, 40)).filter(Boolean)),
   ].slice(0, 60);
+  const knownTokens = new Set(KNOWN_TOKENS);
+  const unknown = requested.filter((p) => !knownTokens.has(p));
+  if (unknown.length > 0)
+    return { ok: false, error: t("admin.formProductsUnknown", { tokens: unknown.join(", ") }) };
+  const products = requested;
 
   const patch: ProducerPatch = {
     phone: clean(input.phone),
@@ -201,6 +207,35 @@ export async function updateOwnProducerAction(
     paymentMethods: clean(input.paymentMethods),
   };
   await updateProducerAdmin(producerId, patch);
+  revalidatePath("/portaal");
+  revalidatePath("/producent/[slug]", "page");
+  return { ok: true };
+}
+
+/**
+ * Vakantie/tijdelijk gesloten: verloopt vanzelf (geen cron), matching blijft
+ * ongemoeid (een gesloten zaak blijft gewoon matchen, alleen de open-status
+ * op de publieke pagina wijkt tijdelijk).
+ */
+export async function setClosedUntilAction(date: string | null): Promise<Result> {
+  const own = await requireOwnProducer();
+  if (!own) return { ok: false, error: "Geen toegang." };
+
+  if (date === null) {
+    await updateProducerAdmin(own.producer.id, { closedUntil: null });
+    revalidatePath("/portaal");
+    revalidatePath("/producent/[slug]", "page");
+    return { ok: true };
+  }
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return { ok: false, error: "Ongeldige datum." };
+  const max = new Date();
+  max.setFullYear(max.getFullYear() + 1);
+  if (parsed.getTime() > max.getTime())
+    return { ok: false, error: "Kies een datum binnen een jaar." };
+
+  await updateProducerAdmin(own.producer.id, { closedUntil: parsed });
   revalidatePath("/portaal");
   revalidatePath("/producent/[slug]", "page");
   return { ok: true };

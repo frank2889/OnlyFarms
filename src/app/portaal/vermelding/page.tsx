@@ -4,7 +4,7 @@ import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller } from "@/lib/queries/admin";
 import { t } from "@/lib/i18n";
 import AdminProducerForm from "@/components/AdminProducerForm";
-import { SellerContactForm } from "@/components/PortalExtras";
+import { SellerContactForm, VacationToggle } from "@/components/PortalExtras";
 import { updateOwnProducerAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export default async function PortaalVermeldingPage() {
           producerId={producer.id}
           action={updateOwnProducerAction}
           editableFields={["contact", "description", "openingHours", "products", "practical"]}
+          productsPicker
           initial={{
             name: producer.name,
             kind: producer.kind,
@@ -53,6 +54,14 @@ export default async function PortaalVermeldingPage() {
             paymentMethods: producer.paymentMethods ?? "",
           }}
         />
+      </div>
+
+      <div className="mt-4 rounded-tile border border-cream-200 bg-white p-4">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-ink-500">
+          {t("portal.vacationTitle")}
+        </h2>
+        <p className="mb-3 text-sm text-ink-500">{t("portal.vacationHint")}</p>
+        <VacationToggle closedUntil={producer.closedUntil} />
       </div>
 
       {/* Contactpersoon: sellers-gegevens, los van de publieke vermelding */}

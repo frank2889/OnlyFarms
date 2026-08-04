@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { t } from "@/lib/i18n";
-import { confirmListingAction, updateSellerContactAction } from "@/app/portaal/actions";
+import { confirmListingAction, setClosedUntilAction, updateSellerContactAction } from "@/app/portaal/actions";
 import { CheckIcon } from "@/components/icons";
 
 const field = "w-full rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm";
@@ -114,6 +114,73 @@ export function SellerContactForm({
           {t("common.save")}
         </button>
       </div>
+    </form>
+  );
+}
+
+/** Vakantie/tijdelijk gesloten: verloopt vanzelf, matching blijft ongemoeid */
+export function VacationToggle({ closedUntil }: { closedUntil: Date | null }) {
+  const router = useRouter();
+  // eslint-disable-next-line react-hooks/purity -- klokvergelijking voor vakantiestatus is hier bewust
+  const isActive = closedUntil != null && closedUntil.getTime() > Date.now();
+  const [date, setDate] = useState(closedUntil ? closedUntil.toISOString().slice(0, 10) : "");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (isActive) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-700">
+          {t("portal.vacationActive", {
+            date: closedUntil!.toLocaleDateString("nl-NL", { day: "numeric", month: "long" }),
+          })}
+        </p>
+        <button
+          onClick={() =>
+            startTransition(async () => {
+              const result = await setClosedUntilAction(null);
+              if (!result.ok) return setError(result.error);
+              router.refresh();
+            })
+          }
+          disabled={pending}
+          className="shrink-0 rounded-full border border-terra-300 px-4 py-2 text-sm font-medium text-terra-700 hover:bg-terra-50 disabled:opacity-50"
+        >
+          {t("portal.vacationEnd")}
+        </button>
+        {error && <p className="w-full text-sm text-terra-800">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError(null);
+        if (!date) return setError(t("portal.vacationPickDate"));
+        startTransition(async () => {
+          const result = await setClosedUntilAction(date);
+          if (!result.ok) return setError(result.error);
+          router.refresh();
+        });
+      }}
+      className="flex flex-wrap items-center gap-2"
+    >
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        className="rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-full border border-cream-300 px-4 py-2 text-sm font-medium hover:border-terra-400 disabled:opacity-50"
+      >
+        {t("portal.vacationSet")}
+      </button>
+      {error && <p className="w-full text-sm text-terra-800">{error}</p>}
     </form>
   );
 }

@@ -99,6 +99,47 @@ export function parseHours(text: string): Interval[] {
   return intervals;
 }
 
+function compressDays(days: number[]): string {
+  if (days.length === 7) return "elke dag";
+  const runs: number[][] = [];
+  let current: number[] = [];
+  for (const d of days) {
+    if (current.length && d === current[current.length - 1] + 1) current.push(d);
+    else {
+      if (current.length) runs.push(current);
+      current = [d];
+    }
+  }
+  if (current.length) runs.push(current);
+  const parts = runs.map((run) =>
+    run.length >= 3
+      ? `${DAY_SHORT[run[0]]}-${DAY_SHORT[run[run.length - 1]]}`
+      : run.map((d) => DAY_SHORT[d]).join(" & ")
+  );
+  return parts.length > 1
+    ? `${parts.slice(0, -1).join(", ")} & ${parts[parts.length - 1]}`
+    : parts[0];
+}
+
+/**
+ * Leesbare echo van een ingevoerde openingstijden-tekst ("Dit lezen we als: di
+ * & za 08:00-17:00"), voor live feedback in het portaal-formulier. Puur en
+ * client-safe (net als de rest van dit bestand). `null` = niets herkend.
+ */
+export function describeHours(text: string): string | null {
+  const intervals = parseHours(text);
+  if (!intervals.length) return null;
+  const groups = new Map<string, number[]>();
+  for (const i of intervals) {
+    const key = `${fmt(i.start)}-${fmt(i.end)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(i.day);
+  }
+  return [...groups.entries()]
+    .map(([time, days]) => `${compressDays([...new Set(days)].sort((a, b) => a - b))} ${time}`)
+    .join(", ");
+}
+
 /** Korte marktdagen-weergave: "di & za" of "elke dag" */
 export function daysSummary(text: string | null): string | null {
   if (!text) return null;

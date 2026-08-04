@@ -42,6 +42,11 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='seller_reviews' and column_name='comment' and is_nullable='NO'",
     "ALTER TABLE seller_reviews ALTER COLUMN comment SET NOT NULL",
   ],
+  // Vakantie/tijdelijk gesloten: verloopt vanzelf (geen cron), matching blijft ongemoeid.
+  [
+    "select 1 from information_schema.columns where table_name='producers' and column_name='closed_until'",
+    "ALTER TABLE producers ADD COLUMN closed_until timestamptz",
+  ],
 ];
 
 async function main() {

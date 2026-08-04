@@ -70,6 +70,8 @@ export const producers = pgTable(
     googlePlaceId: text("google_place_id"),
     hoursSyncedAt: timestamp("hours_synced_at", { withTimezone: true }),
     claimedByEmail: text("claimed_by_email"),
+    // Vakantie/tijdelijk gesloten: verloopt vanzelf, geen cron nodig
+    closedUntil: timestamp("closed_until", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

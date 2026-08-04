@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { markets, producers, reports } from "@/db/schema";
+import { markets, producers, reports, sellers } from "@/db/schema";
 import type { Producer } from "@/lib/types";
 
 const baseColumns = {
@@ -180,10 +180,17 @@ export async function nearbyMarkets(
   return rows as NearbyMarket[];
 }
 
+/**
+ * Left join op sellers via claimedBySellerId: een geschorste of afgewezen
+ * verkoper mag geen "Aangesloten"-badge of claim-teaser meer krijgen op de
+ * publieke pagina, ook al staat isMember nog op true (zie sellerStatus-gebruik
+ * op de producentpagina).
+ */
 export async function producerBySlug(slug: string): Promise<Producer | null> {
   const [row] = await db
-    .select(baseColumns)
+    .select({ ...baseColumns, sellerStatus: sellers.status })
     .from(producers)
+    .leftJoin(sellers, eq(producers.claimedBySellerId, sellers.id))
     .where(eq(producers.slug, slug));
   return (row as Producer) ?? null;
 }

@@ -29,6 +29,7 @@ export default async function NieuwProductPage() {
             priceIndication: "",
             photoUrl: "",
             available: true,
+            featured: false,
           }}
         />
       </div>

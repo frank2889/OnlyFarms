@@ -67,6 +67,11 @@ export default async function PortaalProductenPage() {
                     {t("portal.offerPending")}
                   </span>
                 )}
+                {offer.featured && (
+                  <span className="ml-1 mt-0.5 inline-block rounded-full bg-terra-500 px-2 py-0.5 text-xs text-white">
+                    {t("portal.offerFeatured")}
+                  </span>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1.5 text-sm">
                 <Link

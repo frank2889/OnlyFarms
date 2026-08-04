@@ -19,6 +19,12 @@ const steps: [check: string, sql: string][] = [
     "select 1 from pg_indexes where indexname='events_slug_idx'",
     "CREATE INDEX events_slug_idx ON events ((properties ->> 'slug'))",
   ],
+  // Uitlichten van een product op de producentpagina; geen inhoudelijke
+  // wijziging (net als available), raakt de screeningsstatus dus niet.
+  [
+    "select 1 from information_schema.columns where table_name='offers' and column_name='featured'",
+    "ALTER TABLE offers ADD COLUMN featured boolean NOT NULL DEFAULT false",
+  ],
 ];
 
 async function main() {

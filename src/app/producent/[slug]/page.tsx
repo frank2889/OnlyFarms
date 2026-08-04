@@ -6,8 +6,10 @@ import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { nearbyProducers, producerBySlug } from "@/lib/queries/producers";
 import { publicOffersForSeller } from "@/lib/queries/portal";
+import { publishedExperiencesForSeller } from "@/lib/queries/experiences";
 import { hoursStatusText } from "@/lib/opening-hours";
 import { LeafIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
+import ExperienceForm from "@/components/ExperienceForm";
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 import AskChefsButton from "@/components/AskChefsButton";
@@ -75,6 +77,11 @@ export default async function ProducerPage({
   const isActiveMember =
     producer.isMember &&
     (producer.sellerStatus == null || producer.sellerStatus === "goedgekeurd");
+
+  const experiences =
+    producer.claimedBySellerId && isActiveMember
+      ? await publishedExperiencesForSeller(producer.claimedBySellerId)
+      : [];
 
   const ALCOHOL_TOKENS = ["bier", "wijn", "cider"];
   const showsNix18 =
@@ -381,6 +388,26 @@ export default async function ProducerPage({
             {t("producers.claimCta")}
           </Link>
         </div>
+      )}
+
+      {isActiveMember && producer.claimedBySellerId && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-lg font-bold">{t("producers.experiencesTitle")}</h2>
+          {experiences.length > 0 && (
+            <ul className="mb-3 flex flex-col gap-2">
+              {experiences.map((e) => (
+                <li key={e.id} className="rounded-tile border border-cream-200 bg-white p-3">
+                  <p className="text-sm">{e.comment}</p>
+                  <p className="mt-1 text-xs text-ink-500">
+                    {e.reviewerName} ·{" "}
+                    {e.createdAt.toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <ExperienceForm producerSlug={producer.slug} />
+        </section>
       )}
 
       {nearby.length > 0 && (

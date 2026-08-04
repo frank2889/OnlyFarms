@@ -25,6 +25,23 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='offers' and column_name='featured'",
     "ALTER TABLE offers ADD COLUMN featured boolean NOT NULL DEFAULT false",
   ],
+  // Ervaringen zijn bewust alleen tekst, geen sterren (PLAN.md-besluit).
+  // Rijen zonder tekst zijn betekenisloos zonder rating; database was leeg
+  // getest voor dit bewust destructieve stuk (steekproef vóór dit script:
+  // 0 rijen), maar de check blijft staan voor de volgende keer dat dit
+  // script ergens anders draait.
+  [
+    "select 1 where not exists (select 1 from seller_reviews where comment is null)",
+    "DELETE FROM seller_reviews WHERE comment IS NULL",
+  ],
+  [
+    "select 1 where not exists (select 1 from information_schema.columns where table_name='seller_reviews' and column_name='rating')",
+    "ALTER TABLE seller_reviews DROP COLUMN rating",
+  ],
+  [
+    "select 1 from information_schema.columns where table_name='seller_reviews' and column_name='comment' and is_nullable='NO'",
+    "ALTER TABLE seller_reviews ALTER COLUMN comment SET NOT NULL",
+  ],
 ];
 
 async function main() {

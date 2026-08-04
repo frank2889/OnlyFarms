@@ -330,6 +330,8 @@ export const offers = pgTable("offers", {
 
 // Reviews zijn leidend voor zichtbaarheid en voor schorsing van verkopers.
 // Publicatie pas na moderatie.
+// Ervaringen zijn bewust alleen tekst, geen sterren (PLAN.md-besluit): een
+// cijfer nodigt uit tot vergelijken tussen boeren, een tekst tot een verhaal.
 export const sellerReviews = pgTable(
   "seller_reviews",
   {
@@ -337,8 +339,7 @@ export const sellerReviews = pgTable(
     sellerId: integer("seller_id")
       .notNull()
       .references(() => sellers.id, { onDelete: "cascade" }),
-    rating: integer("rating").notNull(),
-    comment: text("comment"),
+    comment: text("comment").notNull(),
     reviewerName: text("reviewer_name").notNull(),
     reviewerEmail: text("reviewer_email").notNull(),
     published: boolean("published").notNull().default(false),

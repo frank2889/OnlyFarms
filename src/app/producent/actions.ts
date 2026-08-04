@@ -1,8 +1,11 @@
 "use server";
 
-import { createReport } from "@/lib/queries/producers";
+import { createReport, producerBySlug } from "@/lib/queries/producers";
+import { createExperience } from "@/lib/queries/experiences";
 import { trackEvent } from "@/lib/klaviyo";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
+
+type Result = { ok: true } | { ok: false; error: string };
 
 export async function reportProducerAction(
   producerId: number,
@@ -21,4 +24,40 @@ export async function reportProducerAction(
   // wíllekeurig andermans e-mailadres een profiel/event aan te maken). Wel als
   // property meesturen zodat het team 'm in Klaviyo kan zien voor context.
   await trackEvent("producer_reported", { producerId, reporterEmail: validEmail });
+}
+
+/**
+ * Ervaring insturen: alleen tekst, geen sterren (PLAN.md-besluit). Komt
+ * altijd in de moderatiewachtrij; alleen mogelijk bij een geclaimde,
+ * goedgekeurde verkoper (zelfde regel als het publieke aanbod).
+ */
+export async function submitExperienceAction(
+  producerSlug: string,
+  input: { name: string; email: string; comment: string; honeypot?: string }
+): Promise<Result> {
+  // Verborgen veld: een echte bezoeker vult dit nooit in, een script vaak wel
+  if (input.honeypot) return { ok: false, error: "Versturen mislukt." };
+  if (isRateLimited(`experience:${await clientIp()}`, 5, 60 * 60_000))
+    return { ok: false, error: "Even rustig aan: probeer het over een uur opnieuw." };
+
+  const name = input.name.trim().slice(0, 80);
+  if (name.length < 2) return { ok: false, error: "Vul je naam in." };
+  const email = input.email.trim().toLowerCase().slice(0, 200);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+    return { ok: false, error: "Vul een geldig e-mailadres in." };
+  const comment = input.comment.trim().slice(0, 1000);
+  if (comment.length < 10) return { ok: false, error: "Vertel iets meer, minstens 10 tekens." };
+
+  const producer = await producerBySlug(producerSlug);
+  const canReceive =
+    producer?.claimedBySellerId &&
+    (producer.sellerStatus == null || producer.sellerStatus === "goedgekeurd");
+  if (!canReceive) return { ok: false, error: "Deze producent kan nog geen ervaringen ontvangen." };
+
+  await createExperience(producer.claimedBySellerId!, {
+    reviewerName: name,
+    reviewerEmail: email,
+    comment,
+  });
+  return { ok: true };
 }

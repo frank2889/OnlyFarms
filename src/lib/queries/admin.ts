@@ -341,7 +341,6 @@ export async function listUnpublishedReviews() {
   return db
     .select({
       id: sellerReviews.id,
-      rating: sellerReviews.rating,
       comment: sellerReviews.comment,
       reviewerName: sellerReviews.reviewerName,
       createdAt: sellerReviews.createdAt,
@@ -355,8 +354,31 @@ export async function listUnpublishedReviews() {
     .limit(200);
 }
 
-export async function publishReview(id: number): Promise<void> {
-  await db.update(sellerReviews).set({ published: true }).where(eq(sellerReviews.id, id));
+/** Publiceren; geeft verkoper- en vermeldingdata terug voor Klaviyo + revalidatie */
+export async function publishReview(
+  id: number
+): Promise<{ sellerEmail: string; sellerName: string; comment: string; producerSlug: string | null } | null> {
+  const [row] = await db
+    .update(sellerReviews)
+    .set({ published: true })
+    .where(eq(sellerReviews.id, id))
+    .returning({ sellerId: sellerReviews.sellerId, comment: sellerReviews.comment });
+  if (!row) return null;
+  const [seller] = await db
+    .select({ email: sellers.email, name: sellers.name })
+    .from(sellers)
+    .where(eq(sellers.id, row.sellerId));
+  if (!seller) return null;
+  const [producer] = await db
+    .select({ slug: producers.slug })
+    .from(producers)
+    .where(eq(producers.claimedBySellerId, row.sellerId));
+  return {
+    sellerEmail: seller.email,
+    sellerName: seller.name,
+    comment: row.comment,
+    producerSlug: producer?.slug ?? null,
+  };
 }
 
 export async function deleteReview(id: number): Promise<void> {

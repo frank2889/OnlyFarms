@@ -767,14 +767,14 @@ export default function ListView({
             type="submit"
             className="rounded-full bg-terra-500 px-4 py-2 text-sm font-medium text-white hover:bg-terra-600"
           >
-            Opslaan
+            {t("common.save")}
           </button>
           <button
             type="button"
             onClick={() => setRenameOpen(false)}
-            className="text-sm text-ink-500 underline"
+            className="px-1 py-2 text-sm text-ink-500 underline"
           >
-            Annuleren
+            {t("common.cancel")}
           </button>
         </form>
       )}
@@ -785,25 +785,25 @@ export default function ListView({
       )}
       {!online && (
         <div className="mb-3 animate-rise rounded-tile bg-ink-900 px-4 py-2.5 text-sm text-white">
-          Offline. Je wijzigingen staan klaar en worden gesynct zodra je weer verbinding hebt.
+          {t("lists.offlineNotice")}
         </div>
       )}
       {showIntro && (
         <div className="mb-4 animate-rise rounded-tile bg-terra-50 p-4 text-sm text-terra-800">
-          <p className="mb-1.5 font-semibold">Zo werkt je lijst</p>
+          <p className="mb-1.5 font-semibold">{t("lists.introTitle")}</p>
           <ul className="mb-2 flex flex-col gap-1">
-            <li>· Tik op een tegel om iets toe te voegen; tik nog een keer om het er weer af te halen.</li>
-            <li>· Houd een tegel vast om een aantal te kiezen (bijv. 2 dozen of 500 gram).</li>
-            <li>· Deel de lijst met je gezin en vink samen af; alles synct vanzelf.</li>
+            <li>· {t("lists.introTip1")}</li>
+            <li>· {t("lists.introTip2")}</li>
+            <li>· {t("lists.introTip3")}</li>
           </ul>
           <button
             onClick={() => {
               localStorage.setItem("of_intro", "1");
               setIntroDismissed(true);
             }}
-            className="font-medium text-terra-700 underline"
+            className="px-1 py-2 font-medium text-terra-700 underline"
           >
-            Begrepen
+            {t("common.understood")}
           </button>
         </div>
       )}
@@ -834,9 +834,7 @@ export default function ListView({
           <div className="flex flex-wrap items-center gap-2">
             <MapPinIcon width={18} height={18} className="text-terra-500" />
             {!list.lat && (
-              <span className="text-sm text-ink-500">
-                Stel je locatie in om te zien waar je alles koopt
-              </span>
+              <span className="text-sm text-ink-500">{t("lists.setLocationPrompt")}</span>
             )}
             <button
               onClick={useMyLocation}
@@ -859,16 +857,14 @@ export default function ListView({
             {list.lat && (
               <button
                 onClick={() => setLocOpen(false)}
-                className="ml-auto text-sm text-ink-500 underline"
+                className="ml-auto px-1 py-2 text-sm text-ink-500 underline"
               >
-                Annuleren
+                {t("common.cancel")}
               </button>
             )}
           </div>
           {locError && (
-            <p className="mt-2 text-sm text-terra-700">
-              Locatie bepalen lukte niet. Probeer een postcode.
-            </p>
+            <p className="mt-2 text-sm text-terra-700">{t("lists.locationError")}</p>
           )}
         </div>
       )}
@@ -1071,9 +1067,9 @@ export default function ListView({
         {groupedOpen.length > 1 && (
           <button
             onClick={() => setOrderMode((v) => !v)}
-            className="text-xs text-ink-500 underline hover:text-terra-700"
+            className="inline-block px-1 py-2.5 text-xs text-ink-500 underline hover:text-terra-700"
           >
-            {orderMode ? "Klaar" : t("lists.orderCategories")}
+            {orderMode ? t("common.done") : t("lists.orderCategories")}
           </button>
         )}
       </div>
@@ -1087,14 +1083,14 @@ export default function ListView({
                   <span className="flex gap-1">
                     <button
                       onClick={() => moveCategory(group.key, -1)}
-                      className="rounded-full bg-cream-100 px-2 py-0.5 hover:bg-cream-200"
+                      className="rounded-full bg-cream-100 px-3 py-2 hover:bg-cream-200"
                       aria-label={`${group.label} omhoog`}
                     >
                       omhoog
                     </button>
                     <button
                       onClick={() => moveCategory(group.key, 1)}
-                      className="rounded-full bg-cream-100 px-2 py-0.5 hover:bg-cream-200"
+                      className="rounded-full bg-cream-100 px-3 py-2 hover:bg-cream-200"
                       aria-label={`${group.label} omlaag`}
                     >
                       omlaag
@@ -1159,9 +1155,9 @@ export default function ListView({
                   {!item.store && item.id > 0 && !match && cat && cat.matchTokens.length > 0 && (
                     <button
                       onClick={() => setEditItem(item.id)}
-                      className="mt-0.5 text-xs text-ink-500 underline hover:text-terra-700"
+                      className="mt-0.5 px-1 py-1.5 text-xs text-ink-500 underline hover:text-terra-700"
                     >
-                      Weet jij waar? Geef een tip
+                      {t("lists.giveTip")}
                     </button>
                   )}
                 </div>
@@ -1170,23 +1166,27 @@ export default function ListView({
                 )}
                 <button
                   onClick={() => openChefs({ id: item.id, label: item.label })}
-                  className="p-1 text-ink-500 hover:text-terra-600"
+                  className="relative p-1 text-ink-500 hover:text-terra-600"
                   aria-label={t("chefs.askItem")}
                 >
+                  {/* Onzichtbaar vergroot tikvlak: het icoon blijft klein, de knop niet */}
+                  <span className="absolute -inset-1.5" aria-hidden="true" />
                   <ChefHatIcon width={16} height={16} />
                 </button>
                 <button
                   onClick={() => setEditItem(editItem === item.id ? null : item.id)}
-                  className="p-1 text-ink-500 hover:text-terra-600"
+                  className="relative p-1 text-ink-500 hover:text-terra-600"
                   aria-label="Bewerken"
                 >
+                  <span className="absolute -inset-1.5" aria-hidden="true" />
                   <PencilIcon width={16} height={16} />
                 </button>
                 <button
                   onClick={() => deleteItem(item)}
-                  className="p-1 text-ink-500 hover:text-terra-600"
+                  className="relative p-1 text-ink-500 hover:text-terra-600"
                   aria-label="Verwijderen"
                 >
+                  <span className="absolute -inset-1.5" aria-hidden="true" />
                   <TrashIcon width={16} height={16} />
                 </button>
               </div>
@@ -1256,7 +1256,7 @@ export default function ListView({
                     }
                   );
                 }}
-                className="text-xs font-medium text-terra-700 underline"
+                className="inline-block px-1 py-2.5 text-xs font-medium text-terra-700 underline"
               >
                 {t("lists.restoreBought")}
               </button>
@@ -1274,7 +1274,7 @@ export default function ListView({
                     }
                   );
                 }}
-                className="text-xs text-ink-500 underline hover:text-terra-700"
+                className="inline-block px-1 py-2.5 text-xs text-ink-500 underline hover:text-terra-700"
               >
                 {t("lists.clearBought")}
               </button>
@@ -1373,9 +1373,9 @@ export default function ListView({
               <button
                 type="button"
                 onClick={closeSearch}
-                className="shrink-0 text-sm font-medium text-terra-700"
+                className="shrink-0 px-1 py-2.5 text-sm font-medium text-terra-700"
               >
-                Klaar
+                {t("common.done")}
               </button>
             </form>
           </div>
@@ -1466,9 +1466,7 @@ export default function ListView({
                   {rebuy.length > 0 && (
                     <TileRow title={t("lists.boughtBefore")} items={rebuy} onAdd={tapTile} />
                   )}
-                  <p className="mt-2 text-center text-sm text-ink-500">
-                    Typ hierboven wat je zoekt; Enter voegt het eerste resultaat toe.
-                  </p>
+                  <p className="mt-2 text-center text-sm text-ink-500">{t("lists.typeHint")}</p>
                 </>
               )}
             </div>
@@ -1479,7 +1477,11 @@ export default function ListView({
 
       {/* Undo-snackbar */}
       {undo && (
-        <div className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-60 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg">
+        <div
+          role="status"
+          aria-live="polite"
+          className="animate-snack fixed bottom-[8.4rem] sm:bottom-[4.8rem] left-1/2 z-60 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-full bg-ink-900 px-5 py-3 text-sm text-white shadow-lg"
+        >
           <span className="truncate">{undo.label}</span>
           {undo.action && (
             <button
@@ -1487,7 +1489,7 @@ export default function ListView({
                 undo.action!();
                 setUndo(null);
               }}
-              className="shrink-0 font-semibold text-terra-300 underline"
+              className="shrink-0 px-1 py-1.5 font-semibold text-terra-300 underline"
             >
               {t("common.undo")}
             </button>
@@ -1646,7 +1648,7 @@ export default function ListView({
                 autoFocus
                 value={qtyValue}
                 onChange={(e) => setQtyValue(e.target.value)}
-                placeholder="Of typ zelf (bijv. 2 dozen)"
+                placeholder={t("lists.freeQtyPlaceholder")}
                 className="w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-3"
               />
               <div className="flex gap-2">
@@ -1654,14 +1656,14 @@ export default function ListView({
                   type="submit"
                   className="flex-1 rounded-full bg-terra-500 px-5 py-3 font-medium text-white hover:bg-terra-600"
                 >
-                  Op de lijst
+                  {t("lists.addToList")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setQtyItem(null)}
-                  className="rounded-full px-4 text-sm text-ink-500 underline"
+                  className="rounded-full px-4 py-3 text-sm text-ink-500 underline"
                 >
-                  Annuleren
+                  {t("common.cancel")}
                 </button>
               </div>
               {(() => {
@@ -1675,9 +1677,9 @@ export default function ListView({
                       setQtyItem(null);
                       setQtyValue("");
                     }}
-                    className="mt-1 inline-flex items-center gap-2 self-start rounded-full px-1 text-sm text-terra-800 underline"
+                    className="mt-1 inline-flex items-center gap-2 self-start rounded-full px-1 py-1.5 text-sm text-terra-800 underline"
                   >
-                    <TrashIcon width={14} height={14} /> Van de lijst halen
+                    <TrashIcon width={14} height={14} /> {t("lists.removeFromList")}
                   </button>
                 );
               })()}

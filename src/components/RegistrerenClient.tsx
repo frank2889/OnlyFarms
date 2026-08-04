@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerAction } from "@/app/account/actions";
 import { BRAND } from "@/lib/brand";
+import { t } from "@/lib/i18n";
 import { SproutIcon } from "@/components/icons";
 
 function RegisterForm() {
@@ -42,20 +43,31 @@ function RegisterForm() {
         <SproutIcon width={24} height={24} className="text-terra-500" />
         {BRAND.name}
       </Link>
-      <h1 className="mb-1 text-center text-2xl font-bold">Account aanmaken</h1>
+      <h1 className="mb-1 text-center text-2xl font-bold">{t("auth.registerTitle")}</h1>
       {inviteCode && (
-        <p className="mb-3 text-center text-sm text-terra-700">
-          Je sluit aan bij het gezin van je uitnodiging.
-        </p>
+        <p className="mb-3 text-center text-sm text-terra-700">{t("auth.viaInvite")}</p>
       )}
       <form onSubmit={onSubmit} className="mt-3 flex flex-col gap-3">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Je naam" required className={field} />
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mailadres" required className={field} />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("auth.namePlaceholder")}
+          required
+          className={field}
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t("auth.emailPlaceholder")}
+          required
+          className={field}
+        />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Wachtwoord (minstens 8 tekens)"
+          placeholder={t("auth.passwordHintPlaceholder")}
           required
           minLength={8}
           className={field}
@@ -68,13 +80,13 @@ function RegisterForm() {
           disabled={busy}
           className="rounded-full bg-terra-500 px-6 py-3 font-medium text-white hover:bg-terra-600 disabled:opacity-50"
         >
-          {busy ? "Bezig…" : "Account aanmaken"}
+          {busy ? t("auth.busy") : t("auth.registerCta")}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-ink-500">
-        Al een account?{" "}
+        {t("auth.alreadyAccount")}{" "}
         <Link href="/inloggen" className="text-terra-700 underline">
-          Inloggen
+          {t("auth.loginLink")}
         </Link>
       </p>
     </main>

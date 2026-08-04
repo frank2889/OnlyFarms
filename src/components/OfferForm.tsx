@@ -15,6 +15,7 @@ type OfferValues = {
   priceIndication: string;
   photoUrl: string;
   available: boolean;
+  featured: boolean;
 };
 
 const field = "w-full rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm";
@@ -60,6 +61,7 @@ export default function OfferForm({
             priceIndication: form.priceIndication || null,
             photoUrl: form.photoUrl || null,
             available: form.available,
+            featured: form.featured,
           });
           if (result.ok) {
             router.push("/portaal/producten");
@@ -163,6 +165,16 @@ export default function OfferForm({
           className="h-4 w-4 accent-terra-500"
         />
         {t("portal.offerAvailable")}
+      </label>
+
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={form.featured}
+          onChange={(e) => set("featured", e.target.checked)}
+          className="h-4 w-4 accent-terra-500"
+        />
+        {t("portal.offerFeatured")}
       </label>
 
       {error && <p className="rounded-xl bg-terra-50 px-4 py-2 text-sm text-terra-800">{error}</p>}

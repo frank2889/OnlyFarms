@@ -24,6 +24,8 @@ export type Producer = {
   lastVerifiedAt: Date | null;
   /** alleen gevuld bij afstand-queries */
   distanceKm?: number;
+  /** alleen gevuld door producerBySlug (join op sellers via claimedBySellerId) */
+  sellerStatus?: string | null;
 };
 
 export type ListItem = {

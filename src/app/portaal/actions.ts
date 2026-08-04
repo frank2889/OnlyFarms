@@ -82,6 +82,7 @@ function cleanOffer(input: OfferInput): OfferInput | string {
     priceIndication: input.priceIndication?.trim().slice(0, 60) || null,
     photoUrl,
     available: !!input.available,
+    featured: !!input.featured,
   };
 }
 

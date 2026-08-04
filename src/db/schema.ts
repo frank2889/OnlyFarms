@@ -318,6 +318,8 @@ export const offers = pgTable("offers", {
   available: boolean("available").notNull().default(true),
   // Screening: nieuw of inhoudelijk gewijzigd aanbod wacht op teamcontrole
   published: boolean("published").notNull().default(false),
+  // Uitlichten is geen inhoudelijke wijziging (net als available): raakt de screening niet
+  featured: boolean("featured").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

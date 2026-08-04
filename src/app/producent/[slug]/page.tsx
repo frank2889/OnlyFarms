@@ -14,7 +14,9 @@ import AskChefsButton from "@/components/AskChefsButton";
 import JsonLd from "@/components/JsonLd";
 import ProducerHeroCta from "@/components/ProducerHeroCta";
 import ProducerRouteLink from "@/components/ProducerRouteLink";
+import ProducerShareButton from "@/components/ProducerShareButton";
 import ProducerViewPing from "@/components/ProducerViewPing";
+import { CATEGORIES } from "@/lib/catalog";
 import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -66,6 +68,44 @@ export default async function ProducerPage({
 
   const crumbs = producerBreadcrumbs(producer);
 
+  // Een geschorste of afgewezen verkoper houdt zijn claim (isMember blijft
+  // true) maar verliest de "Aangesloten"-badge; de claim-teaser blijft al
+  // correct verborgen (die kijkt naar isMember, niet naar de badge) en het
+  // aanbod is al leeg via publicOffersForSeller.
+  const isActiveMember =
+    producer.isMember &&
+    (producer.sellerStatus == null || producer.sellerStatus === "goedgekeurd");
+
+  const ALCOHOL_TOKENS = ["bier", "wijn", "cider"];
+  const showsNix18 =
+    producer.kind === "brouwerij" ||
+    producer.kind === "wijngaard" ||
+    producer.products.some((p) => ALCOHOL_TOKENS.includes(p));
+
+  // Aanbod gegroepeerd per categorie (CATEGORIES-volgorde), uitgelicht eerst
+  // binnen elke groep (de query sorteert al featured desc, title; sort is
+  // stabiel dus die volgorde blijft staan binnen elke groep hieronder).
+  const availableOffers = offers.filter((o) => o.available);
+  const unavailableOffers = offers.filter((o) => !o.available);
+  const offersByCategory = new Map<string, typeof offers>();
+  for (const o of availableOffers) {
+    const key = o.category ?? "_overig";
+    if (!offersByCategory.has(key)) offersByCategory.set(key, []);
+    offersByCategory.get(key)!.push(o);
+  }
+  const orderedCategoryKeys = [...CATEGORIES.map((c) => c.key), "_overig"].filter((k) =>
+    offersByCategory.has(k)
+  );
+
+  const KIND_LABELS: Record<string, string> = {
+    boerderijwinkel: t("producers.kind.boerderijwinkel"),
+    brouwerij: t("producers.kind.brouwerij"),
+    bakkerij: t("producers.kind.bakkerij"),
+    imkerij: t("producers.kind.imkerij"),
+    wijngaard: t("producers.kind.wijngaard"),
+    overig: t("producers.kind.overig"),
+  };
+
   return (
     <main className="mx-auto max-w-2xl px-4 pb-40">
       <ProducerViewPing slug={producer.slug} />
@@ -97,7 +137,7 @@ export default async function ProducerPage({
 
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <h1 className="text-3xl font-bold">{producer.name}</h1>
-        {producer.isMember ? (
+        {isActiveMember ? (
           <span className="rounded-full bg-terra-500 px-3 py-1 text-xs font-medium text-white">
             {t("producers.memberBadge")}
           </span>
@@ -127,7 +167,16 @@ export default async function ProducerPage({
             {t("common.website")}
           </a>
         )}
+        {producer.phone && (
+          <a
+            href={`tel:${producer.phone}`}
+            className="rounded-full border border-terra-300 px-5 py-2.5 font-medium text-terra-700 hover:bg-terra-50"
+          >
+            {producer.phone}
+          </a>
+        )}
         <AskChefsButton producerSlug={producer.slug} producerName={producer.name} />
+        <ProducerShareButton name={producer.name} slug={producer.slug} />
       </div>
 
       {/* Conversie-ingang voor de Google-bezoeker: alles in een tik op je lijst */}
@@ -138,28 +187,38 @@ export default async function ProducerPage({
       />
 
       {producer.photos.length > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-2">
+        <div className="mb-6">
           <Image
             src={producer.photos[0]}
             alt={producer.name}
             width={800}
             height={600}
             priority
-            className={`aspect-4/3 w-full rounded-tile border border-cream-200 object-cover ${
-              producer.photos.length === 1 ? "col-span-2 aspect-2/1" : "row-span-2 h-full"
-            }`}
+            className="aspect-2/1 w-full rounded-tile border border-cream-200 object-cover"
           />
-          {producer.photos.slice(1, 3).map((url, i) => (
-            <Image
-              key={url}
-              src={url}
-              alt={`${producer.name}, foto ${i + 2}`}
-              width={400}
-              height={300}
-              className="aspect-4/3 w-full rounded-tile border border-cream-200 object-cover"
-            />
-          ))}
+          {producer.photos.length > 1 && (
+            <div className="mt-2 flex snap-x gap-2 overflow-x-auto pb-1">
+              {producer.photos.slice(1, 8).map((url, i) => (
+                <Image
+                  key={url}
+                  src={url}
+                  alt={`${producer.name}, foto ${i + 2}`}
+                  width={300}
+                  height={225}
+                  className="aspect-4/3 w-32 shrink-0 snap-start rounded-tile border border-cream-200 object-cover"
+                />
+              ))}
+            </div>
+          )}
         </div>
+      )}
+      {showsNix18 && (
+        <p className="mb-4 flex items-center gap-2 text-sm text-ink-500">
+          <span className="rounded-full bg-ink-900 px-2 py-0.5 text-xs font-bold text-white">
+            18+
+          </span>
+          {t("producers.nix18Notice")}
+        </p>
       )}
 
       {producer.description && <p className="mb-6 leading-relaxed">{producer.description}</p>}
@@ -167,37 +226,75 @@ export default async function ProducerPage({
       {offers.length > 0 && (
         <section className="mb-6">
           <h2 className="mb-2 text-lg font-bold">{t("producers.offersTitle")}</h2>
-          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {offers.map((offer) => (
-              <li
-                key={offer.id}
-                className="overflow-hidden rounded-tile border border-cream-200 bg-white"
-              >
-                {offer.photoUrl ? (
-                  <Image
-                    src={offer.photoUrl}
-                    alt={offer.title}
-                    width={400}
-                    height={300}
-                    className="aspect-4/3 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex aspect-4/3 w-full items-center justify-center bg-cream-100 text-ink-300">
-                    <StoreIcon width={26} height={26} />
-                  </div>
+          {orderedCategoryKeys.map((catKey) => {
+            const group = offersByCategory.get(catKey)!;
+            const categoryLabel =
+              CATEGORIES.find((c) => c.key === catKey)?.label ?? t("producers.offersOther");
+            return (
+              <div key={catKey} className="mb-4">
+                {orderedCategoryKeys.length > 1 && (
+                  <h3 className="mb-2 text-sm font-semibold text-ink-500">{categoryLabel}</h3>
                 )}
-                <div className="p-3">
-                  <p className="font-medium">{offer.title}</p>
-                  {offer.priceIndication && (
-                    <p className="text-sm font-semibold text-terra-700">{offer.priceIndication}</p>
-                  )}
-                  {offer.description && (
-                    <p className="mt-0.5 line-clamp-2 text-sm text-ink-500">{offer.description}</p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {group.map((offer) => (
+                    <li
+                      key={offer.id}
+                      className="relative overflow-hidden rounded-tile border border-cream-200 bg-white"
+                    >
+                      {offer.featured && (
+                        <span className="absolute left-2 top-2 z-10 rounded-full bg-terra-500 px-2 py-0.5 text-xs font-medium text-white">
+                          {t("producers.offersFeatured")}
+                        </span>
+                      )}
+                      {offer.photoUrl ? (
+                        <Image
+                          src={offer.photoUrl}
+                          alt={offer.title}
+                          width={400}
+                          height={300}
+                          className="aspect-4/3 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex aspect-4/3 w-full items-center justify-center bg-cream-100 text-ink-300">
+                          <StoreIcon width={26} height={26} />
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <p className="font-medium">{offer.title}</p>
+                        {offer.priceIndication && (
+                          <p className="text-sm font-semibold text-terra-700">
+                            {offer.priceIndication}
+                          </p>
+                        )}
+                        {offer.description && (
+                          <p className="mt-0.5 line-clamp-2 text-sm text-ink-500">
+                            {offer.description}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+          {unavailableOffers.length > 0 && (
+            <div className="mt-2">
+              <h3 className="mb-2 text-sm font-semibold text-ink-500">
+                {t("producers.offersUnavailableTitle")}
+              </h3>
+              <ul className="flex flex-wrap gap-2">
+                {unavailableOffers.map((offer) => (
+                  <li
+                    key={offer.id}
+                    className="rounded-full bg-cream-100 px-3 py-1 text-sm text-ink-500"
+                  >
+                    {offer.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="mt-2 text-xs text-ink-500">
             {t("producers.offersNote", { brand: BRAND.name })}
           </p>
@@ -211,6 +308,10 @@ export default async function ProducerPage({
       />
 
       <dl className="mb-6 flex flex-col gap-3 rounded-tile border border-cream-200 bg-white p-4">
+        <div>
+          <dt className="text-sm font-semibold text-ink-500">{t("producers.kindLabel")}</dt>
+          <dd className="mt-1 text-sm">{KIND_LABELS[producer.kind] ?? producer.kind}</dd>
+        </div>
         {producer.products.length > 0 && (
           <div>
             <dt className="text-sm font-semibold text-ink-500">{t("producers.products")}</dt>
@@ -256,6 +357,14 @@ export default async function ProducerPage({
             <span className="text-sm text-ink-500">{t("producers.seasonal")}</span>
           )}
         </div>
+        {producer.paymentMethods && (
+          <div>
+            <dt className="text-sm font-semibold text-ink-500">
+              {t("producers.paymentMethods")}
+            </dt>
+            <dd className="mt-1 text-sm text-ink-700">{producer.paymentMethods}</dd>
+          </div>
+        )}
         {producer.lastVerifiedAt && (
           <p className="text-xs text-ink-300">
             {t("producers.lastVerified", {

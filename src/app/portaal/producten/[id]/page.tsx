@@ -37,6 +37,7 @@ export default async function BewerkProductPage({
             priceIndication: offer.priceIndication ?? "",
             photoUrl: offer.photoUrl ?? "",
             available: offer.available,
+            featured: offer.featured,
           }}
         />
       </div>

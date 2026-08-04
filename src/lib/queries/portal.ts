@@ -51,6 +51,7 @@ export type OfferInput = {
   priceIndication: string | null;
   photoUrl: string | null;
   available: boolean;
+  featured: boolean;
 };
 
 export async function offersForSeller(sellerId: number) {
@@ -98,9 +99,11 @@ export async function deleteOffer(offerId: number, sellerId: number): Promise<vo
 }
 
 /**
- * Publiek aanbod voor de producentpagina: alleen beschikbaar, door het team
- * goedgekeurd (published) en van een nog steeds goedgekeurde verkoper (een
- * geschorste verkoper houdt zijn claim maar zijn aanbod verdwijnt).
+ * Publiek aanbod voor de producentpagina: door het team goedgekeurd
+ * (published) en van een nog steeds goedgekeurde verkoper (een geschorste
+ * verkoper houdt zijn claim maar zijn aanbod verdwijnt). Bewust ook
+ * niet-beschikbaar aanbod: de pagina toont dat gedempt ("nu even niet")
+ * i.p.v. het stil te verbergen. Uitgelicht aanbod eerst.
  */
 export async function publicOffersForSeller(sellerId: number) {
   return db
@@ -111,17 +114,18 @@ export async function publicOffersForSeller(sellerId: number) {
       description: offers.description,
       priceIndication: offers.priceIndication,
       photoUrl: offers.photoUrl,
+      available: offers.available,
+      featured: offers.featured,
     })
     .from(offers)
     .innerJoin(sellers, eq(sellers.id, offers.sellerId))
     .where(
       and(
         eq(offers.sellerId, sellerId),
-        eq(offers.available, true),
         eq(offers.published, true),
         eq(sellers.status, "goedgekeurd")
       )
     )
-    .orderBy(asc(offers.title))
+    .orderBy(desc(offers.featured), asc(offers.title))
     .limit(60);
 }

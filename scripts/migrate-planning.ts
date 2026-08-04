@@ -19,6 +19,11 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='users' and column_name='shopping_day'",
     "ALTER TABLE users ADD COLUMN shopping_day integer",
   ],
+  // Mail op je boodschappendag: alleen na expliciete keuze (AVG), CRO #83 laag 2.
+  [
+    "select 1 from information_schema.columns where table_name='users' and column_name='reminder_opt_in'",
+    "ALTER TABLE users ADD COLUMN reminder_opt_in boolean NOT NULL DEFAULT false",
+  ],
 ];
 
 async function main() {

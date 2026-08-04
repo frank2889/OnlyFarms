@@ -19,6 +19,7 @@ import {
   rotateInviteCode,
   updateNearbyRadius,
   updateShoppingDay,
+  updateReminderOptIn,
   updatePasswordHash,
   updateUserName,
   userByEmail,
@@ -124,6 +125,18 @@ export async function setShoppingDayAction(day: number | null): Promise<Result> 
   if (day !== null && (!Number.isInteger(day) || day < 0 || day > 6))
     return { ok: false, error: "Ongeldige dag." };
   await updateShoppingDay(userId, day);
+  // Dag uitzetten = ook de mailherinnering uitzetten, anders blijft er een
+  // opt-in hangen voor een dag die niet meer bestaat.
+  if (day === null) await updateReminderOptIn(userId, false);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+/** Mail op je boodschappendag: expliciete AVG-opt-in, alleen zinvol met een ingestelde dag */
+export async function setReminderOptInAction(optIn: boolean): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  await updateReminderOptIn(userId, optIn);
   revalidatePath("/profiel");
   return { ok: true };
 }

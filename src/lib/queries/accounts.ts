@@ -19,6 +19,7 @@ export async function userById(userId: number) {
       role: users.role,
       nearbyRadiusM: users.nearbyRadiusM,
       shoppingDay: users.shoppingDay,
+      reminderOptIn: users.reminderOptIn,
     })
     .from(users)
     .where(eq(users.id, userId));
@@ -37,6 +38,21 @@ export async function updateNearbyRadius(userId: number, meters: number | null):
 /** Vaste boodschappendag (0=zondag..6=zaterdag); null = uit */
 export async function updateShoppingDay(userId: number, day: number | null): Promise<void> {
   await db.update(users).set({ shoppingDay: day }).where(eq(users.id, userId));
+}
+
+/** Mail op je boodschappendag: alleen na expliciete keuze (AVG) */
+export async function updateReminderOptIn(userId: number, optIn: boolean): Promise<void> {
+  await db.update(users).set({ reminderOptIn: optIn }).where(eq(users.id, userId));
+}
+
+/** Accounts met deze vaste boodschappendag die mail willen (voor de cron) */
+export async function usersWithShoppingDay(
+  day: number
+): Promise<{ id: number; email: string; name: string }[]> {
+  return db
+    .select({ id: users.id, email: users.email, name: users.name })
+    .from(users)
+    .where(and(eq(users.shoppingDay, day), eq(users.reminderOptIn, true)));
 }
 
 /**

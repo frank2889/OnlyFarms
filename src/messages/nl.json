@@ -63,6 +63,8 @@
     "radiusOff": "Uit",
     "shoppingDayLabel": "Vaste boodschappendag",
     "shoppingDayHint": "Op deze dag herinneren we je op de lijstpagina aan je vorige boodschappen en vaste basis.",
+    "reminderOptIn": "Mail me ook op mijn boodschappendag",
+    "reminderOptInHint": "Alleen als je dit aanvinkt: een e-mail met een link naar je lijst. Je kunt dit op elk moment weer uitzetten.",
     "shoppingDayOff": "Uit",
     "tasteTitle": "Jouw smaak",
     "tasteIntro": "Dit leerde de smaakmodus van je swipes. Het bepaalt welke kaarten je vaker ziet.",

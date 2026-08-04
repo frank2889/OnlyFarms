@@ -99,6 +99,8 @@ export const users = pgTable("users", {
   nearbyRadiusM: integer("nearby_radius_m"),
   // Vaste boodschappendag: 0=zondag..6=zaterdag (DAY_NAMES in opening-hours.ts), null = uit
   shoppingDay: integer("shopping_day"),
+  // Mail op je boodschappendag: alleen na expliciete keuze (AVG), niet automatisch aan bij het instellen van shoppingDay
+  reminderOptIn: boolean("reminder_opt_in").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

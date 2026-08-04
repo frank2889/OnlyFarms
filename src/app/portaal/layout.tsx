@@ -45,7 +45,7 @@ export default async function PortaalLayout({ children }: { children: React.Reac
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-50 border-b border-cream-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-cream-200 bg-white/95 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
           <Link href="/portaal" className="inline-flex min-w-0 items-center gap-2">
             <SproutIcon width={18} height={18} className="text-terra-500" />

@@ -23,13 +23,14 @@ import {
   getListItems,
   recheckItems,
   removeItem,
-  removeOpenItemByCatalogKey,
+  removeOpenItemsByCatalogKeys,
   restoreBought,
   restoreClearedItems,
   setItemChecked,
   clearBought,
   deleteList,
   duplicateList,
+  frequentBought,
   renameList,
   setCategoryOrder,
   setListLocation,
@@ -196,7 +197,14 @@ export async function toggleItemAction(
 /** Undo van een swipe-toevoeging: open item op catalogKey weer verwijderen */
 export async function removeCatalogItemAction(token: string, catalogKey: string): Promise<void> {
   const list = await requireList(token);
-  await removeOpenItemByCatalogKey(list.id, catalogKey);
+  await removeOpenItemsByCatalogKeys(list.id, [catalogKey]);
+  await bump(token);
+}
+
+/** Undo van "Zet mijn vaste boodschappen erop": de zojuist toegevoegde items weer weg */
+export async function removeCatalogItemsAction(token: string, catalogKeys: string[]): Promise<void> {
+  const list = await requireList(token);
+  await removeOpenItemsByCatalogKeys(list.id, catalogKeys);
   await bump(token);
 }
 
@@ -320,8 +328,43 @@ export async function updateItemAction(
 export async function restoreBoughtAction(token: string): Promise<number[]> {
   const list = await requireList(token);
   const ids = await restoreBought(list.id);
+  if (ids.length) {
+    const userId = await currentUserId();
+    await trackConversion("lijst_herhaald", {
+      userId,
+      listId: list.id,
+      properties: { via: "terugzetten", n: ids.length },
+    });
+  }
   await bump(token);
   return ids;
+}
+
+/**
+ * "Zet mijn vaste boodschappen erop": items die minstens 3x gekocht zijn en
+ * nog niet open staan, in één tik toevoegen (heropent afgevinkte items
+ * idempotent via addItem). Retourneert de toegevoegde keys voor de undo.
+ */
+export async function addStaplesAction(token: string): Promise<string[]> {
+  const list = await requireList(token);
+  const staples = await frequentBought(list);
+  const { open } = await getListItems(list.id);
+  const openKeys = new Set(open.map((i) => i.catalogKey).filter((k): k is string => !!k));
+  const toAdd = staples.filter((key) => !openKeys.has(key));
+  for (const key of toAdd) {
+    const item = catalogItem(key);
+    if (item) await addItem(list.id, { catalogKey: key, label: item.label });
+  }
+  if (toAdd.length) {
+    const userId = await currentUserId();
+    await trackConversion("lijst_herhaald", {
+      userId,
+      listId: list.id,
+      properties: { via: "vaste-boodschappen", n: toAdd.length },
+    });
+  }
+  await bump(token);
+  return toAdd;
 }
 
 /** Undo van restoreBoughtAction */

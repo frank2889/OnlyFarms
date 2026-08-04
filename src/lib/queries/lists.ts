@@ -134,14 +134,33 @@ export async function boughtStatsFor(list: {
     .sort((a, b) => b.times - a.times);
 }
 
-/** Open item van de lijst halen op catalogKey (undo van een swipe-toevoeging) */
-export async function removeOpenItemByCatalogKey(listId: number, catalogKey: string): Promise<void> {
+/**
+ * "Vaste boodschappen": catalog-keys die minstens `minTimes` keer gekocht
+ * zijn, huishouden-breed waar mogelijk (zelfde scope als boughtStatsFor).
+ * Model-afweging (zie PLAN.md): geen aparte sjablonen-tabel, dit IS de
+ * blijvende "basis" die bought_stats al bijhoudt.
+ */
+export async function frequentBought(
+  list: { id: number; householdId: number | null },
+  minTimes = 3,
+  limit = 15
+): Promise<string[]> {
+  const stats = await boughtStatsFor(list);
+  return stats
+    .filter((r) => r.times >= minTimes)
+    .slice(0, limit)
+    .map((r) => r.key);
+}
+
+/** Open item(en) van de lijst halen op catalogKey (undo van een swipe- of vaste-boodschappen-toevoeging) */
+export async function removeOpenItemsByCatalogKeys(listId: number, catalogKeys: string[]): Promise<void> {
+  if (!catalogKeys.length) return;
   await db
     .delete(listItems)
     .where(
       and(
         eq(listItems.listId, listId),
-        eq(listItems.catalogKey, catalogKey),
+        inArray(listItems.catalogKey, catalogKeys),
         eq(listItems.checked, false)
       )
     );

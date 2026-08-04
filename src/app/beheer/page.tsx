@@ -40,6 +40,7 @@ export default async function AdminDashboardPage() {
     lijst_gedeeld: t("admin.eventListShared"),
     producent_aangemeld: t("admin.eventSellerApplied"),
     producent_bekeken: t("admin.eventProducerViewed"),
+    lijst_herhaald: t("admin.eventListRepeated"),
   };
 
   return (

@@ -5,7 +5,7 @@ import { listsForUser, membersOfHousehold, userById } from "@/lib/queries/accoun
 import { catalogItem, itemsInSeason } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
-import { boughtBefore, getListByToken, getListItems } from "@/lib/queries/lists";
+import { boughtBefore, frequentBought, getListByToken, getListItems } from "@/lib/queries/lists";
 import { messagesForList } from "@/lib/queries/chat";
 import { nearbyCountsByToken, nearbyProducers } from "@/lib/queries/producers";
 import { openFirst } from "@/lib/opening-hours";
@@ -32,6 +32,7 @@ export default async function ListPage({
 
   const { open, bought } = await getListItems(list.id);
   const boughtBeforeKeys = await boughtBefore({ id: list.id, householdId: list.householdId });
+  const staples = await frequentBought({ id: list.id, householdId: list.householdId });
 
   // Matching per open item met een catalog-key, alleen als de lijst een locatie heeft
   const matches: Record<string, ItemMatch> = {};
@@ -127,6 +128,7 @@ export default async function ListPage({
         matches={matches}
         seasonal={seasonal}
         boughtBeforeKeys={boughtBeforeKeys}
+        staples={staples}
         memberNames={memberNames}
         hasHousehold={!!list.householdId}
         viewerIsMember={viewerIsMember}

@@ -13,7 +13,7 @@ import { geocode, reverseGeocode } from "@/lib/geocode";
 import { trackEvent } from "@/lib/klaviyo";
 import { recordSwipeSignal } from "@/lib/queries/swipe";
 import { trackConversion } from "@/lib/events";
-import { sendListMessage } from "@/lib/queries/chat";
+import { countRecentMessagesByUser, sendListMessage } from "@/lib/queries/chat";
 
 import {
   addItem,
@@ -207,6 +207,10 @@ export async function sendChatMessageAction(
   if (!userId) return { ok: false, error: "login" };
   const clean = body.trim().slice(0, 500);
   if (!clean) return { ok: false, error: "leeg" };
+  // Rate limit: max 20 berichten per minuut per gebruiker (tegen scripts, niet tegen normaal gebruik)
+  if ((await countRecentMessagesByUser(userId, 60_000)) >= 20) {
+    return { ok: false, error: "te-snel" };
+  }
   let item: { id: number; label: string } | null = null;
   if (itemId) {
     const items = await getListItemsForChat(list.id);

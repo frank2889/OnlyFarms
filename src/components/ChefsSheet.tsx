@@ -37,11 +37,13 @@ export default function ChefsSheet({
 }) {
   const router = useRouter();
   const [body, setBody] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [sending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function deliver(text: string, itemId: number | null) {
     if (sending) return;
+    setError(null);
     startTransition(async () => {
       const result = await sendChatMessageAction(token, text, itemId);
       if (result.ok) {
@@ -52,6 +54,8 @@ export default function ChefsSheet({
         setTimeout(() => {
           scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
         }, 300);
+      } else if (result.error === "te-snel") {
+        setError(t("chefs.rateLimited"));
       }
     });
   }
@@ -160,6 +164,7 @@ export default function ChefsSheet({
                   <XIcon width={14} height={14} />
                 </button>
               </div>
+              {error && <p className="mb-2 text-sm text-terra-700">{error}</p>}
               <div className="flex flex-col gap-1.5">
                 {PRESETS.map((preset) => (
                   <button
@@ -176,6 +181,7 @@ export default function ChefsSheet({
             </div>
           ) : (
             <form onSubmit={send}>
+              {error && <p className="mb-2 text-sm text-terra-700">{error}</p>}
               <div className="flex gap-2">
                 <input
                   value={body}

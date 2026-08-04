@@ -155,7 +155,7 @@ export default async function ProfilePage() {
 
         <div className="mt-4 border-t border-cream-100 pt-4">
           <p className="mb-2 text-sm">{t("profile.shoppingDayLabel")}</p>
-          <ShoppingDaySetting current={user.shoppingDay} />
+          <ShoppingDaySetting current={user.shoppingDay} reminderOptIn={user.reminderOptIn} />
           <p className="mt-1.5 text-xs text-ink-500">{t("profile.shoppingDayHint")}</p>
         </div>
       </section>

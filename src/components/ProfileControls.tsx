@@ -11,6 +11,7 @@ import {
   resetTasteProfileAction,
   rotateInviteCodeAction,
   setNearbyRadiusAction,
+  setReminderOptInAction,
   setShoppingDayAction,
   updateNameAction,
 } from "@/app/account/actions";
@@ -171,7 +172,13 @@ export function NearbyRadiusSetting({ current }: { current: number | null }) {
 }
 
 /** Vaste boodschappendag: zeven dag-chips + "uit", grote tikvlakken */
-export function ShoppingDaySetting({ current }: { current: number | null }) {
+export function ShoppingDaySetting({
+  current,
+  reminderOptIn,
+}: {
+  current: number | null;
+  reminderOptIn: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -182,32 +189,56 @@ export function ShoppingDaySetting({ current }: { current: number | null }) {
     router.refresh();
   }
 
+  async function toggleReminder(checked: boolean) {
+    setBusy(true);
+    await setReminderOptInAction(checked);
+    setBusy(false);
+    router.refresh();
+  }
+
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {DAY_SHORT.map((label, day) => (
-        <button
-          key={day}
-          type="button"
-          disabled={busy}
-          onClick={() => choose(current === day ? null : day)}
-          className={`rounded-full border px-3.5 py-2 text-sm font-medium disabled:opacity-50 ${
-            current === day
-              ? "border-terra-500 bg-terra-500 text-white"
-              : "border-cream-300 bg-white text-ink-700 hover:border-terra-400"
-          }`}
-        >
-          {label}
-        </button>
-      ))}
+    <div>
+      <div className="flex flex-wrap gap-1.5">
+        {DAY_SHORT.map((label, day) => (
+          <button
+            key={day}
+            type="button"
+            disabled={busy}
+            onClick={() => choose(current === day ? null : day)}
+            className={`rounded-full border px-3.5 py-2 text-sm font-medium disabled:opacity-50 ${
+              current === day
+                ? "border-terra-500 bg-terra-500 text-white"
+                : "border-cream-300 bg-white text-ink-700 hover:border-terra-400"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {current !== null && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => choose(null)}
+            className="rounded-full border border-cream-300 bg-white px-3.5 py-2 text-sm text-ink-500 hover:border-terra-400 disabled:opacity-50"
+          >
+            {t("profile.shoppingDayOff")}
+          </button>
+        )}
+      </div>
       {current !== null && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => choose(null)}
-          className="rounded-full border border-cream-300 bg-white px-3.5 py-2 text-sm text-ink-500 hover:border-terra-400 disabled:opacity-50"
-        >
-          {t("profile.shoppingDayOff")}
-        </button>
+        <label className="mt-3 flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={reminderOptIn}
+            disabled={busy}
+            onChange={(e) => toggleReminder(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-terra-500"
+          />
+          <span>
+            {t("profile.reminderOptIn")}
+            <span className="mt-0.5 block text-xs text-ink-500">{t("profile.reminderOptInHint")}</span>
+          </span>
+        </label>
       )}
     </div>
   );

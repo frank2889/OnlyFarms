@@ -147,6 +147,30 @@ const steps: [check: string, sql: string][] = [
     "select 1 from information_schema.columns where table_name='list_messages' and column_name='producer_name'",
     "ALTER TABLE list_messages ADD COLUMN producer_name text",
   ],
+  // Account verwijderen (AVG): deze vier verwijzingen naar users blokkeerden
+  // een delete (NO ACTION); voortaan laten ze het veld leeg. Lijsten en
+  // afgehandelde meldingen blijven dus bestaan zonder eigenaar/afhandelaar.
+  [
+    "select 1 from pg_constraint where conname='lists_owner_user_id_users_id_fk' and confdeltype='n'",
+    "ALTER TABLE lists DROP CONSTRAINT lists_owner_user_id_users_id_fk, ADD CONSTRAINT lists_owner_user_id_users_id_fk FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL",
+  ],
+  [
+    "select 1 from pg_constraint where conname='list_items_assignee_user_id_users_id_fk' and confdeltype='n'",
+    "ALTER TABLE list_items DROP CONSTRAINT list_items_assignee_user_id_users_id_fk, ADD CONSTRAINT list_items_assignee_user_id_users_id_fk FOREIGN KEY (assignee_user_id) REFERENCES users(id) ON DELETE SET NULL",
+  ],
+  [
+    "select 1 from pg_constraint where conname='sellers_user_id_users_id_fk' and confdeltype='n'",
+    "ALTER TABLE sellers DROP CONSTRAINT sellers_user_id_users_id_fk, ADD CONSTRAINT sellers_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL",
+  ],
+  [
+    "select 1 from pg_constraint where conname='reports_resolved_by_users_id_fk' and confdeltype='n'",
+    "ALTER TABLE reports DROP CONSTRAINT reports_resolved_by_users_id_fk, ADD CONSTRAINT reports_resolved_by_users_id_fk FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL",
+  ],
+  // Eerste account-brede instelling: vlakbij-meldingsradius (null = uit)
+  [
+    "select 1 from information_schema.columns where table_name='users' and column_name='nearby_radius_m'",
+    "ALTER TABLE users ADD COLUMN nearby_radius_m integer",
+  ],
 ];
 
 async function main() {

@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
 import { trackEvent } from "@/lib/klaviyo";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -9,12 +10,19 @@ import {
   claimList,
   createHousehold,
   createUser,
+  deleteUser,
   householdByInviteCode,
   householdForUser,
+  leaveHousehold,
   passwordHashFor,
+  renameHousehold,
+  rotateInviteCode,
+  updateNearbyRadius,
   updatePasswordHash,
+  updateUserName,
   userByEmail,
 } from "@/lib/queries/accounts";
+import { resetTasteProfile } from "@/lib/queries/swipe";
 import { getListByToken } from "@/lib/queries/lists";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -74,7 +82,89 @@ export async function joinHouseholdAction(code: string): Promise<Result> {
   if (!userId) return { ok: false, error: "Log eerst in." };
   const household = await householdByInviteCode(code.trim());
   if (!household) return { ok: false, error: "Uitnodigingscode niet gevonden." };
+  // addHouseholdMember weigert stil als je al ergens lid bent; wees eerlijk
+  const current = await householdForUser(userId);
+  if (current && current.id !== household.id)
+    return { ok: false, error: "Je zit al in een gezin. Verlaat dat eerst via je profiel." };
   await addHouseholdMember(household.id, userId);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+export async function updateNameAction(name: string): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  if (name.trim().length < 2) return { ok: false, error: "Vul je naam in." };
+  await updateUserName(userId, name.trim().slice(0, 80));
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+const RADIUS_CHOICES = new Set([500, 1000, 2000]);
+
+/** Account-brede vlakbij-meldingsradius; null = uit */
+export async function setNearbyRadiusAction(meters: number | null): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  if (meters !== null && !RADIUS_CHOICES.has(meters))
+    return { ok: false, error: "Ongeldige afstand." };
+  await updateNearbyRadius(userId, meters);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+export async function renameHouseholdAction(name: string): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  const household = await householdForUser(userId);
+  if (!household) return { ok: false, error: "Je zit niet in een gezin." };
+  if (name.trim().length < 2) return { ok: false, error: "Vul een naam in." };
+  await renameHousehold(household.id, name.trim().slice(0, 80));
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+export async function leaveHouseholdAction(): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  const household = await householdForUser(userId);
+  if (!household) return { ok: false, error: "Je zit niet in een gezin." };
+  await leaveHousehold(household.id, userId);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+export async function rotateInviteCodeAction(): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  const household = await householdForUser(userId);
+  if (!household) return { ok: false, error: "Je zit niet in een gezin." };
+  await rotateInviteCode(household.id, randomBytes(6).toString("base64url"));
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+/** Wis het geleerde smaakprofiel (transparantie en controle over je data) */
+export async function resetTasteProfileAction(): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  await resetTasteProfile(userId);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+/**
+ * Account verwijderen (AVG): persoonsdata (smaakprofiel, berichten,
+ * gezinslidmaatschap) verdwijnt mee; gezinslijsten en de koophistorie van het
+ * gezin blijven bestaan. De client logt daarna uit.
+ */
+export async function deleteAccountAction(password: string): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  const stored = await passwordHashFor(userId);
+  if (!stored || !verifyPassword(password, stored))
+    return { ok: false, error: "Je wachtwoord klopt niet." };
+  await deleteUser(userId);
   return { ok: true };
 }
 

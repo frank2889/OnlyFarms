@@ -70,6 +70,7 @@ type Props = {
   nearbyCounts?: Record<string, number>;
   chatMessages?: ChatMessage[];
   viewerUserId?: number | null;
+  accountRadiusM?: number | null;
 };
 
 type Snapshot = { open: ListItem[]; bought: ListItem[] };
@@ -168,6 +169,7 @@ export default function ListView({
   nearbyCounts = {},
   chatMessages = [],
   viewerUserId = null,
+  accountRadiusM,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -793,7 +795,9 @@ export default function ListView({
       )}
 
       {/* "Je bent vlakbij"-melding: alleen zinvol met locatie en matches */}
-      {list.lat != null && <NearbyWatch open={snapshot.open} matches={matches} />}
+      {list.lat != null && (
+        <NearbyWatch open={snapshot.open} matches={matches} accountRadiusM={accountRadiusM} />
+      )}
 
       {/* De lijst zelf leeft in de drawer (cart-model) */}
       {/* Suggesties */}

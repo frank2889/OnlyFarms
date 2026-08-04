@@ -1,6 +1,6 @@
-import { desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { householdMembers, households, lists, users } from "@/db/schema";
+import { householdMembers, households, listItems, lists, users } from "@/db/schema";
 import type { ShoppingList } from "@/lib/types";
 
 export type HouseholdInfo = {
@@ -12,10 +12,67 @@ export type HouseholdInfo = {
 
 export async function userById(userId: number) {
   const [user] = await db
-    .select({ id: users.id, email: users.email, name: users.name, role: users.role })
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      nearbyRadiusM: users.nearbyRadiusM,
+    })
     .from(users)
     .where(eq(users.id, userId));
   return user ?? null;
+}
+
+export async function updateUserName(userId: number, name: string): Promise<void> {
+  await db.update(users).set({ name: name.trim() }).where(eq(users.id, userId));
+}
+
+/** Account-brede vlakbij-meldingsradius (meters); null = uit */
+export async function updateNearbyRadius(userId: number, meters: number | null): Promise<void> {
+  await db.update(users).set({ nearbyRadiusM: meters }).where(eq(users.id, userId));
+}
+
+/**
+ * Account verwijderen (AVG). Persoonsdata (smaakprofiel, berichten,
+ * lidmaatschap) cascadet mee; gezinslijsten, koophistorie en afgehandelde
+ * meldingen blijven bestaan met een leeg eigenaar/afhandelaar-veld (SET NULL).
+ */
+export async function deleteUser(userId: number): Promise<void> {
+  await db.delete(users).where(eq(users.id, userId));
+}
+
+export async function renameHousehold(householdId: number, name: string): Promise<void> {
+  await db.update(households).set({ name: name.trim() }).where(eq(households.id, householdId));
+}
+
+/** Huishouden verlaten; een leeg huishouden mag blijven bestaan (lijsten blijven) */
+export async function leaveHousehold(householdId: number, userId: number): Promise<void> {
+  await db
+    .delete(householdMembers)
+    .where(
+      and(eq(householdMembers.householdId, householdId), eq(householdMembers.userId, userId))
+    );
+}
+
+export async function rotateInviteCode(householdId: number, code: string): Promise<void> {
+  await db.update(households).set({ inviteCode: code }).where(eq(households.id, householdId));
+}
+
+/** Lijsten met open-teller voor het profiel (CRO: je vorige lijst is één tik weg) */
+export async function listsWithCounts(
+  userId: number
+): Promise<(ShoppingList & { openCount: number })[]> {
+  const rows = await listsForUser(userId);
+  if (rows.length === 0) return [];
+  const ids = rows.map((l) => l.id);
+  const counts = await db
+    .select({ listId: listItems.listId, n: sql<number>`count(*)::int` })
+    .from(listItems)
+    .where(and(inArray(listItems.listId, ids), eq(listItems.checked, false)))
+    .groupBy(listItems.listId);
+  const byList = new Map(counts.map((c) => [c.listId, c.n]));
+  return rows.map((l) => ({ ...l, openCount: byList.get(l.id) ?? 0 }));
 }
 
 export async function householdForUser(userId: number): Promise<HouseholdInfo | null> {

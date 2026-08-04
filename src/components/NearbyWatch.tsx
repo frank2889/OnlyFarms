@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { t } from "@/lib/i18n";
+import { setNearbyRadiusAction } from "@/app/account/actions";
 import { BellIcon, RouteIcon, XIcon } from "@/components/icons";
 import type { ItemMatch, ListItem } from "@/lib/types";
 
@@ -68,17 +70,23 @@ function markSeen(slug: string): void {
 export default function NearbyWatch({
   open,
   matches,
+  accountRadiusM,
 }: {
   open: ListItem[];
   matches: Record<string, ItemMatch>;
+  /** Ingelogd: de account-brede instelling wint (null = uit); anoniem: undefined → localStorage */
+  accountRadiusM?: number | null;
 }) {
-  const meters = Number(
+  const router = useRouter();
+  const hasAccount = accountRadiusM !== undefined;
+  const localMeters = Number(
     useSyncExternalStore(
       subscribeSetting,
       () => localStorage.getItem(SETTING_KEY) ?? "0",
       () => "0"
     )
   );
+  const meters = hasAccount ? (accountRadiusM ?? 0) : localMeters;
   const [alert, setAlert] = useState<Alert | null>(null);
   const [geoError, setGeoError] = useState(false);
 
@@ -124,8 +132,13 @@ export default function NearbyWatch({
   }, [meters, candidates]);
 
   function setSetting(value: string) {
-    localStorage.setItem(SETTING_KEY, value);
-    window.dispatchEvent(new Event("of:nearby-setting"));
+    if (hasAccount) {
+      // Ingelogd: instelling hoort bij het account (geldt op al je apparaten)
+      void setNearbyRadiusAction(value === "0" ? null : Number(value)).then(() => router.refresh());
+    } else {
+      localStorage.setItem(SETTING_KEY, value);
+      window.dispatchEvent(new Event("of:nearby-setting"));
+    }
     setGeoError(false);
     if (value === "0") setAlert(null);
   }

@@ -90,6 +90,9 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("gebruiker"),
+  // Account-brede instelling: vlakbij-meldingsradius in meters (null = uit).
+  // Ingelogd wint dit van de device-lokale localStorage-waarde.
+  nearbyRadiusM: integer("nearby_radius_m"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -126,7 +129,7 @@ export const lists = pgTable("lists", {
   id: serial("id").primaryKey(),
   token: text("token").notNull().unique(),
   name: text("name").notNull(),
-  ownerUserId: integer("owner_user_id").references(() => users.id),
+  ownerUserId: integer("owner_user_id").references(() => users.id, { onDelete: "set null" }),
   householdId: integer("household_id").references(() => households.id),
   postcode: text("postcode"),
   lat: doublePrecision("lat"),
@@ -160,7 +163,7 @@ export const listItems = pgTable(
     storeSuggestedBy: text("store_suggested_by"),
     assignee: text("assignee"),
     // gevalideerd gezinslid (alleen bij lijsten met een huishouden)
-    assigneeUserId: integer("assignee_user_id").references(() => users.id),
+    assigneeUserId: integer("assignee_user_id").references(() => users.id, { onDelete: "set null" }),
     // dringend | normaal | kan-wachten (Bring-urgentie)
     priority: text("priority").notNull().default("normaal"),
     dueAt: timestamp("due_at", { withTimezone: true }),
@@ -282,7 +285,7 @@ export const sellers = pgTable(
     lng: doublePrecision("lng"),
     bio: text("bio"),
     // Portaal-toegang: gekoppeld gebruikersaccount (één account, meerdere petten)
-    userId: integer("user_id").unique().references(() => users.id),
+    userId: integer("user_id").unique().references(() => users.id, { onDelete: "set null" }),
     // Selectieproces: wat wil je aanbieden en waarom
     motivation: text("motivation").notNull(),
     acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),
@@ -365,7 +368,7 @@ export const reports = pgTable("reports", {
   reporterEmail: text("reporter_email"),
   resolved: boolean("resolved").notNull().default(false),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
-  resolvedBy: integer("resolved_by").references(() => users.id),
+  resolvedBy: integer("resolved_by").references(() => users.id, { onDelete: "set null" }),
   adminNote: text("admin_note"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

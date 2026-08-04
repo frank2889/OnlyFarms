@@ -33,6 +33,46 @@ export async function recordSwipeSignal(
   } catch {}
 }
 
+export type TasteProfile = {
+  top: { key: string; likes: number }[];
+  flop: { key: string; skips: number }[];
+};
+
+/**
+ * Het geleerde smaakprofiel voor op /profiel: wat swipe je het vaakst naar
+ * rechts (top) en naar links (flop). Transparantie: de gebruiker mag zien wat
+ * het systeem leerde, en het wissen via resetTasteProfile.
+ */
+export async function tasteProfileFor(userId: number, limit = 5): Promise<TasteProfile> {
+  const rows = await db
+    .select({ key: swipeSignals.catalogKey, likes: swipeSignals.likes, skips: swipeSignals.skips })
+    .from(swipeSignals)
+    .where(eq(swipeSignals.userId, userId));
+  const merged = new Map<string, { likes: number; skips: number }>();
+  for (const r of rows) {
+    const cur = merged.get(r.key) ?? { likes: 0, skips: 0 };
+    merged.set(r.key, { likes: cur.likes + r.likes, skips: cur.skips + r.skips });
+  }
+  const all = [...merged.entries()];
+  return {
+    top: all
+      .filter(([, v]) => v.likes > 0)
+      .sort((a, b) => b[1].likes - a[1].likes)
+      .slice(0, limit)
+      .map(([key, v]) => ({ key, likes: v.likes })),
+    flop: all
+      .filter(([, v]) => v.skips > 0)
+      .sort((a, b) => b[1].skips - a[1].skips)
+      .slice(0, limit)
+      .map(([key, v]) => ({ key, skips: v.skips })),
+  };
+}
+
+/** Wis het persoonlijke smaakprofiel (datacontrole voor de gebruiker) */
+export async function resetTasteProfile(userId: number): Promise<void> {
+  await db.delete(swipeSignals).where(eq(swipeSignals.userId, userId));
+}
+
 /**
  * Geleerde voorkeur (likes min skips) per catalogusitem. Ingelogd: het eigen
  * profiel over alle lijsten heen; anoniem: alleen deze lijst zonder gebruiker.

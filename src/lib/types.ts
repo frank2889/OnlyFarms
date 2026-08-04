@@ -56,6 +56,7 @@ export type ShoppingList = {
   lng: number | null;
   radiusKm: number;
   categoryOrder: string[] | null;
+  updatedAt: Date;
 };
 
 export type ItemMatch = {

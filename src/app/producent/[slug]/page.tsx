@@ -7,12 +7,14 @@ import { t } from "@/lib/i18n";
 import { nearbyProducers, producerBySlug } from "@/lib/queries/producers";
 import { publicOffersForSeller } from "@/lib/queries/portal";
 import { hoursStatusText } from "@/lib/opening-hours";
-import { LeafIcon, RouteIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
+import { LeafIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 import AskChefsButton from "@/components/AskChefsButton";
 import JsonLd from "@/components/JsonLd";
 import ProducerHeroCta from "@/components/ProducerHeroCta";
+import ProducerRouteLink from "@/components/ProducerRouteLink";
+import ProducerViewPing from "@/components/ProducerViewPing";
 import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -66,6 +68,7 @@ export default async function ProducerPage({
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-40">
+      <ProducerViewPing slug={producer.slug} />
       <JsonLd data={producerLd(producer, offers)} />
       <JsonLd data={breadcrumbLd(crumbs)} />
       <header className="flex items-center justify-between py-4">
@@ -112,14 +115,7 @@ export default async function ProducerPage({
 
       <div className="mb-6 flex flex-wrap gap-2">
         {producer.lat != null && (
-          <a
-            href={`https://www.google.com/maps/dir/?api=1&destination=${producer.lat},${producer.lng}`}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex items-center gap-2 rounded-full bg-terra-500 px-5 py-2.5 font-medium text-white hover:bg-terra-600"
-          >
-            <RouteIcon width={16} height={16} /> {t("common.route")}
-          </a>
+          <ProducerRouteLink lat={producer.lat} lng={producer.lng!} slug={producer.slug} />
         )}
         {producer.website && (
           <a

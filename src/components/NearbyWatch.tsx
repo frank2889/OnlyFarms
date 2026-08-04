@@ -198,7 +198,10 @@ export default function NearbyWatch({
                 try {
                   navigator.sendBeacon(
                     "/api/event",
-                    new Blob([JSON.stringify({ name: "route_geopend", token })], { type: "application/json" })
+                    new Blob(
+                      [JSON.stringify({ name: "route_geopend", token, slug: alert.slug })],
+                      { type: "application/json" }
+                    )
                   );
                 } catch {}
               }}

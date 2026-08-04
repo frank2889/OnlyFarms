@@ -35,6 +35,7 @@ import {
   StoreIcon,
   TrashIcon,
   UserIcon,
+  XIcon,
 } from "@/components/icons";
 import {
   forgetList,
@@ -92,6 +93,17 @@ type Props = {
   viewerIsMember?: boolean;
   viewerCanManage: boolean;
   nearbyCounts?: Record<string, number>;
+  /** Eerstvolgende weekmarkt binnen 2 dagen en 15 km (nearbyMarkets); null = geen tip */
+  marketTip?: {
+    id: number;
+    name: string;
+    city: string | null;
+    distanceKm: number;
+    lat: number;
+    lng: number;
+    dayLabel: string;
+    dateKey: string;
+  } | null;
   /** Lijsten van het account/huishouden (server-waarheid), voor de switcher naast het apparaat-geheugen */
   serverLists?: { token: string; name: string }[];
   chatMessages?: ChatMessage[];
@@ -295,6 +307,7 @@ export default function ListView({
   viewerIsMember = false,
   viewerCanManage,
   nearbyCounts = {},
+  marketTip = null,
   serverLists = [],
   chatMessages = [],
   viewerUserId = null,
@@ -804,6 +817,22 @@ export default function ListView({
     !dayPromptDismissed &&
     (snapshot.bought.length > 0 || staplesToAdd.length > 0);
 
+  // Marktdag-tip: dismiss per markt per (eerstvolgende) datum, dus vanzelf
+  // weer terug de volgende week. Markten hebben geen assortiment, dus tellen
+  // we alleen hoeveel open items "van het soort" zijn dat je op een markt
+  // tegenkomt (heeft matchTokens), geen harde belofte.
+  const marketTipKey = marketTip ? `of_markettip:${list.token}:${marketTip.id}:${marketTip.dateKey}` : "";
+  const marketTipDismissed = useSyncExternalStore(
+    subscribeStorage,
+    () => (marketTipKey ? localStorage.getItem(marketTipKey) === "1" : false),
+    () => false
+  );
+  const marketableCount = snapshot.open.filter((i) => {
+    const item = i.catalogKey ? catalogItem(i.catalogKey) : undefined;
+    return item && item.matchTokens.length > 0;
+  }).length;
+  const showMarketTip = !!marketTip && !marketTipDismissed && marketableCount > 0;
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-36 sm:pb-24">
       {/* Kop: lijst-switcher + delen */}
@@ -1071,6 +1100,44 @@ export default function ListView({
           {locError && (
             <p className="mt-2 text-sm text-terra-700">{t("lists.locationError")}</p>
           )}
+        </div>
+      )}
+
+      {/* Marktdag-tip: zachte formulering, markten hebben geen assortiment */}
+      {showMarketTip && marketTip && (
+        <div className="mb-4 rounded-tile bg-terra-50 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-medium text-terra-800">
+              {t("lists.marketTip", {
+                day: marketTip.dayLabel.charAt(0).toUpperCase() + marketTip.dayLabel.slice(1),
+                city: marketTip.city ?? marketTip.name,
+                km: marketTip.distanceKm.toFixed(1),
+                n: marketableCount,
+              })}
+            </p>
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem(marketTipKey, "1");
+                } catch {}
+                window.dispatchEvent(new Event("storage"));
+              }}
+              aria-label={t("common.close")}
+              className="shrink-0 p-1 text-terra-700"
+            >
+              <XIcon width={16} height={16} />
+            </button>
+          </div>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${marketTip.lat},${marketTip.lng}`}
+            target="_blank"
+            rel="noopener"
+            onClick={() => beacon("route_geopend")}
+            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-terra-700 underline"
+          >
+            <RouteIcon width={14} height={14} /> {t("common.route")}
+          </a>
+          <p className="mt-1 text-[11px] text-ink-500">{t("lists.marketSource")}</p>
         </div>
       )}
 

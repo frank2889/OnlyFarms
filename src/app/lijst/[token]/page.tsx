@@ -7,8 +7,8 @@ import { t } from "@/lib/i18n";
 import { BRAND } from "@/lib/brand";
 import { boughtBefore, frequentBought, getListByToken, getListItems } from "@/lib/queries/lists";
 import { messagesForList } from "@/lib/queries/chat";
-import { nearbyCountsByToken, nearbyProducers } from "@/lib/queries/producers";
-import { openFirst } from "@/lib/opening-hours";
+import { nearbyCountsByToken, nearbyMarkets, nearbyProducers } from "@/lib/queries/producers";
+import { nextOpenDay, openFirst } from "@/lib/opening-hours";
 import type { ItemMatch } from "@/lib/types";
 import ListView from "@/components/ListView";
 import ClaimListButton from "@/components/ClaimListButton";
@@ -86,6 +86,39 @@ export default async function ListPage({
       ? await nearbyCountsByToken(list.lat, list.lng, list.radiusKm)
       : {};
 
+  // Marktdag-tip: eerstvolgende markt binnen 2 dagen en 15 km (nearbyMarkets' eigen straal)
+  let marketTip: {
+    id: number;
+    name: string;
+    city: string | null;
+    distanceKm: number;
+    lat: number;
+    lng: number;
+    dayLabel: string;
+    dateKey: string;
+  } | null = null;
+  if (list.lat != null && list.lng != null) {
+    const nearby = await nearbyMarkets(list.lat, list.lng, 3);
+    for (const m of nearby) {
+      const next = nextOpenDay(m.daysText);
+      if (next && next.inDays <= 2) {
+        const date = new Date();
+        date.setDate(date.getDate() + next.inDays);
+        marketTip = {
+          id: m.id,
+          name: m.name,
+          city: m.city,
+          distanceKm: m.distanceKm,
+          lat: m.lat,
+          lng: m.lng,
+          dayLabel: next.label,
+          dateKey: date.toISOString().slice(0, 10),
+        };
+        break;
+      }
+    }
+  }
+
   // "Wie haalt het" = gevalideerde leden van het gezin waar deze lijst bij hoort
   const userId = await currentUserId();
   const viewer = userId ? await userById(userId) : null;
@@ -134,6 +167,7 @@ export default async function ListPage({
         viewerIsMember={viewerIsMember}
         viewerCanManage={viewerCanManage}
         nearbyCounts={nearbyCounts}
+        marketTip={marketTip}
         serverLists={serverLists}
         chatMessages={chatMessages}
         viewerUserId={userId ?? null}

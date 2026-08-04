@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BRAND } from "@/lib/brand";
+import { organizationLd, siteUrl, websiteLd } from "@/lib/seo";
 import AppShell from "@/components/AppShell";
+import JsonLd from "@/components/JsonLd";
 import SWRegister from "@/components/SWRegister";
 import "./globals.css";
 
@@ -20,6 +22,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   icons: {
     icon: "/icon.svg",
     apple: "/icon-192.png",
@@ -29,6 +32,14 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND.name}`,
   },
   description: BRAND.tagline,
+  openGraph: {
+    siteName: BRAND.name,
+    locale: "nl_NL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
@@ -42,6 +53,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={organizationLd()} />
+        <JsonLd data={websiteLd()} />
         <AppShell>{children}</AppShell>
         <SWRegister />
       </body>

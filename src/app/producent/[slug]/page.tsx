@@ -11,6 +11,8 @@ import { LeafIcon, RouteIcon, SproutIcon, StoreIcon, VendingIcon } from "@/compo
 import ReportForm from "@/components/ReportForm";
 import ProducerActions from "@/components/ProducerActions";
 import AskChefsButton from "@/components/AskChefsButton";
+import JsonLd from "@/components/JsonLd";
+import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -23,10 +25,13 @@ export async function generateMetadata({
   if (!producer) return {};
   const title = `${producer.name}${producer.city ? `, ${producer.city}` : ""}`;
   return {
-    title: `${title} | ${BRAND.name}`,
+    title,
     description:
       producer.description ??
       `${producer.name} in ${producer.city ?? "Nederland"}: verse producten rechtstreeks van de producent.`,
+    alternates: { canonical: `/producent/${producer.slug}` },
+    // Gestopte zaken blijven bereikbaar voor oude links maar horen niet in de index
+    ...(producer.status === "gestopt" ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -41,33 +46,12 @@ export default async function ProducerPage({
     ? await publicOffersForSeller(producer.claimedBySellerId)
     : [];
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: producer.name,
-    description: producer.description ?? undefined,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: producer.address ?? undefined,
-      postalCode: producer.postcode ?? undefined,
-      addressLocality: producer.city ?? undefined,
-      addressRegion: producer.province ?? undefined,
-      addressCountry: "NL",
-    },
-    geo:
-      producer.lat != null
-        ? { "@type": "GeoCoordinates", latitude: producer.lat, longitude: producer.lng }
-        : undefined,
-    telephone: producer.phone ?? undefined,
-    url: producer.website ?? undefined,
-  };
+  const crumbs = producerBreadcrumbs(producer);
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-40">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={producerLd(producer, offers)} />
+      <JsonLd data={breadcrumbLd(crumbs)} />
       <header className="flex items-center justify-between py-4">
         <Link href="/" className="inline-flex items-center gap-2 font-semibold">
           <SproutIcon width={20} height={20} className="text-terra-500" />
@@ -77,6 +61,20 @@ export default async function ProducerPage({
           {t("producers.title")}
         </Link>
       </header>
+
+      {/* Zichtbare breadcrumb: matcht de BreadcrumbList en linkt naar de provincie */}
+      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-ink-500">
+        <ol className="flex flex-wrap items-center gap-1">
+          {crumbs.slice(0, -1).map((c, i) => (
+            <li key={c.path} className="flex items-center gap-1">
+              {i > 0 && <span aria-hidden>/</span>}
+              <Link href={c.path} className="hover:text-terra-700 hover:underline">
+                {c.name}
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </nav>
 
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <h1 className="text-3xl font-bold">{producer.name}</h1>
@@ -132,11 +130,11 @@ export default async function ProducerPage({
               producer.photos.length === 1 ? "col-span-2 aspect-2/1" : "row-span-2 h-full"
             }`}
           />
-          {producer.photos.slice(1, 3).map((url) => (
+          {producer.photos.slice(1, 3).map((url, i) => (
             <Image
               key={url}
               src={url}
-              alt={producer.name}
+              alt={`${producer.name}, foto ${i + 2}`}
               width={400}
               height={300}
               className="aspect-4/3 w-full rounded-tile border border-cream-200 object-cover"

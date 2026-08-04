@@ -14,6 +14,10 @@ import ListView from "@/components/ListView";
 import ClaimListButton from "@/components/ClaimListButton";
 import { SproutIcon } from "@/components/icons";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 // Altijd vers: gedeelde lijsten veranderen constant
 export const dynamic = "force-dynamic";
 

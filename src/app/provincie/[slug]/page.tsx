@@ -3,30 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
+import { PROVINCES, provinceFromSlug } from "@/lib/provinces";
 import { slugify } from "@/lib/slug";
 import { producersByProvince } from "@/lib/queries/producers";
 import { SproutIcon } from "@/components/icons";
+import JsonLd from "@/components/JsonLd";
+import { breadcrumbLd, itemListLd } from "@/lib/seo";
 
 export const revalidate = 3600;
-
-const PROVINCES = [
-  "Drenthe",
-  "Flevoland",
-  "Friesland",
-  "Gelderland",
-  "Groningen",
-  "Limburg",
-  "Noord-Brabant",
-  "Noord-Holland",
-  "Overijssel",
-  "Utrecht",
-  "Zeeland",
-  "Zuid-Holland",
-];
-
-function provinceFromSlug(slug: string): string | undefined {
-  return PROVINCES.find((p) => slugify(p) === slug);
-}
 
 export function generateStaticParams() {
   return PROVINCES.map((p) => ({ slug: slugify(p) }));
@@ -40,8 +24,9 @@ export async function generateMetadata({
   const province = provinceFromSlug((await params).slug);
   if (!province) return {};
   return {
-    title: `${t("producers.inProvince", { province })} | ${BRAND.name}`,
+    title: t("producers.inProvince", { province }),
     description: `Alle lokale producenten in ${province}: boerderijwinkels, verse producten rechtstreeks van de producent.`,
+    alternates: { canonical: `/provincie/${(await params).slug}` },
   };
 }
 
@@ -54,9 +39,23 @@ export default async function ProvincePage({
   if (!province) notFound();
 
   const producers = await producersByProvince(province);
+  const slug = slugify(province);
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
+      <JsonLd
+        data={breadcrumbLd([
+          { name: "Home", path: "/" },
+          { name: "Producenten", path: "/producenten" },
+          { name: province, path: `/provincie/${slug}` },
+        ])}
+      />
+      <JsonLd
+        data={itemListLd(
+          t("producers.inProvince", { province }),
+          producers.map((p) => ({ name: p.name, path: `/producent/${p.slug}` }))
+        )}
+      />
       <header className="flex items-center justify-between py-4">
         <Link href="/" className="inline-flex items-center gap-2 font-semibold">
           <SproutIcon width={20} height={20} className="text-terra-500" />

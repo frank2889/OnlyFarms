@@ -6,6 +6,10 @@ import { householdByInviteCode } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
 import { SproutIcon } from "@/components/icons";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = "force-dynamic";
 
 // Uitnodigingslink voor een gezin: ingelogd → direct aansluiten;

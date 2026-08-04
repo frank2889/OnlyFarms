@@ -14,12 +14,6 @@ import { iconForCategory } from "@/components/catalog-icons";
 import { RouteIcon, SproutIcon } from "@/components/icons";
 import LocationSearch from "@/components/LocationSearch";
 
-export const metadata: Metadata = {
-  title: `${t("producers.title")} | ${BRAND.name}`,
-  description:
-    "Vind boerderijwinkels, bakkers, brouwers en andere lokale producenten bij jou in de buurt.",
-};
-
 type Search = {
   q?: string;
   lat?: string;
@@ -27,6 +21,24 @@ type Search = {
   product?: string;
   radius?: string;
 };
+
+// Facet-URL's (zoek/locatie/filters) zijn oneindig veel varianten van dezelfde
+// pagina: die krijgen noindex + een canonical naar de kale /producenten.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const hasFacets = !!(params.q || params.lat || params.lng || params.product || params.radius);
+  return {
+    title: t("producers.title"),
+    description:
+      "Vind boerderijwinkels, bakkers, brouwers en andere lokale producenten bij jou in de buurt.",
+    alternates: { canonical: "/producenten" },
+    ...(hasFacets ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 export default async function ProducersPage({
   searchParams,

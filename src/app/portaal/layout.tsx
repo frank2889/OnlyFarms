@@ -9,7 +9,7 @@ import { SproutIcon } from "@/components/icons";
 import PortalTabs from "@/components/PortalTabs";
 
 export const metadata: Metadata = {
-  title: `${t("portal.title")} | ${BRAND.name}`,
+  title: t("portal.title"),
   robots: { index: false, follow: false },
 };
 

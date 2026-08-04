@@ -8,6 +8,10 @@ import { currentSeason } from "@/lib/season";
 import { SproutIcon, StoreIcon } from "@/components/icons";
 import HomeListPanel from "@/components/HomeListPanel";
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function Home() {

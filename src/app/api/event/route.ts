@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { currentUserId } from "@/auth";
 import { getListByToken } from "@/lib/queries/lists";
 import { trackConversion, type ConversionEvent } from "@/lib/events";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,11 @@ export const runtime = "nodejs";
 const CLIENT_EVENTS = new Set<ConversionEvent>(["route_geopend", "lijst_gedeeld"]);
 
 export async function POST(req: Request) {
+  // Ruime limiet tegen scriptmisbruik (log-vervuiling maakt het dashboard
+  // onbruikbaar); normaal gebruik zit hier nooit in de buurt van.
+  if (isRateLimited(`event:${await clientIp()}`, 120, 60_000)) {
+    return NextResponse.json({ ok: false }, { status: 429 });
+  }
   const body = await req.json().catch(() => null);
   const name = body?.name;
   if (typeof name !== "string" || !CLIENT_EVENTS.has(name as ConversionEvent)) {

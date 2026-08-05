@@ -5,6 +5,7 @@ import { requireSellerUser } from "@/lib/authz";
 import { offersForSeller } from "@/lib/queries/portal";
 import { t } from "@/lib/i18n";
 import { PlusIcon, StoreIcon } from "@/components/icons";
+import { ConfirmOfferButton } from "@/components/PortalExtras";
 import { deleteOfferAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +86,7 @@ export default async function PortaalProductenPage() {
                     {t("portal.offerDelete")}
                   </button>
                 </form>
+                <ConfirmOfferButton offerId={offer.id} lastVerifiedAt={offer.lastVerifiedAt} />
               </div>
             </li>
           ))}

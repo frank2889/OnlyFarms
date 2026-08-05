@@ -5,6 +5,7 @@ import { del } from "@vercel/blob";
 import { requireSellerUser } from "@/lib/authz";
 import { producerByIdAdmin, producerForSeller, updateProducerAdmin, type ProducerPatch } from "@/lib/queries/admin";
 import {
+  confirmOffer,
   createOffer,
   deleteOffer,
   offerByIdForSeller,
@@ -137,6 +138,17 @@ export async function deleteOfferAction(offerId: number): Promise<void> {
   }
   revalidatePath("/portaal");
   revalidatePath("/producent/[slug]", "page");
+}
+
+/** "Alles klopt nog" voor één product: zet alleen lastVerifiedAt op dit aanbod */
+export async function confirmOfferAction(offerId: number): Promise<Result> {
+  const ctx = await requireSellerUser();
+  if (!ctx || ctx.seller.status !== "goedgekeurd") return { ok: false, error: "Geen toegang." };
+  const existing = await offerByIdForSeller(offerId, ctx.seller.id);
+  if (!existing) return { ok: false, error: "Product niet gevonden." };
+  await confirmOffer(offerId, ctx.seller.id);
+  revalidatePath("/portaal/producten");
+  return { ok: true };
 }
 
 /**

@@ -38,7 +38,12 @@ import {
   updateItem,
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
-import { nearbyProducers, producerBySlug, searchProducersByName } from "@/lib/queries/producers";
+import {
+  nearbyProducerCount,
+  nearbyProducers,
+  producerBySlug,
+  searchProducersByName,
+} from "@/lib/queries/producers";
 import { openFirst } from "@/lib/opening-hours";
 import { SAMPLE_LIST, catalogItem } from "@/lib/catalog";
 import type { ListItem, Producer, ShoppingList } from "@/lib/types";
@@ -192,6 +197,11 @@ export async function resolveLocationByCoordsAction(
 ): Promise<ResolvedLocation> {
   const label = await reverseGeocode(lat, lng);
   return { lat, lng, label: label ?? "Mijn locatie" };
+}
+
+/** Homepage-onboarding: "N producenten bij jou in de buurt" zodra een locatie bekend is */
+export async function nearbyProducerCountAction(lat: number, lng: number): Promise<number> {
+  return nearbyProducerCount(lat, lng);
 }
 
 export async function addItemAction(

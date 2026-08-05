@@ -14,6 +14,7 @@ import { iconForItem, tintForCategory } from "@/components/catalog-icons";
 import { BellIcon, HeartIcon, SproutIcon, UserIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import PasswordForm, { CopyInviteLink } from "@/components/PasswordForm";
+import PushToggle from "@/components/PushToggle";
 import {
   DeleteAccountForm,
   HouseholdControls,
@@ -187,6 +188,8 @@ export default async function ProfilePage() {
           <ShoppingDaySetting current={user.shoppingDay} reminderOptIn={user.reminderOptIn} />
           <p className="mt-1.5 text-xs text-ink-500">{t("profile.shoppingDayHint")}</p>
         </div>
+
+        <PushToggle />
       </section>
 
       {/* Jouw smaak: wat de smaakmodus leerde, transparant en wisbaar */}

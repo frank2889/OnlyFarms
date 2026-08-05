@@ -156,6 +156,25 @@ export const savedProducers = pgTable(
   ]
 );
 
+// Web push (deel 1: fundament). Eén rij per browser-subscription; een
+// gebruiker met meerdere apparaten heeft dus meerdere rijen.
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)]
+);
+
 // Boodschappenlijsten (Bring-model): anoniem via geheime token-link, of
 // gekoppeld aan een account/huishouden zodat het hele gezin ze ziet.
 export const lists = pgTable("lists", {

@@ -1,9 +1,9 @@
 // Offline-ondersteuning: statische assets cache-first, pagina's network-first
 // met cache-fallback — zodat je lijst ook zonder bereik (supermarktkelder) opent.
 const STATIC_CACHE = "of-static-v1";
-// v2: privépagina's (lijst/profiel/beheer/portaal) mogen niet meer in de
-// page-cache staan; bump ruimt oude, mogelijk gevoelige v1-cache op.
-const PAGE_CACHE = "of-pages-v2";
+// v3: web-push-listeners toegevoegd; bump zodat al geïnstalleerde clients
+// de nieuwe sw.js snel oppikken (v2: privépagina's niet meer in de page-cache).
+const PAGE_CACHE = "of-pages-v3";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -75,4 +75,26 @@ self.addEventListener("fetch", (event) => {
         )
     );
   }
+});
+
+// Web push (deel 1: fundament). Nog geen echte verzending gekoppeld; dit
+// luistert alleen naar wat er binnenkomt zodra dat er is.
+self.addEventListener("push", (event) => {
+  let data = { title: "OnlyFarms", body: "" };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {}
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-512.png",
+      data: { url: data.url || "/lijsten" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/lijsten";
+  event.waitUntil(clients.openWindow(url));
 });

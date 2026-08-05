@@ -42,7 +42,7 @@ export default function ProducerActions({
     startTransition(async () => {
       let target = activeList(rawLists, rawPinned);
       if (!target) {
-        const created = await createListAction("Boodschappen");
+        const created = await createListAction("Boodschappen", "producent");
         target = created;
         rememberList(created);
       }

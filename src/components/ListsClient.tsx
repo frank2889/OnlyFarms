@@ -56,7 +56,7 @@ export default function ListsClient({
   function create(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      const list = await createListAction(name || "Boodschappen");
+      const list = await createListAction(name || "Boodschappen", "lijsten");
       rememberList({ token: list.token, name: list.name });
       router.push(`/lijst/${list.token}`);
     });

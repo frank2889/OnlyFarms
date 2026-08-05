@@ -115,7 +115,10 @@ async function bump(token: string) {
   revalidatePath(`/lijst/${token}`);
 }
 
-export async function createListAction(name: string): Promise<{ token: string; name: string }> {
+export async function createListAction(
+  name: string,
+  via: string = "lijst"
+): Promise<{ token: string; name: string }> {
   // Ruime limiet tegen runaway scripts, niet tegen normaal gebruik
   if (isRateLimited(`create-list:${await clientIp()}`, 30, 60_000)) {
     throw new Error("Te veel lijsten in korte tijd. Probeer het over een minuutje opnieuw.");
@@ -128,7 +131,7 @@ export async function createListAction(name: string): Promise<{ token: string; n
     await claimList(list.id, userId, household?.id ?? null);
   }
   await trackEvent("list_created", { listName: list.name });
-  await trackConversion("lijst_gestart", { userId, listId: list.id });
+  await trackConversion("lijst_gestart", { userId, listId: list.id, properties: { via } });
   return { token: list.token, name: list.name };
 }
 
@@ -149,7 +152,11 @@ export async function createSampleListAction(): Promise<{ token: string }> {
     if (item) await addItem(list.id, { catalogKey: key, label: item.label });
   }
   await trackEvent("list_created", { listName: list.name, sample: true });
-  await trackConversion("lijst_gestart", { userId, listId: list.id, properties: { sample: true } });
+  await trackConversion("lijst_gestart", {
+    userId,
+    listId: list.id,
+    properties: { via: "sample", sample: true },
+  });
   return { token: list.token };
 }
 

@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { currentUserId } from "@/auth";
+import { trackConversion } from "@/lib/events";
 import { trackEvent } from "@/lib/klaviyo";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import {
@@ -64,6 +65,10 @@ export async function registerAction(input: {
   const userId = await createUser(name, email, hashPassword(input.password));
   await addHouseholdMember(householdId, userId);
   await trackEvent("account_created", { viaInvite: !!input.inviteCode }, email);
+  await trackConversion("account_aangemaakt", {
+    userId,
+    properties: { viaInvite: !!input.inviteCode },
+  });
   return { ok: true };
 }
 

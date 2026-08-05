@@ -7,6 +7,7 @@ import { events } from "@/db/schema";
  * premium bestaat nog niet. Alleen deze namen worden geaccepteerd.
  */
 export const CONVERSION_EVENTS = [
+  "account_aangemaakt",
   "lijst_gestart",
   "product_toegevoegd",
   "locatie_ingesteld",

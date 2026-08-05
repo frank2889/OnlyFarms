@@ -32,6 +32,7 @@ export default async function AdminDashboardPage() {
     eventCounts(),
   ]);
   const EVENT_LABELS: Record<string, string> = {
+    account_aangemaakt: t("admin.eventAccountCreated"),
     lijst_gestart: t("admin.eventListStarted"),
     product_toegevoegd: t("admin.eventItemAdded"),
     locatie_ingesteld: t("admin.eventLocationSet"),

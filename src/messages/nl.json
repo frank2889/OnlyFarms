@@ -310,6 +310,8 @@
     "seasonal": "Seizoensgebonden",
     "lastVerified": "Laatst bevestigd: {date}",
     "inProvince": "Producenten in {province}",
+    "itemInProvince": "{item} in {province}",
+    "itemInProvinceIntro": "Producenten in {province} waar je {item} kunt kopen, rechtstreeks bij de bron.",
     "getHere": "{product} hier halen",
     "addedToList": "Op je lijst gezet, met deze winkel erbij",
     "setOnListTitle": "Zet op je lijst",

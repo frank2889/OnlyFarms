@@ -42,6 +42,7 @@ export default async function AdminDashboardPage() {
     producent_aangemeld: t("admin.eventSellerApplied"),
     producent_bekeken: t("admin.eventProducerViewed"),
     lijst_herhaald: t("admin.eventListRepeated"),
+    producent_opgeslagen: t("admin.eventProducerSaved"),
   };
 
   return (

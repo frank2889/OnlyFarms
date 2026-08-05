@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { currentUserId } from "@/auth";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { nearbyProducers, producerBySlug } from "@/lib/queries/producers";
 import { publicOffersForSeller } from "@/lib/queries/portal";
 import { publishedExperiencesForSeller } from "@/lib/queries/experiences";
+import { householdForUser } from "@/lib/queries/accounts";
+import { isProducerSaved } from "@/lib/queries/favorites";
 import { hoursStatusText } from "@/lib/opening-hours";
 import { LeafIcon, SproutIcon, StoreIcon, VendingIcon } from "@/components/icons";
 import ExperienceForm from "@/components/ExperienceForm";
@@ -18,6 +21,7 @@ import ProducerHeroCta from "@/components/ProducerHeroCta";
 import ProducerRouteLink from "@/components/ProducerRouteLink";
 import ProducerShareButton from "@/components/ProducerShareButton";
 import ProducerViewPing from "@/components/ProducerViewPing";
+import SaveProducerButton from "@/components/SaveProducerButton";
 import { CATEGORIES, catalogItem } from "@/lib/catalog";
 import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
@@ -52,6 +56,12 @@ export default async function ProducerPage({
   const offers = producer.claimedBySellerId
     ? await publicOffersForSeller(producer.claimedBySellerId)
     : [];
+
+  const viewerUserId = await currentUserId();
+  const viewerHousehold = viewerUserId ? await householdForUser(viewerUserId) : null;
+  const initialSaved = viewerHousehold
+    ? await isProducerSaved(viewerHousehold.id, producer.id)
+    : false;
 
   // Lokale interne linking (SEO-mesh) en handig voor de bezoeker: buren binnen 15 km
   const nearby =
@@ -187,6 +197,7 @@ export default async function ProducerPage({
         )}
         <AskChefsButton producerSlug={producer.slug} producerName={producer.name} />
         <ProducerShareButton name={producer.name} slug={producer.slug} />
+        <SaveProducerButton producerSlug={producer.slug} initialSaved={initialSaved} />
       </div>
 
       {/* Conversie-ingang voor de Google-bezoeker: alles in een tik op je lijst */}

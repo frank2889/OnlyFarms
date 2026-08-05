@@ -6,11 +6,12 @@ import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
 import { catalogItem } from "@/lib/catalog";
 import { householdForUser, listsWithCounts, userById } from "@/lib/queries/accounts";
+import { savedProducersForHousehold } from "@/lib/queries/favorites";
 import { boughtStatsFor } from "@/lib/queries/lists";
 import { sellerForUser } from "@/lib/queries/portal";
 import { tasteProfileFor } from "@/lib/queries/swipe";
 import { iconForItem, tintForCategory } from "@/components/catalog-icons";
-import { BellIcon, SproutIcon, UserIcon } from "@/components/icons";
+import { BellIcon, HeartIcon, SproutIcon, UserIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import PasswordForm, { CopyInviteLink } from "@/components/PasswordForm";
 import {
@@ -62,6 +63,7 @@ export default async function ProfilePage() {
   const bought = household
     ? (await boughtStatsFor({ id: 0, householdId: household.id })).slice(0, 6)
     : [];
+  const savedProducers = household ? await savedProducersForHousehold(household.id) : [];
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-16">
@@ -138,6 +140,33 @@ export default async function ProfilePage() {
             <code className="rounded bg-cream-100 px-2 py-0.5 text-sm">{household.inviteCode}</code>
           </div>
           <HouseholdControls name={household.name} />
+        </section>
+      )}
+
+      {/* Opgeslagen producenten (favorieten, huishouden-breed) */}
+      {household && (
+        <section className="mb-4 rounded-tile border border-cream-200 bg-white p-4">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
+            {t("profile.savedProducersTitle")}
+          </h2>
+          {savedProducers.length === 0 ? (
+            <p className="text-sm text-ink-500">{t("profile.savedProducersEmpty")}</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {savedProducers.map((p) => (
+                <li key={p.slug}>
+                  <Link
+                    href={`/producent/${p.slug}`}
+                    className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm hover:bg-cream-50"
+                  >
+                    <HeartIcon width={14} height={14} filled className="shrink-0 text-terra-500" />
+                    <span className="font-medium">{p.name}</span>
+                    {p.city && <span className="text-ink-500">{p.city}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

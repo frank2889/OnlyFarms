@@ -131,6 +131,31 @@ export const householdMembers = pgTable(
   ]
 );
 
+// Favorieten: huishouden-brede opgeslagen producenten (CRO #70), niet
+// hetzelfde als swipeSignals (dat is bewust per-gebruiker, smaak is persoonlijk)
+export const savedProducers = pgTable(
+  "saved_producers",
+  {
+    id: serial("id").primaryKey(),
+    householdId: integer("household_id")
+      .notNull()
+      .references(() => households.id, { onDelete: "cascade" }),
+    producerId: integer("producer_id")
+      .notNull()
+      .references(() => producers.id, { onDelete: "cascade" }),
+    savedByUserId: integer("saved_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("saved_producers_household_id_producer_id_unique").on(t.householdId, t.producerId),
+    index("saved_producers_household_idx").on(t.householdId),
+  ]
+);
+
 // Boodschappenlijsten (Bring-model): anoniem via geheime token-link, of
 // gekoppeld aan een account/huishouden zodat het hele gezin ze ziet.
 export const lists = pgTable("lists", {

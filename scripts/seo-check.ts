@@ -99,8 +99,14 @@ async function main() {
   ok("/sitemap.xml: bevat 2000+ URL's", urls.length > 2000, String(urls.length));
   ok("/sitemap.xml: geen /lijsten meer", !urls.some((u) => u.endsWith("/lijsten")));
   ok("/sitemap.xml: lastModified aanwezig", /<lastmod>/.test(xml));
-  const provincieUrls = urls.filter((u) => u.includes("/provincie/"));
+  const provincieUrls = urls.filter((u) => /\/provincie\/[^/]+\/?$/.test(new URL(u).pathname));
   ok("/sitemap.xml: 12 provincies", provincieUrls.length === 12, String(provincieUrls.length));
+  const provincieItemUrls = urls.filter((u) => /\/provincie\/[^/]+\/[^/]+$/.test(new URL(u).pathname));
+  ok(
+    "/sitemap.xml: provincie x catalogusitem-combinaties (geen dunne pagina's)",
+    provincieItemUrls.length > 1000,
+    String(provincieItemUrls.length)
+  );
 
   const producentPaths = urls
     .filter((u) => u.includes("/producent/"))
@@ -113,6 +119,7 @@ async function main() {
   await checkPublicPage("/", []);
   await checkPublicPage("/producenten", []);
   await checkPublicPage("/provincie/gelderland", ["BreadcrumbList", "ItemList"]);
+  await checkPublicPage("/provincie/gelderland/eieren", ["BreadcrumbList", "ItemList"]);
   await checkPublicPage("/verkopen", []);
   for (const path of sample) {
     await checkPublicPage(path, ["BreadcrumbList"]);

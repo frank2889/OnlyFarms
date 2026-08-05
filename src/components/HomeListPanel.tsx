@@ -3,7 +3,12 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createListAction, createSampleListAction, type ResolvedLocation } from "@/app/lijst/actions";
+import {
+  createListAction,
+  createSampleListAction,
+  nearbyProducerCountAction,
+  type ResolvedLocation,
+} from "@/app/lijst/actions";
 import { t } from "@/lib/i18n";
 import { ListIcon, PlusIcon } from "@/components/icons";
 import HomeLocationInput from "@/components/HomeLocationInput";
@@ -25,6 +30,18 @@ export default function HomeListPanel({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [location, setLocation] = useState<ResolvedLocation | null>(null);
+  const [nearbyCount, setNearbyCount] = useState<number | null>(null);
+
+  function handleLocation(loc: ResolvedLocation) {
+    setLocation(loc);
+    setNearbyCount(null);
+    nearbyProducerCountAction(loc.lat, loc.lng).then(setNearbyCount);
+  }
+
+  function handleClearLocation() {
+    setLocation(null);
+    setNearbyCount(null);
+  }
 
   const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
   const myLists = useMemo<StoredList[]>(() => {
@@ -54,7 +71,12 @@ export default function HomeListPanel({
   return (
     <div className="mx-auto w-full max-w-lg rounded-tile border border-cream-200 bg-white p-4 text-left shadow-sm">
       <div className="mb-2">
-        <HomeLocationInput location={location} onLocation={setLocation} onClear={() => setLocation(null)} />
+        <HomeLocationInput location={location} onLocation={handleLocation} onClear={handleClearLocation} />
+        {nearbyCount != null && (
+          <p className="mt-1.5 px-1 text-sm text-ink-500">
+            {t("home.nearbyProducerCount", { n: nearbyCount })}
+          </p>
+        )}
       </div>
       <form onSubmit={create} className="flex gap-2">
         <input

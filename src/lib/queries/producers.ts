@@ -93,6 +93,27 @@ export async function nearbyProducers(
   return { producers: nearest as Producer[], usedFallback: true };
 }
 
+/** Totaal aantal producenten binnen de straal — voor de homepage-onboarding ("N in de buurt") */
+export async function nearbyProducerCount(
+  lat: number,
+  lng: number,
+  radiusKm = 10
+): Promise<number> {
+  const dist = distanceKm(lat, lng);
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(producers)
+    .where(
+      and(
+        ne(producers.status, "gestopt"),
+        isNotNull(producers.lat),
+        isNotNull(producers.lng),
+        sql`${dist} <= ${radiusKm}`
+      )
+    );
+  return row?.n ?? 0;
+}
+
 /** Aantal producenten binnen de straal per producten-token — voor de "N in de buurt"-badges */
 export async function nearbyCountsByToken(
   lat: number,

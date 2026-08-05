@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { listsWithCounts, usersWithShoppingDay } from "@/lib/queries/accounts";
 import { frequentBought, getListItems } from "@/lib/queries/lists";
@@ -9,6 +10,15 @@ import { absoluteUrl } from "@/lib/seo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Vaste lengte via een hash vóór het vergelijken, zodat timingSafeEqual werkt
+// ongeacht de lengte van wat de aanvaller instuurt (anders gooit het een fout
+// bij een lengteverschil, wat zelf weer een timing-signaal zou zijn).
+function safeEqual(a: string, b: string): boolean {
+  const hashA = createHash("sha256").update(a).digest();
+  const hashB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(hashA, hashB);
+}
 
 /**
  * CRO #83, twee onafhankelijke kanalen op je vaste boodschappendag: laag 2
@@ -22,7 +32,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || !auth || !safeEqual(auth, `Bearer ${process.env.CRON_SECRET}`)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

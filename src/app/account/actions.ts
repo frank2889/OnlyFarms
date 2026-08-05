@@ -53,7 +53,10 @@ export async function registerAction(input: {
   if (input.password.length < 8)
     return { ok: false, error: "Kies een wachtwoord van minstens 8 tekens." };
   if (await userByEmail(email))
-    return { ok: false, error: "Er bestaat al een account met dit e-mailadres." };
+    return {
+      ok: false,
+      error: "Dit e-mailadres kan niet gebruikt worden om te registreren. Heb je al een account? Log in.",
+    };
 
   // Uitnodigingscode? Dan sluit je aan bij dat gezin; anders krijg je je eigen gezin
   let householdId: number;
@@ -94,6 +97,10 @@ export async function changePasswordAction(
 }
 
 export async function joinHouseholdAction(code: string): Promise<Result> {
+  // Uitnodigingscodes zijn 48-bit (vs. 96-bit voor lijst-tokens); praktisch
+  // niet te raden, maar deze actie had als enige nog geen enkele throttle.
+  if (isRateLimited(`join-household:${await clientIp()}`, 20, 60_000))
+    return { ok: false, error: "Te veel pogingen. Probeer het over een minuutje opnieuw." };
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "Log eerst in." };
   const household = await householdByInviteCode(code.trim());

@@ -27,6 +27,11 @@ import {
 } from "@/lib/queries/accounts";
 import { resetTasteProfile } from "@/lib/queries/swipe";
 import { getListByToken } from "@/lib/queries/lists";
+import {
+  removePushSubscription,
+  upsertPushSubscription,
+  type PushSubscriptionInput,
+} from "@/lib/queries/push";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -142,6 +147,23 @@ export async function setReminderOptInAction(optIn: boolean): Promise<Result> {
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
   await updateReminderOptIn(userId, optIn);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+/** Web push aanzetten: subscription opslaan (endpoint is uniek per browser-installatie) */
+export async function subscribePushAction(sub: PushSubscriptionInput): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  await upsertPushSubscription(userId, sub);
+  revalidatePath("/profiel");
+  return { ok: true };
+}
+
+export async function unsubscribePushAction(endpoint: string): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "Je bent niet ingelogd." };
+  await removePushSubscription(userId, endpoint);
   revalidatePath("/profiel");
   return { ok: true };
 }

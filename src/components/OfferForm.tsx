@@ -4,19 +4,22 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { t } from "@/lib/i18n";
-import { CATEGORIES } from "@/lib/catalog";
+import { CATEGORIES, catalogByCategory } from "@/lib/catalog";
 import { uploadImage } from "@/lib/upload-client";
 import { saveOfferAction } from "@/app/portaal/actions";
 
 type OfferValues = {
   title: string;
   category: string;
+  catalogKey: string;
   description: string;
   priceIndication: string;
   photoUrl: string;
   available: boolean;
   featured: boolean;
 };
+
+const CATALOG_GROUPS = catalogByCategory();
 
 const field = "w-full rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm";
 const label = "mb-1 block text-sm font-medium";
@@ -57,6 +60,7 @@ export default function OfferForm({
           const result = await saveOfferAction(offerId, {
             title: form.title,
             category: form.category || null,
+            catalogKey: form.catalogKey || null,
             description: form.description || null,
             priceIndication: form.priceIndication || null,
             photoUrl: form.photoUrl || null,
@@ -103,6 +107,26 @@ export default function OfferForm({
             className={field}
           />
         </div>
+      </div>
+
+      <div>
+        <label className={label} htmlFor="o-catalog">{t("portal.offerCatalogItem")}</label>
+        <select
+          id="o-catalog"
+          value={form.catalogKey}
+          onChange={(e) => set("catalogKey", e.target.value)}
+          className={field}
+        >
+          <option value="">{t("portal.offerCatalogItemNone")}</option>
+          {CATALOG_GROUPS.map((group) => (
+            <optgroup key={group.category} label={group.label}>
+              {group.items.map((item) => (
+                <option key={item.key} value={item.key}>{item.label}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-ink-500">{t("portal.offerCatalogItemHint")}</p>
       </div>
 
       <div>

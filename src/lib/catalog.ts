@@ -277,6 +277,30 @@ export function tokensByCategory(): { category: CategoryKey; label: string; toke
   }));
 }
 
+/**
+ * Catalogusitems gegroepeerd per categorie, voor een aanbod-item-picker
+ * (item-niveau, niet token-niveau zoals tokensByCategory). Alleen items met
+ * matchTokens: een leeg-matchTokens-item (bijv. categorie Supermarkt) matcht
+ * toch nooit, dus die aanbieden zou een keuze zijn die nergens toe leidt.
+ */
+export function catalogByCategory(): {
+  category: CategoryKey;
+  label: string;
+  items: { key: string; label: string }[];
+}[] {
+  const grouped = new Map<CategoryKey, { key: string; label: string }[]>();
+  for (const item of CATALOG) {
+    if (item.matchTokens.length === 0) continue;
+    if (!grouped.has(item.category)) grouped.set(item.category, []);
+    grouped.get(item.category)!.push({ key: item.key, label: item.label });
+  }
+  return CATEGORIES.filter((c) => grouped.has(c.key)).map((c) => ({
+    category: c.key,
+    label: c.label,
+    items: grouped.get(c.key)!,
+  }));
+}
+
 /** Producten-token van een producent naar het best passende catalogusitem */
 export function itemForToken(token: string): CatalogItem | undefined {
   return (

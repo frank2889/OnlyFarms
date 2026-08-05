@@ -33,6 +33,7 @@ export default async function BewerkProductPage({
           initial={{
             title: offer.title,
             category: offer.category ?? "",
+            catalogKey: offer.catalogKey ?? "",
             description: offer.description ?? "",
             priceIndication: offer.priceIndication ?? "",
             photoUrl: offer.photoUrl ?? "",

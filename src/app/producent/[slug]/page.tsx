@@ -18,7 +18,7 @@ import ProducerHeroCta from "@/components/ProducerHeroCta";
 import ProducerRouteLink from "@/components/ProducerRouteLink";
 import ProducerShareButton from "@/components/ProducerShareButton";
 import ProducerViewPing from "@/components/ProducerViewPing";
-import { CATEGORIES } from "@/lib/catalog";
+import { CATEGORIES, catalogItem } from "@/lib/catalog";
 import { breadcrumbLd, producerBreadcrumbs, producerLd } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -271,6 +271,13 @@ export default async function ProducerPage({
                       )}
                       <div className="p-3">
                         <p className="font-medium">{offer.title}</p>
+                        {offer.catalogKey && catalogItem(offer.catalogKey) && (
+                          <p className="mt-0.5 text-xs text-ink-500">
+                            {t("producers.offersMatchesItem", {
+                              item: catalogItem(offer.catalogKey)!.label,
+                            })}
+                          </p>
+                        )}
                         {offer.priceIndication && (
                           <p className="text-sm font-semibold text-terra-700">
                             {offer.priceIndication}

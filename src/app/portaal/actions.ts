@@ -13,7 +13,7 @@ import {
   updateSellerContact,
   type OfferInput,
 } from "@/lib/queries/portal";
-import { CATEGORIES, KNOWN_TOKENS } from "@/lib/catalog";
+import { CATEGORIES, KNOWN_TOKENS, catalogItem } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import type { ProducerFormInput } from "@/app/beheer/producenten/actions";
 
@@ -77,9 +77,12 @@ function cleanOffer(input: OfferInput): OfferInput | string {
   if (title.length < 2) return "Vul een productnaam in.";
   const photoUrl = input.photoUrl?.trim() || null;
   if (photoUrl && !isOwnBlobUrl(photoUrl)) return "Ongeldige foto.";
+  const catalogKey = input.catalogKey?.trim() || null;
+  if (catalogKey && !catalogItem(catalogKey)) return "Onbekend catalogusitem.";
   return {
     title,
     category: input.category && VALID_CATEGORIES.has(input.category) ? input.category : null,
+    catalogKey,
     description: input.description?.trim().slice(0, 1000) || null,
     priceIndication: input.priceIndication?.trim().slice(0, 60) || null,
     photoUrl,

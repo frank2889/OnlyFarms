@@ -321,6 +321,9 @@ export const offers = pgTable("offers", {
     .references(() => sellers.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   category: text("category"),
+  // Verwijzing naar een specifiek catalogusitem (fijner dan de brede producten-tokens);
+  // app-side gevalideerd via catalogItem(), nooit FK-afgedwongen (patroon list_items.catalogKey)
+  catalogKey: text("catalog_key"),
   description: text("description"),
   // Indicatie als tekst ("€3 per doos") — het platform verwerkt geen betalingen
   priceIndication: text("price_indication"),

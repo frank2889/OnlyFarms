@@ -32,6 +32,15 @@ const baseColumns = {
   closedUntil: producers.closedUntil,
 };
 
+// Matcht de daadwerkelijke vorm van catalogus-tokens (src/lib/catalog.ts).
+// Blijft sowieso geparametriseerd (geen SQL-injectierisico), maar dit
+// voorkomt een misvormde Postgres-array-literal als een toekomstige
+// aanroeper ooit vrije tekst i.p.v. vaste catalogus-tokens doorgeeft.
+function productsOverlapCondition(tokens: string[]) {
+  const safe = tokens.filter((t) => /^[a-z]+$/.test(t));
+  return sql`${producers.products} && ${`{${safe.join(",")}}`}::text[]`;
+}
+
 function distanceKm(lat: number, lng: number) {
   // Haversine in SQL — ruim snel genoeg op deze datasetgrootte
   return sql<number>`6371 * 2 * asin(sqrt(
@@ -67,9 +76,7 @@ export async function nearbyProducers(
     isNotNull(producers.lng),
   ];
   if (tokens?.length) {
-    conditions.push(
-      sql`${producers.products} && ${`{${tokens.join(",")}}`}::text[]`
-    );
+    conditions.push(productsOverlapCondition(tokens));
   }
   if (membersOnly !== undefined) {
     conditions.push(eq(producers.isMember, membersOnly));
@@ -256,7 +263,7 @@ export async function producersByProvinceAndToken(
       and(
         eq(producers.province, province),
         ne(producers.status, "gestopt"),
-        sql`${producers.products} && ${`{${matchTokens.join(",")}}`}::text[]`
+        productsOverlapCondition(matchTokens)
       )
     )
     .orderBy(producers.city, producers.name);

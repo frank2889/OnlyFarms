@@ -472,6 +472,8 @@ export async function setLocationByCoordsAction(
   lat: number,
   lng: number
 ): Promise<void> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
   const list = await requireList(token);
   // Toon wélk punt de app gebruikt — geolocation op desktop kan er flink naast zitten
   const label = await reverseGeocode(lat, lng);
@@ -537,7 +539,11 @@ export async function duplicateListAction(
   return { ok: true, token: created.token, name: created.name };
 }
 
+// Zelfde keuzes als het <select> in ListView.tsx
+const VALID_RADIUS_KM = new Set([5, 10, 15, 25]);
+
 export async function setRadiusAction(token: string, radiusKm: number): Promise<void> {
+  if (!VALID_RADIUS_KM.has(radiusKm)) return;
   const list = await requireList(token);
   await setListRadius(list.id, radiusKm);
   await bump(token);

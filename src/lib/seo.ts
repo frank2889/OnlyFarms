@@ -196,3 +196,18 @@ export function producerBreadcrumbs(producer: Producer): { name: string; path: s
   items.push({ name: producer.name, path: `/producent/${producer.slug}` });
   return items;
 }
+
+/** Breadcrumb-items voor een provincie×catalogusitem-pagina (4 lagen) */
+export function provinceItemBreadcrumbs(
+  province: string,
+  itemLabel: string,
+  itemSlug: string
+): { name: string; path: string }[] {
+  const pSlug = provinceSlug(province);
+  return [
+    { name: "Home", path: "/" },
+    { name: "Producenten", path: "/producenten" },
+    { name: province, path: `/provincie/${pSlug}` },
+    { name: itemLabel, path: `/provincie/${pSlug}/${itemSlug}` },
+  ];
+}

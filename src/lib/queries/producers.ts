@@ -1,6 +1,8 @@
 import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { markets, producers, reports, sellers } from "@/db/schema";
+import { CATALOG } from "@/lib/catalog";
+import { PROVINCES } from "@/lib/provinces";
 import type { Producer } from "@/lib/types";
 
 const baseColumns = {
@@ -239,6 +241,66 @@ export async function allProvinces(): Promise<{ province: string; count: number 
     .groupBy(producers.province)
     .orderBy(producers.province);
   return rows.filter((r) => r.province) as { province: string; count: number }[];
+}
+
+/** Producenten in een provincie die minstens één van deze producten-tokens voeren */
+export async function producersByProvinceAndToken(
+  province: string,
+  matchTokens: string[]
+): Promise<Producer[]> {
+  if (!matchTokens.length) return [];
+  const rows = await db
+    .select(baseColumns)
+    .from(producers)
+    .where(
+      and(
+        eq(producers.province, province),
+        ne(producers.status, "gestopt"),
+        sql`${producers.products} && ${`{${matchTokens.join(",")}}`}::text[]`
+      )
+    )
+    .orderBy(producers.city, producers.name);
+  return rows as Producer[];
+}
+
+/** Per provincie welke producten-tokens er voorkomen — basis voor de provincie×item-combinaties */
+async function tokensPresentByProvince(): Promise<Record<string, Set<string>>> {
+  const rows = await db
+    .select({ province: producers.province, products: producers.products })
+    .from(producers)
+    .where(and(isNotNull(producers.province), ne(producers.status, "gestopt")));
+  const byProvince: Record<string, Set<string>> = {};
+  for (const row of rows) {
+    if (!row.province) continue;
+    if (!byProvince[row.province]) byProvince[row.province] = new Set();
+    for (const token of row.products) byProvince[row.province].add(token);
+  }
+  return byProvince;
+}
+
+/**
+ * Alle provincie×catalogusitem-combinaties met minstens 1 producent — voor
+ * een schone sitemap zonder dunne pagina's (geen ruwe cross-product van 12
+ * provincies × ~138 matchbare items). Eén query i.p.v. één per combinatie:
+ * per provincie de aanwezige tokens ophalen en daar app-side (CATALOG) tegen
+ * matchen.
+ */
+export async function provinceItemCombosWithProducers(): Promise<
+  { province: string; itemKey: string; itemLabel: string }[]
+> {
+  const byProvince = await tokensPresentByProvince();
+  const matchableItems = CATALOG.filter((item) => item.matchTokens.length > 0);
+  const combos: { province: string; itemKey: string; itemLabel: string }[] = [];
+  for (const province of PROVINCES) {
+    const tokens = byProvince[province];
+    if (!tokens?.size) continue;
+    for (const item of matchableItems) {
+      if (item.matchTokens.some((token) => tokens.has(token))) {
+        combos.push({ province, itemKey: item.key, itemLabel: item.label });
+      }
+    }
+  }
+  return combos;
 }
 
 export async function allProducerSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {

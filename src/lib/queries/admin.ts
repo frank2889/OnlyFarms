@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { offers, producers, reports, sellerReviews, sellers } from "@/db/schema";
 import { slugify } from "@/lib/slug";
@@ -354,6 +354,39 @@ export async function duplicateGroups(): Promise<DuplicateGroup[]> {
   return (result.rows as { pc: string; addr: string; members: DuplicateGroup["members"] }[]).map(
     (r) => ({ postcode: r.pc, address: r.addr, members: r.members })
   );
+}
+
+/**
+ * Duplicaten samenvoegen: de mergeIds gaan op status "gestopt" (nooit hard
+ * verwijderen, dat behoudt historie en oude links/SEO); keepId blijft
+ * bestaan. claimedBySellerId-conflict: het keep-record wint als het al een
+ * claim heeft, anders neemt het de eerste gevonden claim van een merge-
+ * record over. Die claim wordt daarna van de merge-records zelf gewist,
+ * anders zou producerForSeller() straks tussen twee rijen voor dezelfde
+ * verkoper moeten kiezen (die query pakt gewoon de eerste match).
+ */
+export async function mergeProducers(keepId: number, mergeIds: number[]): Promise<void> {
+  if (mergeIds.length === 0 || mergeIds.includes(keepId)) return;
+
+  const rows = await db
+    .select({ id: producers.id, claimedBySellerId: producers.claimedBySellerId })
+    .from(producers)
+    .where(inArray(producers.id, [keepId, ...mergeIds]));
+  const keep = rows.find((r) => r.id === keepId);
+  if (!keep) return;
+
+  const finalClaim =
+    keep.claimedBySellerId ??
+    rows.find((r) => mergeIds.includes(r.id) && r.claimedBySellerId)?.claimedBySellerId ??
+    null;
+
+  if (finalClaim !== keep.claimedBySellerId) {
+    await db.update(producers).set({ claimedBySellerId: finalClaim }).where(eq(producers.id, keepId));
+  }
+  await db
+    .update(producers)
+    .set({ status: "gestopt", claimedBySellerId: null })
+    .where(inArray(producers.id, mergeIds));
 }
 
 /* ---------- Ervaringen (reviews) ---------- */

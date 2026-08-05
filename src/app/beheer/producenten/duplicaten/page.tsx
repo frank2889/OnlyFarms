@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/authz";
 import { duplicateGroups } from "@/lib/queries/admin";
 import { t } from "@/lib/i18n";
-import { setProducerStoppedAction } from "../actions";
+import MergeDuplicatesGroup from "@/components/MergeDuplicatesGroup";
 
 export const dynamic = "force-dynamic";
 
@@ -36,35 +36,7 @@ export default async function AdminDuplicatesPage() {
               <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-500">
                 {group.postcode} · {group.address}
               </p>
-              <ul className="flex flex-col gap-2">
-                {group.members.map((m) => (
-                  <li key={m.id} className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium">
-                      {m.name}
-                      {m.city ? ` · ${m.city}` : ""}
-                    </span>
-                    {m.isMember && (
-                      <span className="shrink-0 rounded-full bg-terra-100 px-2 py-0.5 text-xs text-terra-700">
-                        {t("producers.memberBadge")}
-                      </span>
-                    )}
-                    <span className="shrink-0 rounded-full bg-cream-100 px-2 py-0.5 text-xs text-ink-700">
-                      {m.status}
-                    </span>
-                    <Link
-                      href={`/beheer/producenten/${m.id}`}
-                      className="shrink-0 text-terra-700 underline"
-                    >
-                      {t("admin.view")}
-                    </Link>
-                    <form action={setProducerStoppedAction.bind(null, m.id)}>
-                      <button type="submit" className="text-ink-500 underline">
-                        {t("admin.setStopped")}
-                      </button>
-                    </form>
-                  </li>
-                ))}
-              </ul>
+              <MergeDuplicatesGroup members={group.members} />
             </li>
           ))}
         </ul>

@@ -332,6 +332,14 @@ export function ChefHatIcon(p: IconProps) {
   );
 }
 
+export function HeartIcon({ filled, ...p }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg {...p} fill={filled ? "currentColor" : "none"}>
+      <path d="M12 21s-6.5-4.35-9.2-8.05C1.06 10.66 1.5 7.5 4 6a5 5 0 0 1 8 1 5 5 0 0 1 8-1c2.5 1.5 2.94 4.66 1.2 6.95C18.5 16.65 12 21 12 21Z" />
+    </Svg>
+  );
+}
+
 export function BellIcon(p: IconProps) {
   return (
     <Svg {...p}>

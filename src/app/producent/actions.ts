@@ -1,7 +1,11 @@
 "use server";
 
+import { currentUserId } from "@/auth";
 import { createReport, producerBySlug } from "@/lib/queries/producers";
 import { createExperience } from "@/lib/queries/experiences";
+import { householdForUser } from "@/lib/queries/accounts";
+import { toggleSavedProducer } from "@/lib/queries/favorites";
+import { trackConversion } from "@/lib/events";
 import { trackEvent } from "@/lib/klaviyo";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
@@ -60,4 +64,28 @@ export async function submitExperienceAction(
     comment,
   });
   return { ok: true };
+}
+
+/**
+ * Favoriet aan/uit voor het hele huishouden (CRO #70). Een ingelogde
+ * gebruiker kan tijdelijk zonder huishouden zitten (leaveHouseholdAction
+ * heeft geen guard tegen het verlaten van je enige huishouden), dus dat is
+ * een apart foutresultaat, los van "niet ingelogd".
+ */
+export async function toggleSavedProducerAction(
+  producerSlug: string
+): Promise<
+  | { ok: true; saved: boolean }
+  | { ok: false; error: "login" | "geen-huishouden" | "niet-gevonden" }
+> {
+  const userId = await currentUserId();
+  if (!userId) return { ok: false, error: "login" };
+  const household = await householdForUser(userId);
+  if (!household) return { ok: false, error: "geen-huishouden" };
+  const producer = await producerBySlug(producerSlug);
+  if (!producer) return { ok: false, error: "niet-gevonden" };
+
+  const saved = await toggleSavedProducer(household.id, producer.id, userId);
+  if (saved) await trackConversion("producent_opgeslagen", { userId, properties: { producerSlug } });
+  return { ok: true, saved };
 }

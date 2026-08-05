@@ -87,6 +87,7 @@ export async function sellerForUser(userId: number) {
 export type OfferInput = {
   title: string;
   category: string | null;
+  catalogKey: string | null;
   description: string | null;
   priceIndication: string | null;
   photoUrl: string | null;
@@ -162,6 +163,7 @@ export async function publicOffersForSeller(sellerId: number) {
       id: offers.id,
       title: offers.title,
       category: offers.category,
+      catalogKey: offers.catalogKey,
       description: offers.description,
       priceIndication: offers.priceIndication,
       photoUrl: offers.photoUrl,

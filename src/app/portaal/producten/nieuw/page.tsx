@@ -25,6 +25,7 @@ export default async function NieuwProductPage() {
           initial={{
             title: "",
             category: "",
+            catalogKey: "",
             description: "",
             priceIndication: "",
             photoUrl: "",

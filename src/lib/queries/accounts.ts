@@ -45,14 +45,24 @@ export async function updateReminderOptIn(userId: number, optIn: boolean): Promi
   await db.update(users).set({ reminderOptIn: optIn }).where(eq(users.id, userId));
 }
 
-/** Accounts met deze vaste boodschappendag die mail willen (voor de cron) */
+/**
+ * Accounts met deze vaste boodschappendag (voor de cron). Bewust niet
+ * gefilterd op reminderOptIn: dat is alleen de mail-opt-in, web push heeft
+ * zijn eigen onafhankelijke opt-in (een push-subscription hebben of niet) —
+ * de cron checkt per kanaal zelf of een gebruiker het wil.
+ */
 export async function usersWithShoppingDay(
   day: number
-): Promise<{ id: number; email: string; name: string }[]> {
+): Promise<{ id: number; email: string; name: string; reminderOptIn: boolean }[]> {
   return db
-    .select({ id: users.id, email: users.email, name: users.name })
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      reminderOptIn: users.reminderOptIn,
+    })
     .from(users)
-    .where(and(eq(users.shoppingDay, day), eq(users.reminderOptIn, true)));
+    .where(eq(users.shoppingDay, day));
 }
 
 /**

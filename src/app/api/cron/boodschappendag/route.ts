@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listsWithCounts, usersWithShoppingDay } from "@/lib/queries/accounts";
 import { frequentBought, getListItems } from "@/lib/queries/lists";
+import { pushSubscriptionsForUser } from "@/lib/queries/push";
+import { sendPush } from "@/lib/push";
 import { nowInAmsterdam } from "@/lib/opening-hours";
 import { trackEvent } from "@/lib/klaviyo";
 import { absoluteUrl } from "@/lib/seo";
@@ -9,12 +11,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * CRO #83 laag 2: op je vaste boodschappendag een Klaviyo-event met
- * e-mailadres, zodat Sally daar een herinneringsflow op kan bouwen (het
- * eerste niet-anonieme event hier). Draait 1x per dag via vercel.json;
- * bepaalt zelf de weekdag (Europe/Amsterdam) en stuurt alleen naar accounts
- * met een expliciete opt-in (reminder_opt_in). Best-effort per gebruiker:
- * één mislukte gebruiker mag de rest niet blokkeren.
+ * CRO #83, twee onafhankelijke kanalen op je vaste boodschappendag: laag 2
+ * (Klaviyo-mail, alleen met reminder_opt_in) en laag 3 (web push, alleen met
+ * minstens 1 push-subscription). Draait 1x per dag via vercel.json, binnen
+ * dezelfde per-gebruiker-loop (geen nieuwe cron nodig, Hobby-limiet); bepaalt
+ * zelf de weekdag (Europe/Amsterdam). Best-effort per gebruiker én per
+ * kanaal: één mislukte gebruiker of kanaal mag de rest niet blokkeren.
  *
  *   curl -H "Authorization: Bearer $CRON_SECRET" https://.../api/cron/boodschappendag?dry=1
  */
@@ -28,7 +30,8 @@ export async function GET(req: NextRequest) {
   const { day } = nowInAmsterdam();
   const users = await usersWithShoppingDay(day);
 
-  let sent = 0;
+  let mailSent = 0;
+  let pushSent = 0;
   for (const user of users) {
     try {
       const lists = await listsWithCounts(user.id);
@@ -39,24 +42,42 @@ export async function GET(req: NextRequest) {
       const openKeys = new Set(open.map((i) => i.catalogKey).filter((k): k is string => !!k));
       const staples = await frequentBought({ id: list.id, householdId: list.householdId });
       const staplesCount = staples.filter((k) => !openKeys.has(k)).length;
+      const listUrl = absoluteUrl(`/lijst/${list.token}#lijst`);
 
-      if (!dry) {
-        await trackEvent(
-          "boodschappendag",
-          {
-            listName: list.name,
-            listUrl: absoluteUrl(`/lijst/${list.token}#lijst`),
-            openItems: list.openCount,
-            staples: staplesCount,
-          },
-          user.email
-        );
+      if (user.reminderOptIn) {
+        try {
+          if (!dry) {
+            await trackEvent(
+              "boodschappendag",
+              { listName: list.name, listUrl, openItems: list.openCount, staples: staplesCount },
+              user.email
+            );
+          }
+          mailSent++;
+        } catch {
+          // best-effort: mail-kanaal breekt push voor deze gebruiker niet
+        }
       }
-      sent++;
+
+      const subs = await pushSubscriptionsForUser(user.id);
+      if (subs.length > 0) {
+        if (!dry) {
+          await Promise.all(
+            subs.map((sub) =>
+              sendPush(sub, {
+                title: "Boodschappendag",
+                body: `${list.openCount} open op je lijst, ${staplesCount} vaste boodschappen nog niet erop.`,
+                url: listUrl,
+              })
+            )
+          );
+        }
+        pushSent++;
+      }
     } catch {
       // best-effort: één mislukte gebruiker breekt de rest niet
     }
   }
 
-  return NextResponse.json({ day, usersChecked: users.length, sent, dry });
+  return NextResponse.json({ day, usersChecked: users.length, mailSent, pushSent, dry });
 }

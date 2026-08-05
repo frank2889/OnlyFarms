@@ -107,7 +107,7 @@ export default async function AdminDashboardPage() {
         {t("admin.statsCommunityTitle")}
       </h2>
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile value={stats.community.users} label={t("admin.statUsers")} />
+        <StatTile value={stats.community.users} label={t("admin.statUsers")} href="/beheer/gebruikers" />
         <StatTile value={stats.community.households} label={t("admin.statHouseholds")} />
         <StatTile value={stats.community.lists} label={t("admin.statLists")} />
         <StatTile value={stats.community.items} label={t("admin.statItems")} />

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { householdMembers, households, listItems, lists, users } from "@/db/schema";
 import type { ShoppingList } from "@/lib/types";
@@ -24,6 +24,26 @@ export async function userById(userId: number) {
     .from(users)
     .where(eq(users.id, userId));
   return user ?? null;
+}
+
+/** Zoeken op naam/e-mail voor AVG-verzoeken (beheer/gebruikers) */
+export async function searchUsers(
+  query: string,
+  limit = 30
+): Promise<{ id: number; name: string; email: string; role: string; createdAt: Date }[]> {
+  const q = `%${query.trim()}%`;
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(or(ilike(users.name, q), ilike(users.email, q)))
+    .orderBy(users.name)
+    .limit(limit);
 }
 
 export async function updateUserName(userId: number, name: string): Promise<void> {

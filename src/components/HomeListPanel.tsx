@@ -34,7 +34,7 @@ export default function HomeListPanel({
   function create(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      const list = await createListAction(name || "Boodschappen");
+      const list = await createListAction(name || "Boodschappen", "homepage");
       rememberList({ token: list.token, name: list.name });
       router.push(`/lijst/${list.token}`);
     });

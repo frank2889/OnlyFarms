@@ -13,6 +13,18 @@ const ALLOWED = new Map([
 ]);
 const MAX_BYTES = 8 * 1024 * 1024;
 
+// file.type komt van de client en is dus niet te vertrouwen; de eerste
+// bytes van het bestand zelf ("magic numbers") liegen niet.
+async function sniffedTypeMatches(file: File, mimeType: string): Promise<boolean> {
+  const head = Buffer.from(await file.slice(0, 12).arrayBuffer());
+  if (mimeType === "image/jpeg") return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+  if (mimeType === "image/png")
+    return head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+  if (mimeType === "image/webp")
+    return head.toString("ascii", 0, 4) === "RIFF" && head.toString("ascii", 8, 12) === "WEBP";
+  return false;
+}
+
 // Foto-upload voor portaal en beheer. Alleen ingelogde verkopers/teamleden;
 // het bestand landt in Vercel Blob en de URL wordt daarna via een server
 // action (met eigenaarschapscheck) aan vermelding of product gekoppeld.
@@ -44,6 +56,12 @@ export async function POST(req: NextRequest) {
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "Maximaal 8 MB per foto." }, { status: 400 });
+  }
+  if (!(await sniffedTypeMatches(file, file.type))) {
+    return NextResponse.json(
+      { error: "Het bestand is geen geldige JPG, PNG of WebP-afbeelding." },
+      { status: 400 }
+    );
   }
 
   const scope = seller ? `verkoper-${seller.seller.id}` : "beheer";

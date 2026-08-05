@@ -3,9 +3,10 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createListAction, createSampleListAction } from "@/app/lijst/actions";
+import { createListAction, createSampleListAction, type ResolvedLocation } from "@/app/lijst/actions";
 import { t } from "@/lib/i18n";
 import { ListIcon, PlusIcon } from "@/components/icons";
+import HomeLocationInput from "@/components/HomeLocationInput";
 import {
   listsSnapshot,
   parseStoredLists,
@@ -23,6 +24,7 @@ export default function HomeListPanel({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
+  const [location, setLocation] = useState<ResolvedLocation | null>(null);
 
   const rawLists = useSyncExternalStore(subscribeLists, listsSnapshot, () => "[]");
   const myLists = useMemo<StoredList[]>(() => {
@@ -34,7 +36,7 @@ export default function HomeListPanel({
   function create(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      const list = await createListAction(name || "Boodschappen", "homepage");
+      const list = await createListAction(name || "Boodschappen", "homepage", location ?? undefined);
       rememberList({ token: list.token, name: list.name });
       router.push(`/lijst/${list.token}`);
     });
@@ -43,7 +45,7 @@ export default function HomeListPanel({
   // CRO #7: zonder typen meteen een gevulde lijst en dus meteen lokale matches
   function createSample() {
     startTransition(async () => {
-      const list = await createSampleListAction();
+      const list = await createSampleListAction(location ?? undefined);
       rememberList({ token: list.token, name: "Boodschappen" });
       router.push(`/lijst/${list.token}`);
     });
@@ -51,6 +53,9 @@ export default function HomeListPanel({
 
   return (
     <div className="mx-auto w-full max-w-lg rounded-tile border border-cream-200 bg-white p-4 text-left shadow-sm">
+      <div className="mb-2">
+        <HomeLocationInput location={location} onLocation={setLocation} onClear={() => setLocation(null)} />
+      </div>
       <form onSubmit={create} className="flex gap-2">
         <input
           value={name}

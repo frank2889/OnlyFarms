@@ -139,6 +139,17 @@ export async function deleteOffer(offerId: number, sellerId: number): Promise<vo
 }
 
 /**
+ * "Alles klopt nog" voor een los aanbod-item: zet uitsluitend lastVerifiedAt,
+ * nooit updatedAt/published (dat zou het weer de controle-wachtrij in sturen).
+ */
+export async function confirmOffer(offerId: number, sellerId: number): Promise<void> {
+  await db
+    .update(offers)
+    .set({ lastVerifiedAt: new Date() })
+    .where(and(eq(offers.id, offerId), eq(offers.sellerId, sellerId)));
+}
+
+/**
  * Publiek aanbod voor de producentpagina: door het team goedgekeurd
  * (published) en van een nog steeds goedgekeurde verkoper (een geschorste
  * verkoper houdt zijn claim maar zijn aanbod verdwijnt). Bewust ook

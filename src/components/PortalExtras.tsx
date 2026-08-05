@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { t } from "@/lib/i18n";
-import { confirmListingAction, setClosedUntilAction, updateSellerContactAction } from "@/app/portaal/actions";
+import {
+  confirmListingAction,
+  confirmOfferAction,
+  setClosedUntilAction,
+  updateSellerContactAction,
+} from "@/app/portaal/actions";
 import { CheckIcon } from "@/components/icons";
 
 const field = "w-full rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm";
@@ -35,6 +40,49 @@ export function ConfirmListingButton() {
       className="rounded-full border border-terra-300 px-4 py-2 text-sm font-medium text-terra-700 hover:bg-terra-50 disabled:opacity-50"
     >
       {t("portal.confirmAll")}
+    </button>
+  );
+}
+
+const OFFER_STALE_DAYS = 90;
+
+/** "Alles klopt nog" voor één product; verschijnt alleen als het nooit of >90 dagen geleden bevestigd is */
+export function ConfirmOfferButton({
+  offerId,
+  lastVerifiedAt,
+}: {
+  offerId: number;
+  lastVerifiedAt: Date | null;
+}) {
+  const router = useRouter();
+  const [done, setDone] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const staleMs = OFFER_STALE_DAYS * 24 * 60 * 60 * 1000;
+  // eslint-disable-next-line react-hooks/purity -- klokvergelijking voor verjaar-drempel is hier bewust
+  const isStale = !lastVerifiedAt || Date.now() - new Date(lastVerifiedAt).getTime() > staleMs;
+  if (done) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-terra-700">
+        <CheckIcon width={13} height={13} /> {t("portal.confirmedNow")}
+      </span>
+    );
+  }
+  if (!isStale) return null;
+  return (
+    <button
+      onClick={() =>
+        startTransition(async () => {
+          const result = await confirmOfferAction(offerId);
+          if (result.ok) {
+            setDone(true);
+            router.refresh();
+          }
+        })
+      }
+      disabled={pending}
+      className="text-xs text-terra-700 underline disabled:opacity-50"
+    >
+      {t("portal.offerConfirm")}
     </button>
   );
 }

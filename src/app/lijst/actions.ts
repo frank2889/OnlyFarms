@@ -39,13 +39,14 @@ import {
 } from "@/lib/queries/lists";
 import { notifyListUpdated } from "@/lib/realtime";
 import {
+  nearbyCountsByToken,
   nearbyProducerCount,
   nearbyProducers,
   producerBySlug,
   searchProducersByName,
 } from "@/lib/queries/producers";
 import { openFirst } from "@/lib/opening-hours";
-import { SAMPLE_LIST, catalogItem } from "@/lib/catalog";
+import { SAMPLE_LIST, catalogItem, pickLocationAwareSampleItems } from "@/lib/catalog";
 import type { ListItem, Producer, ShoppingList } from "@/lib/types";
 
 export type NearbyLite = {
@@ -171,7 +172,10 @@ export async function createSampleListAction(
       lng: location.lng,
     });
   }
-  for (const key of SAMPLE_LIST) {
+  const keys = location
+    ? pickLocationAwareSampleItems(await nearbyCountsByToken(location.lat, location.lng, 10))
+    : SAMPLE_LIST;
+  for (const key of keys) {
     const item = catalogItem(key);
     if (item) await addItem(list.id, { catalogKey: key, label: item.label });
   }

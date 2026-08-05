@@ -247,6 +247,32 @@ export function catalogItem(key: string): CatalogItem | undefined {
   return CATALOG.find((i) => i.key === key);
 }
 
+/**
+ * Locatie-bewuste voorbeeldlijst (homepage-onboarding): items met dekking bij
+ * jou in de buurt (op basis van nearbyCountsByToken), hoogste dekking eerst.
+ * Vult aan met de statische SAMPLE_LIST als er te weinig kwalificeren —
+ * nooit een dunne lijst tonen aan een nieuwe bezoeker.
+ */
+export function pickLocationAwareSampleItems(
+  counts: Record<string, number>,
+  limit = 8
+): string[] {
+  const scored = CATALOG.filter((item) => item.matchTokens.length > 0)
+    .map((item) => ({
+      key: item.key,
+      score: item.matchTokens.reduce((sum, token) => sum + (counts[token] ?? 0), 0),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const picked = scored.slice(0, limit).map((entry) => entry.key);
+  for (const key of SAMPLE_LIST) {
+    if (picked.length >= limit) break;
+    if (!picked.includes(key)) picked.push(key);
+  }
+  return picked;
+}
+
 /** Alle geldige producten-tokens (waarop de matching daadwerkelijk kijkt) */
 export const KNOWN_TOKENS: string[] = [
   ...new Set(CATALOG.flatMap((item) => item.matchTokens)),

@@ -14,6 +14,7 @@ import {
   deleteUser,
   householdByInviteCode,
   householdForUser,
+  isHouseholdMember,
   leaveHousehold,
   passwordHashFor,
   renameHousehold,
@@ -223,12 +224,23 @@ export async function deleteAccountAction(password: string): Promise<Result> {
   return { ok: true };
 }
 
-/** Anonieme (via link gedeelde) lijst toevoegen aan je account en gezin */
+/**
+ * Anonieme (via link gedeelde) lijst toevoegen aan je account en gezin. Een
+ * lijst die al aan een ander account/gezin gekoppeld is mag hier niet
+ * overschreven worden (anders kan iedereen met de link een geclaimde lijst
+ * overnemen) — alleen onclaimde lijsten, je eigen lijst opnieuw, of een lijst
+ * van je eigen gezin zijn toegestaan, zelfde grens als requireListManage().
+ */
 export async function claimListAction(token: string): Promise<Result> {
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "Log eerst in." };
   const list = await getListByToken(token);
   if (!list) return { ok: false, error: "Lijst niet gevonden." };
+  const allowed =
+    (!list.ownerUserId && !list.householdId) ||
+    list.ownerUserId === userId ||
+    (list.householdId != null && (await isHouseholdMember(userId, list.householdId)));
+  if (!allowed) return { ok: false, error: "Deze lijst is al gekoppeld aan een ander account." };
   const household = await householdForUser(userId);
   await claimList(list.id, userId, household?.id ?? null);
   return { ok: true };

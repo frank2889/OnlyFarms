@@ -4,6 +4,7 @@ import { currentUserId } from "@/auth";
 import { householdByInviteCode } from "@/lib/queries/accounts";
 import { BRAND } from "@/lib/brand";
 import { t } from "@/lib/i18n";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 import JoinHouseholdConfirm from "@/components/JoinHouseholdConfirm";
 
 export const metadata = {
@@ -22,7 +23,10 @@ export default async function JoinHouseholdPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const household = await householdByInviteCode(code);
+  // Rate-limit vóór de lookup; bij overschrijding hetzelfde "niet gevonden"
+  // tonen als een echt onbekende code, om geen apart signaal te geven.
+  const limited = isRateLimited(`join-household-lookup:${await clientIp()}`, 20, 60_000);
+  const household = limited ? null : await householdByInviteCode(code);
 
   if (!household) {
     return (

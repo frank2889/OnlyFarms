@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/authz";
-import { updateProducerAdmin, type ProducerPatch } from "@/lib/queries/admin";
+import { mergeProducers, updateProducerAdmin, type ProducerPatch } from "@/lib/queries/admin";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -79,4 +79,16 @@ export async function setProducerStoppedAction(producerId: number): Promise<void
   if (!admin) return;
   await updateProducerAdmin(producerId, { status: "gestopt" });
   revalidatePath("/beheer", "layout");
+}
+
+/** Duplicaten samenvoegen: groupIds is de hele groep, keepId blijft bestaan */
+export async function mergeProducersAction(groupIds: number[], keepId: number): Promise<Result> {
+  const admin = await requireAdminUser();
+  if (!admin) return { ok: false, error: "Geen toegang." };
+  if (!groupIds.includes(keepId)) return { ok: false, error: "Ongeldige keuze." };
+  const mergeIds = groupIds.filter((id) => id !== keepId);
+  await mergeProducers(keepId, mergeIds);
+  revalidatePath("/beheer", "layout");
+  revalidatePath("/producent/[slug]", "page");
+  return { ok: true };
 }

@@ -25,6 +25,7 @@ export default function AdminNav({ badges }: { badges: QueueBadges }) {
     { href: "/beheer/producenten", label: t("admin.navProducers"), count: 0 },
     { href: "/beheer/aanbod", label: t("admin.navOffers"), count: badges.pendingOffers },
     { href: "/beheer/ervaringen", label: t("admin.navReviews"), count: badges.pendingReviews },
+    { href: "/beheer/gebruikers", label: t("admin.navUsers"), count: 0 },
   ];
 
   return (

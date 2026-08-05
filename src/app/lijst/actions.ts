@@ -115,9 +115,12 @@ async function bump(token: string) {
   revalidatePath(`/lijst/${token}`);
 }
 
+export type ResolvedLocation = { lat: number; lng: number; label: string };
+
 export async function createListAction(
   name: string,
-  via: string = "lijst"
+  via: string = "lijst",
+  location?: ResolvedLocation
 ): Promise<{ token: string; name: string }> {
   // Ruime limiet tegen runaway scripts, niet tegen normaal gebruik
   if (isRateLimited(`create-list:${await clientIp()}`, 30, 60_000)) {
@@ -130,6 +133,13 @@ export async function createListAction(
     const household = await householdForUser(userId);
     await claimList(list.id, userId, household?.id ?? null);
   }
+  if (location) {
+    await setListLocation(list.id, {
+      postcode: location.label,
+      lat: location.lat,
+      lng: location.lng,
+    });
+  }
   await trackEvent("list_created", { listName: list.name });
   await trackConversion("lijst_gestart", { userId, listId: list.id, properties: { via } });
   return { token: list.token, name: list.name };
@@ -140,12 +150,21 @@ export async function createListAction(
  * zonder typen bij de eerste lokale match komt. Items gaan er rechtstreeks in
  * (geen per-item conversie-events, dat zou de metrics vervuilen).
  */
-export async function createSampleListAction(): Promise<{ token: string }> {
+export async function createSampleListAction(
+  location?: ResolvedLocation
+): Promise<{ token: string }> {
   const list = await createList("Boodschappen");
   const userId = await currentUserId();
   if (userId) {
     const household = await householdForUser(userId);
     await claimList(list.id, userId, household?.id ?? null);
+  }
+  if (location) {
+    await setListLocation(list.id, {
+      postcode: location.label,
+      lat: location.lat,
+      lng: location.lng,
+    });
   }
   for (const key of SAMPLE_LIST) {
     const item = catalogItem(key);
@@ -158,6 +177,21 @@ export async function createSampleListAction(): Promise<{ token: string }> {
     properties: { via: "sample", sample: true },
   });
   return { token: list.token };
+}
+
+/** Homepage-onboarding: locatie resolven zonder dat er al een lijst bestaat */
+export async function resolveLocationByQueryAction(
+  query: string
+): Promise<ResolvedLocation | null> {
+  return geocode(query);
+}
+
+export async function resolveLocationByCoordsAction(
+  lat: number,
+  lng: number
+): Promise<ResolvedLocation> {
+  const label = await reverseGeocode(lat, lng);
+  return { lat, lng, label: label ?? "Mijn locatie" };
 }
 
 export async function addItemAction(

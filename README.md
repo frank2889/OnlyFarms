@@ -46,7 +46,7 @@ De database (Neon, via Vercel) bevat al 2.279 producenten. Alleen bij een verse 
 
 ## Samenwerken (branch-workflow)
 
-Nooit rechtstreeks naar `main` — branch + pull request, iemand anders reviewt, CI (lint + build) moet groen. Branch protection staat aan. Per klus:
+Nooit rechtstreeks naar `main` — branch + pull request, iemand anders reviewt, CI (lint + build) moet groen. Branch protection staat aan. **Geen developer? Lees [docs/SAMENWERKEN.md](docs/SAMENWERKEN.md)**: stap-voor-stap uitleg om alles via de browser te doen (voor Sally en Chimene). Per klus:
 
 ```bash
 git checkout main && git pull
